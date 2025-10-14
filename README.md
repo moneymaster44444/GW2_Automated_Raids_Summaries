@@ -41,7 +41,7 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
    ```
 3. Place your arcDPS logs into:
    ```
-   GW2_Automated_Raids_Summaries\Raid_Logs
+   Raid_Logs
    ```
 4. Run:
    ```bat
