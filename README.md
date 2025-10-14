@@ -8,14 +8,14 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 
 - **`establish_config_files.bat`**  
   Creates the required config files for Elite Insights and EI Combiner.  
-  ? Run this **once** after cloning the project.
+  Run this **once** after cloning the project.
 
 - **`build_elite_insights.bat`**  
   Builds the Elite Insights CLI executable at:  
   ```
   Resources\Elite Insights\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe
   ```
-  ? Run this **once** after cloning the project (after `establish_config_files.bat`).
+  Run this **once** after cloning the project (after `establish_config_files.bat`).
 
 - **`process_logs.bat`**  
   Processes your arcDPS logs by running them through Elite Insights and EI Combiner.  
@@ -26,8 +26,8 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 
 - **`get_latest_ei_and_ei_combiner.bat`**  
   Development utility to pull the latest upstream versions of Elite Insights and EI Combiner subtrees.  
-  ? Only run this when new releases are available upstream.  
-  ?? Updates may introduce breaking changes that require adjustments in this repo. Always test after running it.
+  Only run this when new releases are available upstream.  
+  Updates may introduce breaking changes that require adjustments in this repo. Always test after running it.
 
 ---
 
