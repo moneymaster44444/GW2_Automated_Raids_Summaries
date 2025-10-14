@@ -4,6 +4,11 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 
 ---
 
+## Required Runtimes, SDKs, etc.
+
+- Python
+- .NET SDK Runtime
+
 ## Batch Files Overview
 
 - **`establish_config_files.bat`**  
