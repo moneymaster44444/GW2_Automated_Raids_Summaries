@@ -1,0 +1,65 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8</TargetFramework>
+        <LangVersion>12.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Version>0.69.1</Version>
+        <Configurations>Debug;Release;NoRewards;Trace</Configurations>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>DEBUG</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Trace|AnyCPU'">
+        <DefineConstants>TRACING</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='NoRewards|AnyCPU'">
+        <DefineConstants>DEBUG</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="Resources\**\*.css" />
+        <None Include="Resources\**\*.js" />
+        <None Include="Resources\**\*.html" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+        <Company>GW2 Elite Insights</Company>
+        <Product>GW2 Elite Insights</Product>
+        <Authors>EliphasNUIT</Authors>
+        <Description></Description>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <UserSecretsId>deaea9ef-69e9-4b48-ba82-b2294277674f</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GW2EIEvtcParser\GW2EIEvtcParser.csproj" />
+        <ProjectReference Include="..\GW2EIGW2API\GW2EIGW2API.csproj" />
+        <ProjectReference Include="..\GW2EIJSON\GW2EIJSON.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Properties\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Properties\Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+</Project>
