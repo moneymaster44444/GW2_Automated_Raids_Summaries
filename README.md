@@ -24,7 +24,7 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 
 - **`process_logs.bat`**  
   Processes your arcDPS logs by running them through Elite Insights and EI Combiner.  
-  Produces a combined JSON file (`Drag_and_Drop.json`) that can be dragged into:  
+  Produces a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) that can be dragged into:  
   ```
   Resources\EI Combiner\Example_Output\Top_Stats_Index.html
   ```
