@@ -52,7 +52,7 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
    ```bat
    process_logs.bat
    ```
-   This will generate a combined JSON file you can drag into:
+   This will generate a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) that can be dragged into:
    ```
    Resources\EI Combiner\Example_Output\Top_Stats_Index.html
    ```
