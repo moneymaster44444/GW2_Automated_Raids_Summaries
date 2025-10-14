@@ -1,0 +1,420 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Elite Insights Log Schema",
+  "description": "JSON schema for Elite Insights combat log output for Guild Wars 2, requiring all categories, including empty arrays/objects, based on arcdps logs.",
+  "type": "object",
+  "required": [
+    "fightName",
+    "recordedBy",
+    "timeStart",
+    "timeEnd",
+    "duration",
+    "success",
+    "encounter",
+    "players",
+    "targets",
+    "phases",
+    "mechanics",
+    "version"
+  ],
+  "properties": {
+    "fightName": {
+      "description": "Name or identifier of the encounter (e.g., boss name or WvW skirmish).",
+      "type": "string",
+      "minLength": 1
+    },
+    "recordedBy": {
+      "description": "Name of the player who recorded the log.",
+      "type": "string",
+      "minLength": 1
+    },
+    "timeStart": {
+      "description": "Start time of the encounter in ISO 8601 format or similar.",
+      "type": "string",
+      "minLength": 1
+    },
+    "timeEnd": {
+      "description": "End time of the encounter in ISO 8601 format or similar.",
+      "type": "string",
+      "minLength": 1
+    },
+    "duration": {
+      "description": "Duration of the encounter (e.g., '5m 32s 123ms').",
+      "type": "string",
+      "minLength": 1
+    },
+    "success": {
+      "description": "Whether the encounter was successful (e.g., boss defeated or objective completed).",
+      "type": "boolean"
+    },
+    "encounter": {
+      "description": "Metadata about the encounter.",
+      "type": "object",
+      "required": [
+        "id",
+        "mode",
+        "isWvW",
+        "mapId",
+        "region"
+      ],
+      "properties": {
+        "id": {
+          "description": "Unique identifier for the encounter.",
+          "type": "integer"
+        },
+        "mode": {
+          "description": "Encounter mode (e.g., Normal, Challenge Mode, Large-Scale for WvW).",
+          "type": "string",
+          "minLength": 1
+        },
+        "isWvW": {
+          "description": "Indicates if the encounter is a World vs. World (WvW) encounter.",
+          "type": "boolean"
+        },
+        "mapId": {
+          "description": "ID of the map where the encounter took place.",
+          "type": "integer"
+        },
+        "region": {
+          "description": "WvW region or server (e.g., NA, EU).",
+          "type": "string",
+          "minLength": 0
+        }
+      }
+    },
+    "players": {
+      "description": "Array of player data, including performance metrics and roles.",
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "account",
+          "profession",
+          "group",
+          "stats",
+          "mechanics",
+          "buffs",
+          "debuffs"
+        ],
+        "properties": {
+          "name": {
+            "description": "Character name of the player.",
+            "type": "string",
+            "minLength": 1
+          },
+          "account": {
+            "description": "Account name of the player.",
+            "type": "string",
+            "minLength": 1
+          },
+          "profession": {
+            "description": "Player's profession (e.g., Guardian, Necromancer).",
+            "type": "string",
+            "minLength": 1
+          },
+          "group": {
+            "description": "Squad subgroup number (0 for no group).",
+            "type": "integer",
+            "minimum": 0
+          },
+          "stats": {
+            "description": "Combat statistics for the player.",
+            "type": "object",
+            "required": [
+              "dpsAll",
+              "heal",
+              "boonUptime",
+              "debuffUptime",
+              "deaths",
+              "downs",
+              "damageTaken",
+              "barrierGenerated"
+            ],
+            "properties": {
+              "dpsAll": {
+                "description": "Overall DPS metrics.",
+                "type": "array",
+                "minItems": 0,
+                "items": {
+                  "type": "object",
+                  "required": ["dps", "damage"],
+                  "properties": {
+                    "dps": {
+                      "description": "Damage per second.",
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "damage": {
+                      "description": "Total damage dealt.",
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              },
+              "heal": {
+                "description": "Healing statistics.",
+                "type": "array",
+                "minItems": 0,
+                "items": {
+                  "type": "object",
+                  "required": ["healing"],
+                  "properties": {
+                    "healing": {
+                      "description": "Total healing done.",
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              },
+              "boonUptime": {
+                "description": "Boon uptime percentages.",
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "debuffUptime": {
+                "description": "Debuff uptime percentages.",
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "deaths": {
+                "description": "Number of times the player died.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "downs": {
+                "description": "Number of times the player was downed.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "damageTaken": {
+                "description": "Total damage taken by the player.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "barrierGenerated": {
+                "description": "Total barrier generated by the player.",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "mechanics": {
+            "description": "Player-specific mechanics data.",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "required": ["name", "count", "times"],
+              "properties": {
+                "name": {
+                  "description": "Name of the mechanic (e.g., 'Failed Sapper').",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "count": {
+                  "description": "Number of times the mechanic occurred.",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "times": {
+                  "description": "Timestamps or intervals of mechanic occurrences (relative to encounter start).",
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "buffs": {
+            "description": "Buff application data for the player.",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "uptime"],
+              "properties": {
+                "id": {
+                  "description": "Buff ID.",
+                  "type": "integer"
+                },
+                "name": {
+                  "description": "Name of the buff (e.g., Might, Protection).",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uptime": {
+                  "description": "Percentage uptime of the buff.",
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              }
+            }
+          },
+          "debuffs": {
+            "description": "Debuff application data for the player.",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "uptime"],
+              "properties": {
+                "id": {
+                  "description": "Debuff ID.",
+                  "type": "integer"
+                },
+                "name": {
+                  "description": "Name of the debuff (e.g., Bleeding, Poison).",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uptime": {
+                  "description": "Percentage uptime of the debuff.",
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "targets": {
+      "description": "Array of targets (e.g., enemies or bosses) in the encounter.",
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["name", "health", "dpsTaken"],
+        "properties": {
+          "name": {
+            "description": "Name of the target (e.g., boss name or enemy type).",
+            "type": "string",
+            "minLength": 1
+          },
+          "health": {
+            "description": "Total health of the target.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "dpsTaken": {
+            "description": "DPS taken by the target.",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "required": ["dps", "damage"],
+              "properties": {
+                "dps": {
+                  "description": "Damage per second taken.",
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "damage": {
+                  "description": "Total damage taken.",
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "phases": {
+      "description": "Array of encounter phases (e.g., boss phases or time segments).",
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["name", "startTime", "endTime", "dpsStats"],
+        "properties": {
+          "name": {
+            "description": "Name of the phase.",
+            "type": "string",
+            "minLength": 1
+          },
+          "startTime": {
+            "description": "Start time of the phase (relative to encounter start, in milliseconds).",
+            "type": "number",
+            "minimum": 0
+          },
+          "endTime": {
+            "description": "End time of the phase (relative to encounter start, in milliseconds).",
+            "type": "number",
+            "minimum": 0
+          },
+          "dpsStats": {
+            "description": "DPS statistics for the phase.",
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "required": ["player", "dps"],
+              "properties": {
+                "player": {
+                  "description": "Player name or index.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "dps": {
+                  "description": "DPS for the player in this phase.",
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mechanics": {
+      "description": "Global mechanics data for the encounter.",
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "count"],
+        "properties": {
+          "name": {
+            "description": "Name of the mechanic.",
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "description": "Description of the mechanic.",
+            "type": "string",
+            "minLength": 0
+          },
+          "count": {
+            "description": "Total occurrences of the mechanic.",
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "version": {
+      "description": "Version of Elite Insights used to generate the log.",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}
