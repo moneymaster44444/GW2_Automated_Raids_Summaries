@@ -7,7 +7,7 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 ## Required Runtimes, SDKs, etc.
 
 - Python (to run EI Combiner's python script in `process_logs.bat`)
-- .NET SDK Runtime (used by `build_elite_insights.bat` to build `Resources\Elite Insights\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe`)
+- .NET SDK (used by `build_elite_insights.bat` to build `Resources\Elite Insights\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe`)
 
 ## Batch Files Overview
 
