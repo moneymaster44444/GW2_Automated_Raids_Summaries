@@ -1,0 +1,43 @@
+# === Guild Wars 2 arcDPS Logs ===
+Raid_Logs/*.zevtc
+Raid_Logs/*.evtc
+
+# EI / Combiner outputs
+Raids_Summaries/*.json
+Resources/EI Combiner/Example_Output/*.json
+
+# === Visual Studio / .NET ===
+.vs/                # Visual Studio workspace folder
+/.vs
+*.user              # User-specific settings
+*.suo               # Solution user options
+*.userosscache
+*.sln.docstates
+
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+packages/
+
+# Others
+*.tmp
+*.log
+
+# === Windows clutter ===
+Thumbs.db
+Desktop.ini
+
+# === IDE configs ===
+.vscode/
+.idea/
+/Resources/Config/EliteInsights.conf
+/Resources/Config/top_stats_config.ini
+*.json
