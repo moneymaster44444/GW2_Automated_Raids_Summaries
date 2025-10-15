@@ -170,6 +170,6 @@ rem %~1 = full path to log file
 if not exist %~1 goto :eof
 set "FOUND_LOG=1"
 echo     -> "%~nx1"
-"%EI_CLI_EXE%" -c "%EI_CONF%" "%~1" >nul 2>&1
+"%EI_CLI_EXE%" -c "%EI_CONF%" "%~1"
 if errorlevel 1 echo     [WARN] EI returned non-zero for %~nx1
 goto :eof
