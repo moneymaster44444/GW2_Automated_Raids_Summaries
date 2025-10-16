@@ -1,0 +1,12 @@
+title: $:/gw2/auto-import
+type: text/vnd.tiddlywiki
+tags: $:/tags/StartupAction
+
+\whitespace trim
+<!-- On startup, if $:/data/dragdrop exists, import it and jump to Top_Stats_Index -->
+<$list filter="[[$:/data/dragdrop]is[tiddler]]">
+  <!-- Import the JSON contained in the $:/data/dragdrop data tiddler -->
+  <$action-sendmessage $message="tm-import-json" $param="$:/data/dragdrop" />
+  <!-- Optional: navigate straight to your Top Stats landing tiddler -->
+  <$action-navigate $to="Top_Stats_Index" />
+</$list>

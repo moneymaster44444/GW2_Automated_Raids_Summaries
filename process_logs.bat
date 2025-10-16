@@ -1,8 +1,8 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 rem ==========================================
-rem Process arcDPS logs -> EI JSON -> Drag_and_Drop JSON
+rem Process arcDPS logs -> EI JSON -> Drag_and_Drop JSON -> TW5 Auto-Imported HTML
 rem ==========================================
 
 rem --- Resolve repo root (this script must live at repo root) ---
@@ -47,6 +47,11 @@ if not exist "%DROP_DIR%"    mkdir "%DROP_DIR%"
 rem --- Pre-run: DELETE any stray arcDPS logs at repo root (do not move) ---
 del /q "%ROOT%*.zevtc" >nul 2>&1
 del /q "%ROOT%*.evtc"  >nul 2>&1
+
+rem --- Pre-run: requested cleanup of previous run intermediates ---
+echo [CLEANUP] Removing leftover JSONs from previous run...
+del /q "%DROP_DIR%\*.json"     >nul 2>&1
+del /q "%EI_JSON_DIR%\*.json"  >nul 2>&1
 
 rem --- Ensure config files exist ---
 if not exist "%EI_CONF%" (
@@ -149,6 +154,93 @@ if errorlevel 1 (
   del /q "%EI_JSON_DIR%\Drag_and_Drop_Log_Summary_*.json" >nul 2>&1
 )
 
+rem ==========================================================
+rem [4] Auto-import into TiddlyWiki and build single-file HTML
+rem ==========================================================
+
+rem --- Inputs for TiddlyWiki stage ---
+set "TW_BUILD_DIR=%ROOT%Top_Stats_Html"
+set "TW_SHELL=%ROOT%Resources\EI Combiner\Example_Output\Top_Stats_Index.html"
+set "AUTO_TID=%ROOT%auto-import.tid"
+
+rem --- Sanity checks ---
+where tiddlywiki >nul 2>&1
+if errorlevel 1 (
+  echo [ERROR] "tiddlywiki" not found on PATH. Did you run: npm install -g tiddlywiki ?
+  goto :_fail
+)
+
+if not exist "%AUTO_TID%" (
+  echo [ERROR] auto-import.tid not found at: %AUTO_TID%
+  goto :_fail
+)
+
+rem --- Work out the filename we just copied into %DROP_DIR% ---
+for %%A in ("%LATEST_JSON%") do set "LATEST_NAME=%%~nxA"
+set "LATEST_DROP_JSON=%DROP_DIR%\%LATEST_NAME%"
+
+if not exist "%LATEST_DROP_JSON%" (
+  echo [ERROR] Expected Drag_and_Drop JSON not found in Raids_Summaries:
+  echo         %LATEST_DROP_JSON%
+  goto :_fail
+)
+
+rem --- One-time init of the build wiki (first run only) ---
+if not exist "%TW_BUILD_DIR%" (
+  echo [INFO] Initializing build wiki at: %TW_BUILD_DIR%
+  call tiddlywiki "%TW_BUILD_DIR%" --init server || goto :_fail
+
+  if not exist "%TW_SHELL%" (
+    echo [ERROR] UI shell not found:
+    echo         %TW_SHELL%
+    goto :_fail
+  )
+
+  echo [INFO] Loading UI shell...
+  call tiddlywiki "%TW_BUILD_DIR%" --load "%TW_SHELL%" || goto :_fail
+)
+
+rem --- Always (re)import the startup auto-import action (safe & idempotent)
+echo [INFO] Refreshing startup auto-import action...
+call tiddlywiki "%TW_BUILD_DIR%" --import "%AUTO_TID%" text/plain || goto :_fail
+
+echo [INFO] Injecting latest JSON into $:/data/dragdrop...
+call tiddlywiki "%TW_BUILD_DIR%" --import "%LATEST_DROP_JSON%" application/json "$:/data/dragdrop" || goto :_fail
+
+echo [INFO] Building single-file HTML (target: index)...
+call tiddlywiki "%TW_BUILD_DIR%" --build index || goto :_fail
+
+set "TW_OUT=%TW_BUILD_DIR%\output\index.html"
+if exist "%TW_OUT%" (
+  echo [OK] Build complete:
+  echo      %TW_OUT%
+
+  rem --- Compute date tag robustly ---
+  call :compute_date_tag
+  echo [INFO] Using date tag: !DATE_TAG!
+
+  rem --- Final path in Raids_Summaries ---
+  set "TW_FINAL=%DROP_DIR%\INC_!DATE_TAG!.html"
+
+  rem --- Copy then delete original (safer than MOVE if anything goes wrong) ---
+  copy /y "%TW_OUT%" "!TW_FINAL!" >nul
+  if errorlevel 1 (
+    echo [WARN] Copy failed; leaving original at:
+    echo       %TW_OUT%
+  ) else (
+    del /q "%TW_OUT%" >nul 2>&1
+    if exist "!TW_FINAL!" (
+      echo [OK] Final HTML written to:
+      echo      !TW_FINAL!
+    ) else (
+      echo [WARN] Unexpected: final file missing after copy. Check permissions/paths.
+    )
+  )
+) else (
+  echo [WARN] Build finished but index.html not found where expected:
+  echo       %TW_OUT%
+)
+
 :_post_cleanup_success
 rem --- Post-run: DELETE any stray arcDPS logs at repo root (do not move) ---
 del /q "%ROOT%*.zevtc" >nul 2>&1
@@ -159,10 +251,17 @@ echo ==========================================
 echo Pipeline complete.
 echo Drag_and_Drop JSON available under:
 echo   %DROP_DIR%
+echo Raid Summary HTML is at:
+if defined TW_FINAL (
+  echo   !TW_FINAL!
+) else (
+  echo   %TW_OUT%
+)
 echo ==========================================
 exit /b 0
 
 :_fail
+echo [ERROR] Pipeline aborted. See messages above.
 exit /b 1
 
 :_run_ei
@@ -173,3 +272,43 @@ echo     -> "%~nx1"
 "%EI_CLI_EXE%" -c "%EI_CONF%" "%~1"
 if errorlevel 1 echo     [WARN] EI returned non-zero for %~nx1
 goto :eof
+
+:compute_date_tag
+rem --- Helper: compute MM-dd-yy date tag into DATE_TAG ---
+set "DATE_TAG="
+
+rem 1) Try Windows PowerShell (prefer 64-bit System32; then Sysnative; then PATH)
+for %%P in (
+  "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+  "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+  "powershell.exe"
+) do (
+  if not defined DATE_TAG if exist "%%~fP" (
+    for /f "delims=" %%D in ('"%%~fP" -NoProfile -Command "(Get-Date).ToString('MM-dd-yy')" 2^>nul') do (
+      set "DATE_TAG=%%D"
+    )
+  )
+)
+
+rem 2) Fallback: WMIC (YYYYMMDDhhmmss.mmm+TZ) -> MM-dd-yy
+if not defined DATE_TAG (
+  for /f "tokens=2 delims==" %%L in ('wmic os get LocalDateTime /value 2^>nul ^| find "="') do set "LDT=%%L"
+  if defined LDT (
+    set "DATE_TAG=!LDT:~4,2!-!LDT:~6,2!-!LDT:~2,2!"
+  )
+)
+
+rem 3) Last resort: parse %DATE% (locale-dependent heuristic)
+if not defined DATE_TAG (
+  for /f "tokens=1-4 delims=/-. " %%a in ("%DATE%") do (
+    set "a=%%a" & set "b=%%b" & set "c=%%c" & set "d=%%d"
+  )
+  if defined b if defined c if defined d (
+    set "DATE_TAG=!b!-!c!-!d:~-2!"
+  ) else if defined a if defined b if defined c (
+    set "DATE_TAG=!a!-!b!-!c:~-2!"
+  )
+)
+
+if not defined DATE_TAG set "DATE_TAG=unknown"
+exit /b 0

@@ -7,9 +7,11 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 ## Required Runtimes, SDKs, etc.
 
 - Python (to run EI Combiner's python script in `process_logs.bat`)
-  - After you installed Python, you will also need to install additional modules:
-    - xlsxwriter: `pip install requests glicko2 xlsxwriter`
+  - After you installed Python, you will also need to install xlsxwriter: `pip install requests glicko2 xlsxwriter`
 - .NET SDK 8 (used by `build_elite_insights.bat` to build `GuildWars2EliteInsights-CLI.exe`)
+- Node.js
+  - After you installed Node.js, install tiddlywiki: `npm install -g tiddlywiki`
+    - To automatically load and generate the final html file without having to manually drag and drop the generated JSON file from EI Combiner.
 
 ## Batch Files Overview
 

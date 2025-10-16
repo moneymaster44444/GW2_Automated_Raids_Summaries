@@ -38,6 +38,9 @@ Desktop.ini
 # === IDE configs ===
 .vscode/
 .idea/
+
 /Resources/Config/EliteInsights.conf
 /Resources/Config/top_stats_config.ini
+/Top_Stats_Html
 *.json
+*.html
