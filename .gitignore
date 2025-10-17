@@ -44,3 +44,4 @@ Desktop.ini
 /Top_Stats_Html
 *.json
 *.html
+Resources/Config/Secrets/discord_webhook.txt
