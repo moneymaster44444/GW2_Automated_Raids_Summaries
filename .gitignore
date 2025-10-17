@@ -1,6 +1,6 @@
 # === Guild Wars 2 arcDPS Logs ===
-Raid_Logs/*.zevtc
-Raid_Logs/*.evtc
+*.zevtc
+*.evtc
 
 # EI / Combiner outputs
 Raids_Summaries/*.json
