@@ -5,7 +5,7 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 ---
 ## Before you begin, install the following required tools.
 
-- [Python 3](https://www.python.org/downloads/) (to run EI Combiner's python script in `process_logs.bat`)
+- [Python 3](https://www.python.org/downloads/) (3.12.10 or higher. To run EI Combiner's python script in `process_logs.bat`)
   - After installing Python, install xlsxwriter: `pip install requests glicko2 xlsxwriter`
 - [.NET SDK 8](https://dotnet.microsoft.com/en-us/download) (used by `build_elite_insights.bat` to build `GuildWars2EliteInsights-CLI.exe`)
 - [Node.js](https://nodejs.org/en/download)
