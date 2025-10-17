@@ -130,8 +130,7 @@ internal class SunquaPeakInstance : SunquaPeak
 
     private List<EncounterPhaseData> HandleAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases, TargetID aiID)
     {
-        var fullPhases = new List<EncounterPhaseData>();
-        var singlePhases = new List<EncounterPhaseData>();
+        var encounterPhases = new List<EncounterPhaseData>();
         var mainPhase = phases[0];
         if (targetsByIDs.TryGetValue((int)aiID, out var ais))
         {
@@ -149,7 +148,7 @@ internal class SunquaPeakInstance : SunquaPeak
                         var darkAi = englobedDarkAis.FirstOrDefault(x => x.EnglobingAgentItem == elementalAi.EnglobingAgentItem);
                         if (darkAi != null)
                         {
-                            fullOffset = HandleFullAiPhases(fullPhases, mainPhase, englobedElAis, elementalAi, darkAi, log, phases, fullOffset);
+                            fullOffset = HandleFullAiPhases(encounterPhases, mainPhase, englobedElAis, elementalAi, darkAi, log, phases, fullOffset);
                         }
                     }
                 }
@@ -157,12 +156,11 @@ internal class SunquaPeakInstance : SunquaPeak
             int offset = 0;
             foreach (var ai in nonEnglobedAis)
             {
-                offset = HandleSingleAiPhases(singlePhases, mainPhase, nonEnglobedAis, ai, log, phases, aiID, offset);       
+                offset = HandleSingleAiPhases(encounterPhases, mainPhase, nonEnglobedAis, ai, log, phases, aiID, offset);       
             }
         }
-        NumericallyRenameEncounterPhases(fullPhases);
-        NumericallyRenameEncounterPhases(singlePhases);
-        return [..fullPhases, ..singlePhases];
+        NumericallyRenameEncounterPhases(encounterPhases);
+        return encounterPhases;
     }
 
     private List<EncounterPhaseData> HandleFullAndElementalAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
