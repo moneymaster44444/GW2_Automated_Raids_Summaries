@@ -1,0 +1,18 @@
+{
+  "vendors": [
+    {
+      "name": "Elite Insights",
+      "repo": "https://github.com/baaron4/GW2-Elite-Insights-Parser.git",
+      "prefix": "Resources\\Elite Insights",
+      "ref": "v3.14.2.0",
+      "squash": true
+    },
+    {
+      "name": "EI Combiner",
+      "repo": "https://github.com/Drevarr/GW2_EI_log_combiner.git",
+      "prefix": "Resources\\EI Combiner",
+      "ref": "v1.4.1",
+      "squash": true
+    }
+  ]
+}

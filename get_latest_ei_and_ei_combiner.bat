@@ -1,72 +1,63 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-rem ==========================================
-rem GW2 Automated Raids Summaries - Subtree Updater
-rem - Updates vendored subtrees (EI & EI Combiner)
-rem ==========================================
+rem =========================================================
+rem Pull vendored 3rd-party repos (git subtrees) at pinned refs
+rem Reads: 3rd_party_repo_version.lock (JSON)
+rem Requires: git + PowerShell (Windows PowerShell 5.1+ or PowerShell 7+)
+rem =========================================================
 
-rem --- Resolve repo root (this script should live at repo root) ---
-set "ROOT=%~dp0"
-pushd "%ROOT%" >nul 2>&1
+set "LOCK=3rd_party_repo_version.lock"
 
-rem --- Tool checks (git only) ---
-where git >nul 2>&1 || (echo [ERROR] git not found in PATH. Install Git and retry.& exit /b 1)
-
-git rev-parse --is-inside-work-tree >nul 2>&1 || (
-  echo [ERROR] This folder is not a Git repository. Run inside your repo root.
+if not exist "%LOCK%" (
+  echo [ERROR] Lock file not found: %LOCK%
   exit /b 1
 )
 
-rem --- Configurable paths/branches ---
-set "EI_PREFIX=Resources/Elite Insights"
-set "EI_REMOTE=https://github.com/baaron4/GW2-Elite-Insights-Parser.git"
-set "EI_BRANCH=master"
-
-set "COMB_PREFIX=Resources/EI Combiner"
-set "COMB_REMOTE=https://github.com/Drevarr/GW2_EI_log_combiner.git"
-set "COMB_BRANCH=main"
-
-echo ==========================================
-echo Updating subtrees...
-echo Repo: %CD%
-echo ==========================================
-echo.
-
-rem --- Capture HEAD before updates to detect change ---
-for /f "usebackq delims=" %%H in (`git rev-parse HEAD`) do set "HEAD_BEFORE=%%H"
-
-rem --- Update Elite Insights subtree ---
-echo [1/2] Updating Elite Insights subtree...
-git subtree pull --prefix="%EI_PREFIX%" "%EI_REMOTE%" %EI_BRANCH% --squash -m "Update Elite Insights subtree"
+rem --- Verify git exists ---
+where git >nul 2>&1
 if errorlevel 1 (
-  echo [WARN] Elite Insights subtree pull reported a non-zero exit code.
-) else (
-  echo [OK] Elite Insights updated ^(or already up-to-date^).
+  echo [ERROR] 'git' not found in PATH.
+  exit /b 1
 )
-echo.
 
-rem --- Update EI Combiner subtree ---
-echo [2/2] Updating EI Combiner subtree...
-git subtree pull --prefix="%COMB_PREFIX%" "%COMB_REMOTE%" %COMB_BRANCH% --squash -m "Update EI Combiner subtree"
+rem --- Prefer pwsh (PS7) if available; otherwise fall back to Windows PowerShell ---
+where pwsh >nul 2>&1 && (set "PS=pwsh") || (set "PS=powershell")
+
+%PS% -NoProfile -ExecutionPolicy Bypass ^
+  -Command ^
+  "$ErrorActionPreference='Stop';" ^
+  "Write-Host 'Using lock file: %LOCK%';" ^
+  "$json = Get-Content '%LOCK%' -Raw | ConvertFrom-Json;" ^
+  "if (-not $json -or -not $json.vendors) { throw 'No vendors found in lock file.' }" ^
+  "foreach ($v in $json.vendors) {" ^
+  "  if (-not $v.repo -or -not $v.prefix -or -not $v.ref) { throw 'Lock entry missing repo/prefix/ref.' }" ^
+  "  $name = if ($v.PSObject.Properties.Name -contains 'name' -and $v.name) { $v.name } else { $v.prefix };" ^
+  "  $prefixRaw = [string]$v.prefix; $prefix = $prefixRaw -replace '\\','/';" ^
+  "  Write-Host ''; Write-Host ('=== ' + $name + ' ===');" ^
+  "  Write-Host ('repo:   ' + $v.repo);" ^
+  "  Write-Host ('prefix: ' + $prefix);" ^
+  "  Write-Host ('ref:    ' + $v.ref);" ^
+  "  $prefixExists = Test-Path -LiteralPath $prefixRaw;" ^
+  "  if (-not $prefixExists) {" ^
+  "    Write-Host 'Prefix not found; performing initial add...';" ^
+  "    $args = @('subtree','add','--prefix', $prefix, $v.repo, $v.ref);" ^
+  "    if ($v.squash -eq $true) { $args += '--squash' }" ^
+  "    & git @args; if ($LASTEXITCODE -ne 0) { throw ('git add failed for ' + $name) }" ^
+  "  } else {" ^
+  "    $args = @('subtree','pull','--prefix', $prefix, $v.repo, $v.ref);" ^
+  "    if ($v.squash -eq $true) { $args += '--squash' }" ^
+  "    & git @args; if ($LASTEXITCODE -ne 0) { throw ('git pull failed for ' + $name) }" ^
+  "  }" ^
+  "}"
+
+
 if errorlevel 1 (
-  echo [WARN] EI Combiner subtree pull reported a non-zero exit code.
-) else (
-  echo [OK] EI Combiner updated ^(or already up-to-date^).
+  echo.
+  echo [ERROR] One or more subtree pulls failed.
+  exit /b 1
 )
+
 echo.
-
-rem --- Detect if HEAD changed ---
-for /f "usebackq delims=" %%H in (`git rev-parse HEAD`) do set "HEAD_AFTER=%%H"
-
-echo ==========================================
-if /i "%HEAD_BEFORE%"=="%HEAD_AFTER%" (
-  echo No subtree changes detected ^(already up-to-date^).
-) else (
-  echo Subtrees updated locally.[31m Run git push after testing.[0m
-)
-echo Done.
-echo ==========================================
-
-popd
+echo [OK] All third-party subtrees updated according to %LOCK%
 exit /b 0
