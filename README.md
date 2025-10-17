@@ -24,12 +24,11 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
    Raid_Logs
    ```
 3. (Optional) Set Discord webhook URL to automatically post the results to Discord
-     a. Create a webhook on a Discord channel of your choice
-     b. Paste the webhook URL to:
+     - Create a webhook on a Discord channel of your choice and paste the webhook URL to:
      ```
      \Resources\Config\Secrets\discord_webhook.txt
      ```
-4. Run:
+5. Run:
    ```bat
    process_logs.bat
    ```
