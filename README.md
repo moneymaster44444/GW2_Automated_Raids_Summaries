@@ -45,30 +45,35 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 ---
 ## Details: Batch Files Overview
 
-- **`establish_config_files.bat`**  
-  Creates the required config files for Elite Insights and EI Combiner.  
+- `establish_config_files.bat`
+  
+  Creates the required config files for Elite Insights and EI Combiner.
   Run this **once** after cloning the project.
 
-- **`build_elite_insights.bat`**  
+- `build_elite_insights.bat`
+  
   Builds the Elite Insights CLI executable at:  
   ```
   Resources\Elite Insights\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe
   ```
   Run this **once** after cloning the project (after `establish_config_files.bat`).
 
-- **`process_logs.bat`**  
+- `process_logs.bat`
+  
   Processes your arcDPS logs by running them through Elite Insights and EI Combiner.  
   Produces a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) that can be dragged into:  
   ```
   Resources\EI Combiner\Example_Output\Top_Stats_Index.html
   ```
 
-- **`get_latest_ei_and_ei_combiner.bat`**  
-  Development utility to pull the latest upstream versions of Elite Insights and EI Combiner subtrees.  
-  Only run this when new releases are available upstream.  
-  Updates may introduce breaking changes that require adjustments in this repo. Always test after running it.
+- `get_latest_ei_and_ei_combiner.bat`
+  
+  This is a development tool to pull the latest releases of Elite Insights and EI Combiner into this repo.
+  Updates may introduce breaking changes that require adjustments in this repo.
+  Always test after running it.
 
 ---
+
 ## Advanced Use / Development
 
 If you are maintaining this repository and want to update either Elite Insights or EI Combiner:
@@ -77,5 +82,7 @@ If you are maintaining this repository and want to update either Elite Insights 
   ```bat
   get_latest_ei_and_ei_combiner.bat
   ```
-- This will pull the latest upstream changes from Elite Insights and EI Combiner into the repo.
+- This will pull the release versions of Elite Insights and EI Combiner into `\Resources\Elite Insights` and `\Resources\EI Combiner` respectively.
+- The exact version it will pull is determined by `3rd_party_repo_version.lock`.
+  -  Update the version number in this file to match the release version tag for the 3rd party projects when you are ready to the pull latest releases.
 - After updating, thoroughly test `process_logs.bat` to ensure no breaking changes were introduced before committing and pushing.
