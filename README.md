@@ -3,16 +3,44 @@
 A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-Elite-Insights-Parser) and [EI Combiner](https://github.com/Drevarr/GW2_EI_log_combiner) log processing for Guild Wars 2 arcdps raid logs.
 
 ---
+## Before you begin, install the following runtimes and tools.
 
-## Required Runtimes, SDKs, etc.
+- [Python 3](https://www.python.org/downloads/) (to run EI Combiner's python script in `process_logs.bat`)
+  - After installing Python, install xlsxwriter: `pip install requests glicko2 xlsxwriter`
+- [.NET SDK 8](https://dotnet.microsoft.com/en-us/download) (used by `build_elite_insights.bat` to build `GuildWars2EliteInsights-CLI.exe`)
+- [Node.js](https://nodejs.org/en/download)
+  - After installing Node.js, install tiddlywiki: `npm install -g tiddlywiki`
+    - To automatically load and generate the summary HTML file without having to manually drag and drop the generated JSON file from EI Combiner.
+---
+## How to Use
 
-- Python (to run EI Combiner's python script in `process_logs.bat`)
-  - After you installed Python, you will also need to install xlsxwriter: `pip install requests glicko2 xlsxwriter`
-- .NET SDK 8 (used by `build_elite_insights.bat` to build `GuildWars2EliteInsights-CLI.exe`)
-- Node.js
-  - After you installed Node.js, install tiddlywiki: `npm install -g tiddlywiki`
-    - To automatically load and generate the final html file without having to manually drag and drop the generated JSON file from EI Combiner.
+1. (First time only)From the repo root, run:
+   ```bat
+   establish_config_files.bat
+   build_elite_insights.bat
+   ``` 
+2. Place your arcDPS logs into:
+   ```
+   Raid_Logs
+   ```
+3. (Optional) Set Discord webhook URL to automatically post the results to Discord
+     a. Create a webhook on a Discord channel of your choice
+     b. Paste the webhook URL to:
+     ```
+     \Resources\Config\Secrets\discord_webhook.txt
+     ```
+4. Run:
+   ```bat
+   process_logs.bat
+   ```
+   If you did step 4, then your summary will post to Discord at the end of the batch and you are done.
 
+   Otherwise, the batch will create a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) which can be dragged into:
+   ```
+   Resources\EI Combiner\Example_Output\Top_Stats_Index.html
+   ```
+   Manually post the resulting HTML file to Discord.
+---
 ## Batch Files Overview
 
 - **`establish_config_files.bat`**  
@@ -39,30 +67,6 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
   Updates may introduce breaking changes that require adjustments in this repo. Always test after running it.
 
 ---
-
-## First-Time Setup
-
-1. Clone this repository.
-2. From the repo root, run:
-   ```bat
-   establish_config_files.bat
-   build_elite_insights.bat
-   ```
-3. Place your arcDPS logs into:
-   ```
-   Raid_Logs
-   ```
-4. Run:
-   ```bat
-   process_logs.bat
-   ```
-   This will generate a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) that can be dragged into:
-   ```
-   Resources\EI Combiner\Example_Output\Top_Stats_Index.html
-   ```
-
----
-
 ## Advanced Usage / Development
 
 If you are maintaining this repository and want to update either Elite Insights or EI Combiner:
