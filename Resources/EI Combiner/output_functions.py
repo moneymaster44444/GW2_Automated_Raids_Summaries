@@ -548,225 +548,92 @@ def build_damage_summary_table(top_stats: dict, caption: str, tid_date_time: str
 		tid_list
 		)
 
-def build_category_summary_table(top_stats: dict, category_stats: dict, enable_hide_columns: bool, caption: str, tid_date_time: str) -> None:
-	"""
-	Print a table of defense stats for all players in the log.
 
-	Args:
-		top_stats (dict): The top_stats dictionary containing the overall stats.
-		category_stats (dict): A dictionary that maps a category name to a stat name.
+def build_category_summary_report(
+    top_stats: Dict[str, Any],
+    category_stats: Dict[str, str],
+    enable_hide_columns: bool,
+    caption: str,
+    tid_date_time: str,
+    tid_list: list,
+    layout: str = "summary",  # "summary" or "detailed"
+    sort_mode: str = "Stat/1s",  # which column to sort by in detailed layout
+) -> None:
+    """
+    Unified generator for category summary tables.
 
-	Returns:
-		None
-	"""
-	pct_stats = {
+    layout="summary" - single large table (all stats as columns)
+    layout="detailed" - one table+chart per stat with Total/Stat/1s/60s columns
+    """
+
+    TOGGLES = ["Total", "Stat/1s", "Stat/60s"]
+
+    alt_stat_icon = {
+		"damage":"{{totalDmg}}",
+		"boonStripDownContribution":"{{boonStrips}}{{downed}}",
+		"boonStripDownContributionTime":"{{boonStripsTime}}{{downed}}",
+		"appliedCrowdControlDownContribution":"{{appliedCrowdControl}}{{downed}}",
+		"appliedCrowdControlDurationDownContribution":"{{appliedCrowdControlDuration}}{{downed}}",
+		"damageTakenCount": '{{damageTaken}}[img width=16 [Hits|hits.png]]',
+		"conditionDamageTakenCount": '{{conditionDamageTaken}}[img width=16 [Hits|hits.png]]',
+		"powerDamageTakenCount": '{{powerDamageTaken}}[img width=16 [Hits|hits.png]]',
+		"downedDamageTakenCount": '{{downedDamageTaken}}[img width=16 [Hits|hits.png]]',
+		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]'
+		}
+    pct_stats = {
 		"criticalRate": "critableDirectDamageCount", "flankingRate":"connectedDirectDamageCount", "glanceRate":"connectedDirectDamageCount", "againstMovingRate": "connectedDamageCount"
 	}
-	time_stats = ["resurrectTime", "condiCleanseTime", "condiCleanseTimeSelf", "boonStripsTime", "removedStunDuration", "boonStripDownContributionTime"]
-	defense_hits = {"damageTakenCount": 'damageTaken', "conditionDamageTakenCount": 'conditionDamageTaken', "powerDamageTakenCount": 'powerDamageTaken', "downedDamageTakenCount": 'downedDamageTaken', "damageBarrierCount": 'damageBarrier'}
-	rows = []
+    time_stats = ["resurrectTime", "condiCleanseTime", "condiCleanseTimeSelf", "boonStripsTime", "removedStunDuration", "boonStripDownContributionTime"]
+
+    # === Helper to compute per-player values ===
+    def compute_values(player, stat, category):
+        fight_time = player.get("active_time", 0) / 1000
+        if fight_time == 0:
+            return {"Total": 0, "Stat/1s": 0, "Stat/60s": 0}
+        if stat in pct_stats:
+            divisor_value = player[category].get(pct_stats[stat], 0)
+            if divisor_value == 0:
+                return {"Total": 0, "Stat/1s": 0, "Stat/60s": 0}
+            val = round((player[category].get(stat, 0) / divisor_value) * 100, 2)
+            return {"Total": val, "Stat/1s": val, "Stat/60s": val}
+        val = player[category].get(stat, 0)
+        if stat in ["receivedCrowdControlDuration","appliedCrowdControlDuration", "appliedCrowdControlDurationDownContribution"]:
+            val = val / 1000
+        return {
+            "Total": val,
+            "Stat/1s": val / fight_time,
+            "Stat/60s": val / (fight_time / 60),
+        }
 	
+    rows: List[str] = []
+    rows.append('<div style="overflow-y:auto;width:100%;overflow-x:auto;">\n')
 
-	if enable_hide_columns:
-		column_control_list = []
-		num_columns = 4
-		for stat in category_stats:
-			#<label><input type="checkbox" id="toggle-col5" checked> {{totalDmg}}</label> 
-			if stat =="damage":
-				column_control_list.append("{{totalDmg}}")
-				num_columns += 1
-			elif stat == "connectedDamageCount":
-				column_control_list.append("{{connectedDamageCount}}")
-				num_columns += 1
-			elif stat == "connectedDirectDamageCount":
-				column_control_list.append("{{connectedDirectDamageCount}}")
-				column_control_list.append("{{connectedIndirectDamageCount}}")
-				num_columns += 2
-			elif stat == "boonStripDownContribution":
-				column_control_list.append("{{boonStrips}}{{downed}}")
-				num_columns += 1
-			elif stat == "boonStripDownContributionTime":
-				column_control_list.append("{{boonStripsTime}}{{downed}}")
-				num_columns += 1
-			elif stat in defense_hits:
-				column_control_list.append("{{"+f"{defense_hits[stat]}"+"}}"+"[img width=16 [Hits|hits.png]]")
-				num_columns += 1
-			elif stat == "appliedCrowdControlDownContribution":
-				column_control_list.append("{{appliedCrowdControl}}{{downed}}")
-				num_columns += 1
-			elif stat == "appliedCrowdControlDurationDownContribution":
-				column_control_list.append("{{appliedCrowdControlDuration}}{{downed}}")
-				num_columns += 1
-			elif stat == "damageBarrier":
-				column_control_list.append("{{"+stat+"}}")
-				column_control_list.append("{{"+stat+"}} %")
-				num_columns += 2
-			else:
-				column_control_list.append("{{"+stat+"}}")
-				num_columns += 1
-		
-
-		style_info = "<style>\n/* === Column visibility rules === */\n"	
-		for i in range(4, num_columns):
-			if i == num_columns - 1:
-				style_info += f".col-toggle:has(#toggle-col{i+1}:not(:checked)) tr > *:nth-child({i+1}) {{\n  display: none;\n}}"
-			else:
-				style_info += f".col-toggle:has(#toggle-col{i+1}:not(:checked)) tr > *:nth-child({i+1}),\n"
-		hide_controls = "Hide Columns:"
-		for i, stat in enumerate(column_control_list):
-			hide_controls += f" <label><input type='checkbox' id='toggle-col{i+5}' checked> {stat}</label>"
-		hide_controls += "\n"
-		style_info += """
+    # Optional column toggles for summary layout
+    if enable_hide_columns and layout == "summary":
+        rows.append("""
+<style>
 .col-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3em 0.5em;
-  align-items: center;
-  background: #343a40;
-  color: #eee;
-  border-radius: 0.5em;
-  padding: 0.6em 1em;
-  margin-bottom: 0.8em;
-  font-size: 0.9em;
+  display:flex;flex-wrap:wrap;gap:0.3em 0.5em;align-items:center;
+  background:#343a40;color:#eee;border-radius:0.5em;
+  padding:0.6em 1em;margin-bottom:0.8em;font-size:0.9em;
 }
-
 .col-controls label {
-  display: flex;
-  align-items: center;
-  gap: 0.2em;
-  background: #333;
-  padding: 0.2em 0.5em;
-  border-radius: 0.3em;
-  cursor: pointer;
-  transition: background 0.2s;
+  display:flex;align-items:center;gap:0.2em;
+  background:#333;padding:0.2em 0.5em;border-radius:0.3em;cursor:pointer;
+  transition:background 0.2s;
 }
-
-.col-controls label:hover {
-  background: #444;
-}
-
-.col-controls input[type="checkbox"] {
-  accent-color: #6cf;
-}
+.col-controls label:hover{background:#444;}
+.col-controls input[type="checkbox"]{accent-color:#6cf;}
 </style>
 <div class='col-toggle'>
+<div class="col-controls">""")
+        for i, stat in enumerate(category_stats.keys(), start=5):
+            rows.append(f"<label><input type='checkbox' id='toggle-col{i}' checked> {{{{{stat}}}}}</label>")
+        rows.append("</div>\n")
 
-<div class="col-controls">"""
-		rows.append(style_info)
-		hide_controls += "\n</div>\n"
-		rows.append(hide_controls)
-	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
-	for toggle in ["Total", "Stat/1s", "Stat/60s"]:
-		rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="category_radio" type="match" text="{toggle}" animate="yes">\n')
-		# Build the table header
-		header = "|thead-dark table-caption-top table-hover sortable|k\n"
-		header += "|!Party |!Name | !Prof | !{{FightTime}} |"
-		for stat in category_stats:
-			if stat =="damage":
-				header += " !{{totalDmg}} |"
-			elif stat == "connectedDamageCount":
-				header += " !{{connectedDamageCount}} |"
-			elif stat == "connectedDirectDamageCount":
-				header += " !{{connectedDirectDamageCount}} | !{{connectedIndirectDamageCount}} |"
-			elif stat == "boonStripDownContribution":
-				header += " !{{boonStrips}}{{downed}} |"
-			elif stat == "boonStripDownContributionTime":
-				header += " !{{boonStripsTime}}{{downed}} |"
-			elif stat in defense_hits:
-				header += " !{{"+f"{defense_hits[stat]}"+"}}"+"[img width=16 [Hits|hits.png]] |"
-			elif stat == "appliedCrowdControlDownContribution":
-				header += " !{{appliedCrowdControl}}{{downed}} |"
-			elif stat == "appliedCrowdControlDurationDownContribution":
-				header += " !{{appliedCrowdControlDuration}}{{downed}} |"
-			elif stat == "damageBarrier":
-				header += " !{{"+f"{stat}"+"}} | !{{"+f"{stat}"+"}} % |"
-			else:
-				header += " !{{"+f"{stat}"+"}} |"
-		header += "h"
-
-		rows.append(header)
-
-		# Build the table body
-		for player in top_stats["player"].values():
-			fight_time = player["active_time"] / 1000
-			if fight_time == 0:
-				continue
-			account = player["account"]
-			name = player["name"]
-			tt_name = f'<span data-tooltip="{account}">{name}</span>'
-			row = f"| { player['last_party']} |{tt_name} | {{{{{player['profession']}}}}} {player['profession'][:3]} | {fight_time:,.1f}|"
-			
-			for stat, category in category_stats.items():
-				stat_value = player[category].get(stat, 0)
-				if stat in ["receivedCrowdControlDuration","appliedCrowdControlDuration"]:
-					stat_value = stat_value / 1000
-
-				#if stat == "connectedDirectDamageCount":
-				#	total_hits = player[category].get("connectedDamageCount", 0)
-				#	stat_value = f"{stat_value} | {total_hits - stat_value}"
-
-				if stat in pct_stats:
-					divisor_value = player[category].get(pct_stats[stat], 0)
-					if divisor_value == 0:
-						divisor_value = 1
-					stat_value_percentage = round((stat_value / divisor_value) * 100, 1)
-					stat_value = f"{stat_value_percentage:.2f}%"
-				elif stat in time_stats:
-					if toggle == "Stat/1s":
-						stat_value = f"{stat_value/fight_time:.2f}"
-					elif toggle == "Stat/60s":
-						stat_value = f"{stat_value/(fight_time/60):.2f}"
-					else:
-						stat_value = f"{stat_value:,.1f}"
-				elif stat == "connectedDirectDamageCount":
-					total_hits = player[category].get("connectedDamageCount", 0)
-					if toggle == "Stat/1s":
-						stat_value = f"{stat_value/fight_time:.2f}| {(total_hits-stat_value)/fight_time:.2f}"
-					elif toggle == "Stat/60s":
-						stat_value = f"{stat_value/(fight_time/60):.2f}| {(total_hits-stat_value)/(fight_time/60):.2f}"
-					else:
-						stat_value = f"{stat_value:,}| {(total_hits-stat_value):,}"
-				elif stat == "damageBarrier":
-					player_damage_Taken = player[category].get("damageTaken", 0)
-					barrier_percentage = round((stat_value / player_damage_Taken) * 100, 1) if player_damage_Taken != 0 else 0
-					if toggle == "Stat/1s":
-						stat_value = f"{stat_value/fight_time:,.2f}| {barrier_percentage:.1f}%"
-					elif toggle == "Stat/60s":
-						stat_value = f"{stat_value/(fight_time/60):,.2f}| {barrier_percentage:.1f}%"
-					else:
-						stat_value = f"{stat_value:,}| {barrier_percentage:.1f}%"
-				else:
-					if toggle == "Stat/1s":
-						stat_value = f"{stat_value/fight_time:,.2f}"
-					elif toggle == "Stat/60s":
-						stat_value = f"{stat_value/(fight_time/60):,.2f}"
-					else:
-						stat_value = f"{stat_value:,}"
-				row += f" {stat_value}|"
-
-			rows.append(row)
-		rows.append(f'|<$radio field="category_radio" value="Total"> Total  </$radio> - <$radio field="category_radio" value="Stat/1s"> Stat/1s  </$radio> - <$radio field="category_radio" value="Stat/60s"> Stat/60s  </$radio> - {caption} Table|c')
-		rows.append("\n</$reveal>")
-
-	if enable_hide_columns:
-		rows.append("\n</div>\n") 		
-
-	rows.append("\n\n</div>")
-	#push table to tid_list for output
-	tid_text = "\n".join(rows)
-
-	append_tid_for_output(
-		create_new_tid_from_template(f"{tid_date_time}-{caption.replace(' ', '-')}", caption, tid_text, fields={"category_radio": "Total"}),
-		tid_list
-		)
-
-def build_boon_focus_summary_test(top_stats: dict, boons: dict, buff_data: dict, tid_date_time: str) -> None:
-	"""
-	Generate TiddlyWiki tables that show Self/Group/Squad/Total Generation
-	for each individual boon across all players.
-	"""
-	rows = []
-	rows.append("""
+    # === Focus Layout (table + 3-bar chart per stat) ===
+    if layout == "detailed":
+        rows.append("""
 <style>
 .btn {
   display: inline-block;
@@ -816,245 +683,141 @@ def build_boon_focus_summary_test(top_stats: dict, boons: dict, buff_data: dict,
 }
 </style>
 """)
-	rows.append('<div style="overflow-y:auto; width:100%; overflow-x:auto;">\n\n')
-	for boon_id, boon_name in boons.items():
-		if boon_id not in buff_data:
-			continue
-		skillIcon = buff_data[boon_id]["icon"]
-		stacking = buff_data[boon_id].get('stacking', False)
-		
-		#rows.append(f'<$radio field="boon_selected" value="{boon_name}"> {{{{{boon_name}}}}} {boon_name}</$radio>   ')
-		#<$button setTitle="$:/state/boon_selected" setTo="{boon_name}" selectedClass="" class="btn btn-sm btn-dark" style=""> Fight Review </$button>
-		#rows.append(f'<$button class="btn btn-sm btn-dark"> <$action-setfield $field="boon_selected" $value="{boon_name}"/>  {{{{{boon_name}}}}} {boon_name} </$button>')
-		rows.append(f'<$button class="btn btn-sm btn-dark" set="$:/temp/boon_selected" setTo="{boon_name}">  {{{{{boon_name}}}}} {boon_name} </$button>')
-	# Iterate each boon as its own table
-	for boon_id, boon_name in boons.items():
-		chart_data = []
-		if boon_id not in buff_data:
-			continue
-		skillIcon = buff_data[boon_id]["icon"]
-		stacking = buff_data[boon_id].get('stacking', False)
 
-		# Section title per boon
-		#<$reveal type="match" state="$:/state/MenuTab" text="'+item+'">
-		#rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" type="match" text="{boon_name}" animate="yes">\n')
-		rows.append(f'<$reveal type="match" state="$:/temp/boon_selected" text="{boon_name}" animate="yes">\n')
-		rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
+        # Radio buttons for selecting stat focus
+        for stat in category_stats:
+            stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
+            rows.append(
+                f'<$radio class="btn btn-sm btn-dark" field="{caption}_selected" value="{stat}"> {stat_icon} </$radio>'
+            )
 
-		# Iterate for "Total", "Average", "Uptime" toggle views
-		for toggle in ["Total", "Average", "Uptime"]:
-			rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" type="match" text="{toggle}" animate="yes">\n')
+        # One table and chart per stat
+        for stat, category in category_stats.items():
+            # Compute values per player
+            chart_data = []
+            for player in top_stats.get("player", {}).values():
+                vals = compute_values(player, stat, category)
+                chart_data.append({
+                    "Party": player["last_party"],
+                    "Name": player["name"],
+                    "Prof": player["profession"],
+                    "FightTime": player["active_time"] / 1000,
+                    **{k: round(v, 2) for k, v in vals.items()},
+                })
 
-			# Header
-			header = "|thead-dark table-caption-top table-hover sortable|k\n"
-			header += f"|!Party |!Name | !Prof | !{{{{FightTime}}}} | !Self Gen | !Group Gen | !Squad Gen | !Total Gen |h"
-			rows.append(header)
+            # Sort by Stat/1s descending
+            chart_data.sort(key=lambda x: x[sort_mode], reverse=True)
 
-			# Rows for each player
-			for player in top_stats["player"].values():
-				chart_row = []
-				if player["active_time"] == 0:
-					continue
+            # === Build table ===
+            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="{caption}_selected" type="match" text="{stat}" animate="yes">')
+            rows.append('<div class="flex-row">\n    <div class="flex-col border">\n\n')
+            format_stat = stat[0].upper() + stat[1:]
+            rows.append(f"!! {format_stat}\n")
+            rows.append("|thead-dark table-caption-top table-hover sortable|k\n")
+            rows.append("|!Party |!Name |!Prof |!{{FightTime}} |!Total|!Stat/1s|!Stat/60s|h")
 
-				account = player["account"]
-				name = player["name"]
-				tt_name = f'<span data-tooltip="{account}">{name}</span>'
-				row = f"| {player['last_party']} |{tt_name} |{{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time']/1000:,.1f}|"
-				chart_row.extend([player['last_party'], name, player['profession'][:3], player['active_time']/1000])
-				# For each category
-				category_order = ["selfBuffs", "groupBuffs", "squadBuffs", "totalBuffs"]
-				player_categories = {category: player.get(category, {}) for category in category_order}
-				for category in category_order:
-					# Skip if missing
-					if boon_id not in player_categories[category] and category != "totalBuffs":
-						entry = '-'
-						chart_row.append(0)
-					else:
-						# Determine if the boon is stacking
-						stacking = buff_data[boon_id].get('stacking', False)                
-						num_fights = player["num_fights"]
-						group_supported = player["group_supported"]
-						squad_supported = player["squad_supported"]
-						active_time = player["active_time"]
+            for p in chart_data:
+                rows.append(
+                    f"| {p['Party']} | {p['Name']} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
+                    f"{p['FightTime']:,.1f} | {p['Total']:,.2f}| {p['Stat/1s']:,.2f}| {p['Stat/60s']:,.2f}|"
+                )
 
-						# Calculate generation and uptime percentage based on category
-						if category == "selfBuffs":
-							generation_ms = player[category][boon_id]["generation"]
-							wasted_ms = player[category][boon_id]["wasted"]
-							if stacking:
-								uptime_percentage = round((generation_ms / player['active_time']), 3)
-								wasted_percentage = round((wasted_ms / player['active_time']), 3)
-							else:
-								uptime_percentage = round((generation_ms / player['active_time']) * 100, 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) * 100, 3)
-						elif category == "groupBuffs":
-							generation_ms = player[category][boon_id]["generation"]
-							wasted_ms = player[category][boon_id]["wasted"]
-							if stacking:
-								uptime_percentage = round((generation_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
-							else:
-								uptime_percentage = round((generation_ms / player['active_time']) / ((group_supported - num_fights)/num_fights) * 100, 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) / ((group_supported - num_fights)/num_fights) * 100, 3)
-						elif category == "squadBuffs":
-							generation_ms = player[category][boon_id]["generation"]
-							wasted_ms = player[category][boon_id]["wasted"]
-							if stacking:
-								uptime_percentage = round((generation_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights), 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights), 3)
-							else:
-								uptime_percentage = round((generation_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights) * 100, 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) / ((squad_supported - num_fights)/num_fights) * 100, 3)
-						elif category == "totalBuffs":
-							generation_ms = 0
-							wasted_ms = 0
-							if boon_id in player["selfBuffs"]:
-								generation_ms += player["selfBuffs"][boon_id]["generation"]
-								wasted_ms += player["selfBuffs"][boon_id]["wasted"] 
-							if boon_id in player["squadBuffs"]:
-								generation_ms += player["squadBuffs"][boon_id]["generation"]
-								wasted_ms += player["squadBuffs"][boon_id]["wasted"]
-							if stacking:
-								uptime_percentage = round((generation_ms / player['active_time']) / (squad_supported), 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) / (squad_supported), 3)
-							else:
-								uptime_percentage = round((generation_ms / player['active_time']) / (squad_supported) * 100, 3)
-								wasted_percentage = round((wasted_ms / player['active_time']) / (squad_supported) * 100, 3)
-						else:
-							raise ValueError(f"Invalid category: {category}")
+            rows.append("\n    </div>\n    <div class='flex-col border'>\n\n")
+            # Sort chart by requested metric
+            sorted_chart = sorted(chart_data, key=lambda x: x.get(sort_mode, 0), reverse=True)
+            json_chart = json.dumps(sorted_chart)
 
-						# Output format based on toggle
-						if toggle == "Total":
-							wasted_total = round(int(wasted_ms)/1000, 5)
-							generated_total = int(generation_ms)/1000
-							entry = f'<span data-tooltip="{wasted_total:,.2f} Wasted">{generated_total:,.2f}</span>'
-							chart_row.append(generated_total)
-						elif toggle == "Average":
-							wasted_average = round(int(wasted_ms)/active_time,5)
-							generated_average = round(int(generation_ms)/active_time,5)
-							entry = f'<span data-tooltip="{wasted_average:,.2f} Wasted">{generated_average:,.2f}</span>'
-							chart_row.append(generated_average)
-						else:  # Uptime
-							if stacking:
-								chart_row.append(uptime_percentage)
-								uptime_percentage = f"{uptime_percentage:.2f}"
-								wasted_percentage = f"{wasted_percentage:.2f}"
-								entry = f'<span data-tooltip="{wasted_percentage} Wasted">{uptime_percentage}</span>'
-													
-							else:
-								chart_row.append(uptime_percentage)
-								uptime_percentage = f"{uptime_percentage:.2f}%"
-								wasted_percentage = f"{wasted_percentage:.2f}%"							
-								entry = f'<span data-tooltip="{wasted_percentage} Wasted">{uptime_percentage}</span>'
-								
-
-					row += f" {entry}|"
-
-				chart_data.append(chart_row)
-				sorted_chart_data = sorted(chart_data, key=lambda x: float(x[6]), reverse=True)
-				json_chart_data = json.dumps(sorted_chart_data)
-				rows.append(row)
-
-			rows.append(f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio> - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio> - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio> - {boon_name} Table|c')
-			rows.append("\n</$reveal>")
-
-		boon_chart=f"""
+            # Chart: 3 bars per player with legend toggle
+            chart_block = f"""
 <$echarts $text=```
 option = {{
-title: {{
-	text: '{boon_name} Generation',
-	subtext: 'selectable legend for Total, Squad, Group, Self generation'
-}},
-legend: {{
-	orient: 'horizontal',
-	top: '10%',
-	selected: {{
-	'Total Gen': false,
-	'Squad Gen': true,
-	'Group Gen': false,
-	'Self Gen': false
-	}}
-}},
-grid:{{
-	top: '15%'
-}},
-tooltip: {{top: "center"}},
-dataset: {{
-    dimensions: ["Party","Name","Prof","Total Fight Time","Self Gen","Group Gen","Squad Gen","Total Gen"],
-	source: {json_chart_data}
-}},
-xAxis: {{}},
-yAxis: {{ 
-	type: 'category',
-	inverse: true, // top player on top 
-	}},
-dataZoom: [
-	{{
-	type: 'slider',
-	yAxisIndex: 0,
-	filterMode: 'none'
-	}},
-	{{
-	type: 'inside',
-	yAxisIndex: 0,
-	filterMode: 'none'
-	}}
-],    
-series: [
-	{{
-	type: 'bar',
-	name: 'Total Gen',
-	encode: {{
-		// Map "amount" column to x-axis.
-		x: 'Total Gen',
-		// Map "product" row to y-axis.
-		y: 'Name'
-	}}
-	}},
-	{{
-	type: 'bar',
-	name: 'Squad Gen',
-	encode: {{
-		// Map "amount" column to x-axis.
-		x: 'Squad Gen',
-		// Map "product" row to y-axis.
-		y: 'Name'
-	}}
-	}},
-	{{
-	type: 'bar',
-	name: 'Group Gen',
-	encode: {{
-		// Map "amount" column to x-axis.
-		x: 'Group Gen',
-		// Map "product" row to y-axis.
-		y: 'Name'
-	}}
-	}},
-	{{
-	type: 'bar',
-	name: 'Self Gen',
-	encode: {{
-		// Map "amount" column to x-axis.
-		x: 'Self Gen',
-		// Map "product" row to y-axis.
-		y: 'Name'
-	}}
-	}}
-]
+  title: {{ text: '{format_stat}', subtext: '{caption}' }},
+  tooltip: {{ trigger: 'axis' }},
+  legend: {{ selected: {{ "Stat/1s": false, "Total": true, "Stat/60s":false }}, top:'10%' }},
+  dataset: {{
+    dimensions: ["Party", "Name", "Profession", "Total", "Stat/1s", "Stat/60s"],
+    source: {json_chart}
+  }},
+  xAxis: {{}},
+  yAxis: {{ type: 'category', inverse: true }},
+  grid: {{ top: '15%', containLabel: true }},
+  series: [
+    {{ type: 'bar', name: 'Total', encode: {{ x: 'Total', y: 'Name' }} }},
+    {{ type: 'bar', name: 'Stat/1s', encode: {{ x: 'Stat/1s', y: 'Name' }} }},
+    {{ type: 'bar', name: 'Stat/60s', encode: {{ x: 'Stat/60s', y: 'Name' }} }}
+  ],
+  dataZoom: [
+    {{ type: 'slider', yAxisIndex: 0, start: 0, end: 50 }},
+    {{ type: 'inside', yAxisIndex: 0 }}
+  ]
 }};
-```$height="800px" $width="100%" $theme="dark"/>
-		"""
-		rows.append(boon_chart)
-		rows.append("\n</$reveal>")		
-	rows.append("\n</div>")
-	tid_text = "\n".join(rows)
+```$height="700px" $theme="dark"/>
+"""
+            rows.append(chart_block)
+            rows.append("\n    </div>\n</div>\n\n")
+            rows.append("</$reveal>\n")
 
-	temp_title = f"{tid_date_time}-Boon-Generation-By-Boon-TEST"
-	append_tid_for_output(
-		create_new_tid_from_template(temp_title, "Boon Generation Overview TEST", tid_text, fields={"radio": "Total","boon_radio": "Total", "boon_selected": "Might"}),
-		tid_list
-	)
+        rows.append("</div>")
+        tid_text = "\n".join(rows)
+        temp_title = f"{tid_date_time}-{caption}-Detailed"
+        append_tid_for_output(
+            create_new_tid_from_template(
+                temp_title,
+                f"{caption} - Detailed",
+                tid_text,
+                fields={f"{caption}_selected": next(iter(category_stats.keys()), "")},
+            ),
+            tid_list,
+        )
+
+    # === Summary Layout (one large table) ===
+    elif layout == "summary":
+        for toggle in TOGGLES:
+            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="category_radio" '
+                        f'type="match" text="{toggle}" animate="yes">\n')
+
+            header = "|thead-dark table-caption-top table-hover sortable|k\n"
+            header += "|!Party |!Name | !Prof | !{{FightTime}} |"
+            for stat in category_stats.keys():
+                stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
+                header += f" !{stat_icon} |"
+            header += "h"
+            rows.append(header)
+
+            for player in top_stats.get("player", {}).values():
+                fight_time = player.get("active_time", 0) / 1000
+                if fight_time == 0:
+                    continue
+                row = (f"| {player['last_party']} |{player['name']} | "
+                       f"{{{{{player['profession']}}}}} {player['profession'][:3]} | "
+                       f"{fight_time:,.1f} |")
+                for stat, category in category_stats.items():
+                    val = compute_values(player, stat, category)[toggle]
+                    row += f" {val:,.2f}|"
+                rows.append(row)
+
+            rows.append(f'|<$radio field="category_radio" value="Total"> Total  </$radio>'
+                        f' - <$radio field="category_radio" value="Stat/1s"> Stat/1s  </$radio>'
+                        f' - <$radio field="category_radio" value="Stat/60s"> Stat/60s  </$radio>'
+                        f' - {caption} Table|c\n</$reveal>')
+
+        if enable_hide_columns:
+            rows.append("</div>\n")
+
+        tid_text = "\n".join(rows)
+        temp_title = f"{tid_date_time}-{caption}-Summary"
+        append_tid_for_output(
+            create_new_tid_from_template(
+                temp_title,
+                f"{caption} - Summary",
+                tid_text,
+                fields={"category_radio": "Total"},
+            ),
+            tid_list,
+        )
+    else:
+        raise ValueError("layout must be 'summary' or 'detailed'")
+	
 
 CATEGORY_ORDER = ["selfBuffs", "groupBuffs", "squadBuffs", "totalBuffs"]
 CATEGORY_CAPTIONS = {
@@ -1327,10 +1090,10 @@ def build_boon_report(
             if boon_id not in buff_data:
                 continue
             rows.append(
-                f'<$button class="btn btn-sm btn-dark"'
-                f' set="$:/temp/boon_selected" setTo="{boon_name}"> '
+                f'<$radio class="btn btn-sm btn-dark"'
+                f' field="boon_selected" value="{boon_name}"> '
                 f'{{{{{boon_name}}}}} {boon_name}'
-                f' </$button>'
+                f' </$radio>'
             )
 
         # Per-boon sections
@@ -1341,7 +1104,7 @@ def build_boon_report(
             skillIcon = buff_data[boon_id].get("icon", "")
             stacking = buff_data[boon_id].get("stacking", False)
 
-            rows.append(f'<$reveal state="$:/temp/boon_selected" stateField="boon_selected" '
+            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" '
                         f'type="match" text="{boon_name}" animate="yes">\n')
             rows.append('\n<div class="flex-row">\n<div class="flex-col border">\n\n')
             rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
@@ -2419,11 +2182,18 @@ def build_menu_tid(datetime: str, db_update: bool) -> None:
 		)
 
 	append_tid_for_output(
-		create_new_tid_from_template(title, caption, text, tags, fields={'radio': 'Total', 'boon_radio': 'Total', "category_radio": "Total", "category_heal": "Squad", "stacking_item": "might", 'damage_with_buff': 'might', 'mitigation': 'Player'}),
+		create_new_tid_from_template(title, caption, text, tags, 
+							   fields={
+									'radio': 'Total',
+									'boon_radio': 'Total',
+									'boon_selected': 'Might', 'Defenses_selected': 'damageTaken',
+									'Offensive_selected': 'downContribution', 'Support_selected': 'condiCleanse',
+									"category_radio": "Total", "category_heal": "Squad", "stacking_item": "might",
+									'damage_with_buff': 'might', 'mitigation': 'Player'}),
 		tid_list
 	)
 
-def build_general_stats_tid(datetime):
+def build_general_stats_tid(datetime, offensive_detailed, defenses_detailed, support_detailed):
 	"""
 	Build a TID for general stats menu.
 	"""
@@ -2431,12 +2201,30 @@ def build_general_stats_tid(datetime):
 	title = f"{datetime}-General-Stats"
 	caption = "General Stats"
 	creator = "Drevarr@github.com"
-	text = (f"<<tabs '[[{datetime}-Damage]] [[{datetime}-Damage-With-Buffs]] [[{datetime}-Offensive]] "
-			f"[[{datetime}-Defenses]] [[{datetime}-Support]] [[{datetime}-Heal-Stats]] [[{datetime}-Healers]] [[{datetime}-Combat-Resurrect]] [[{datetime}-FB-Pages]] [[{datetime}-Mesmer-Clone-Usage]] [[{datetime}-Pull-Skills]]' "
-			f"'{datetime}-Offensive' '$:/temp/tab1'>>")
+
+	text_parts = []
+	text_parts .append(f"<<tabs '[[{datetime}-Damage]] [[{datetime}-Damage-With-Buffs]]")
+	if offensive_detailed:
+		text_parts.append(f"[[{datetime}-Offensive-Summary]] [[{datetime}-Offensive-Detailed]]")
+	else:
+		text_parts.append(f"[[{datetime}-Offensive-Summary]]")
+
+	if defenses_detailed:
+		text_parts.append(f"[[{datetime}-Defenses-Summary]] [[{datetime}-Defenses-Detailed]]")
+	else:
+		text_parts.append(f"[[{datetime}-Defenses-Summary]]")
+
+	if support_detailed:
+		text_parts.append(f"[[{datetime}-Support-Summary]] [[{datetime}-Support-Detailed]]")
+	else:
+		text_parts.append(f"[[{datetime}-Support-Summary]]")
+
+	text = " ".join(text_parts)
+	text += f"[[{datetime}-Heal-Stats]] [[{datetime}-Healers]] [[{datetime}-Combat-Resurrect]] [[{datetime}-FB-Pages]] [[{datetime}-Mesmer-Clone-Usage]]"
+	text += f"[[{datetime}-Pull-Skills]]' '{datetime}-Offensive-Summary' '$:/temp/tab1'>>"
 
 	append_tid_for_output(
-		create_new_tid_from_template(title, caption, text, tags, creator=creator, fields={'radio': 'Total', 'damage_with_buff': 'might'}),
+		create_new_tid_from_template(title, caption, text, tags, creator=creator, fields={'radio': 'Total', 'damage_with_buff': 'might', 'boon_selected':'Might', 'Support_selected': 'condiCleanse', 'Offensive_selected': 'downContribution', 'Defenses_selected': 'damageTaken'}),
 		tid_list
 	)
 
@@ -2476,7 +2264,7 @@ def build_damage_modifiers_menu_tid(datetime: str) -> None:
 		tid_list
 	)
 
-def build_buffs_stats_tid(datetime):
+def build_buffs_stats_tid(datetime, boons_detailed):
 	"""
 	Build a TID for buffs menu.
 	"""
@@ -2484,11 +2272,16 @@ def build_buffs_stats_tid(datetime):
 	title = f"{datetime}-Buffs"
 	caption = "Buffs"
 	creator = "Drevarr@github.com"
-
-	text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Boon-Generation-Detailed]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
-			f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
-			f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
-			f"'{datetime}-Boons' '$:/temp/tab1'>>")
+	if boons_detailed:
+		text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Boon-Generation-Detailed]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
+				f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
+				f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
+				f"'{datetime}-Boons' '$:/temp/tab1'>>")
+	else:
+		text = (f"<<tabs '[[{datetime}-Boons]] [[{datetime}-Stacking-Buffs]] [[{datetime}-Personal-Buffs]] [[{datetime}-Offensive-Buffs]] [[{datetime}-Support-Buffs]] [[{datetime}-Defensive-Buffs]]"
+				f" [[{datetime}-Gear-Buff-Uptimes]] [[{datetime}-Gear-Skill-Damage]]"
+				f"[[{datetime}-Conditions-In]] [[{datetime}-Debuffs-In]] [[{datetime}-Conditions-Out]] [[{datetime}-Debuffs-Out]]' "
+				f"'{datetime}-Boons' '$:/temp/tab1'>>")
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator),
