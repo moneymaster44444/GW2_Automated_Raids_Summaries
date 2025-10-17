@@ -36,11 +36,7 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
    ```
    If you did step 3 then you are done. Your summary HTML will post to Discord at the end of the batch run.
 
-   Otherwise, the batch will create a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) which can be dragged into:
-   ```
-   Resources\EI Combiner\Example_Output\Top_Stats_Index.html
-   ```
-   Manually post the resulting HTML file to Discord.
+   Otherwise, manually post the resulting HTML file in `Raids_Summaries` to Discord:
    
 ---
 ## Details: Batch Files Overview
