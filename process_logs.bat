@@ -166,8 +166,25 @@ rem ==========================================================
 rem [4] Auto-import into TiddlyWiki and build single-file HTML
 rem ==========================================================
 
-rem --- Inputs for TiddlyWiki stage ---
+rem --- Hard reset of previous TiddlyWiki output (delete Top_Stats_Html) ---
 set "TW_BUILD_DIR=%ROOT%Top_Stats_Html"
+if exist "%TW_BUILD_DIR%" (
+  echo [CLEANUP] Removing previous TiddlyWiki output at: "%TW_BUILD_DIR%"
+  rmdir /s /q "%TW_BUILD_DIR%" 2>nul
+  if exist "%TW_BUILD_DIR%" (
+    echo [WARN] First attempt to remove "%TW_BUILD_DIR%" failed ^(files in use?^) Retrying...
+    rem clear read-only/system/hidden attributes then retry
+    attrib -r -s -h "%TW_BUILD_DIR%\*" /s /d >nul 2>&1
+    rem small pause to let antivirus/indexers release handles
+    ping -n 2 127.0.0.1 >nul
+    rmdir /s /q "%TW_BUILD_DIR%" || (
+      echo [ERROR] Could not remove "%TW_BUILD_DIR%". Close any open files in that folder and re-run.
+      goto :_fail
+    )
+  )
+)
+
+rem --- Inputs for TiddlyWiki stage ---
 set "TW_SHELL=%ROOT%Resources\EI Combiner\Example_Output\Top_Stats_Index.html"
 set "AUTO_TID=%ROOT%auto-import.tid"
 
