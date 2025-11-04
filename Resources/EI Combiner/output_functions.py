@@ -610,8 +610,14 @@ def build_category_summary_report(
 
     # Optional column toggles for summary layout
     if enable_hide_columns and layout == "summary":
+        rows.append('<style>')
+        col_count = 26
+        for i in range(4, col_count):
+            if i == col_count - 1:
+                rows.append(f".col-toggle:has(#toggle-col{i}:not(:checked)) tr > *:nth-child({i}) {{\n  display: none;}}")
+            else:
+                rows.append(f".col-toggle:has(#toggle-col{i}:not(:checked)) tr > *:nth-child({i}),")
         rows.append("""
-<style>
 .col-controls {
   display:flex;flex-wrap:wrap;gap:0.3em 0.5em;align-items:center;
   background:#343a40;color:#eee;border-radius:0.5em;
@@ -625,10 +631,14 @@ def build_category_summary_report(
 .col-controls label:hover{background:#444;}
 .col-controls input[type="checkbox"]{accent-color:#6cf;}
 </style>
+					
 <div class='col-toggle'>
-<div class="col-controls">""")
+<div class="col-controls">
+Uncheck to Hide: """)
+        rows.append
         for i, stat in enumerate(category_stats.keys(), start=5):
-            rows.append(f"<label><input type='checkbox' id='toggle-col{i}' checked> {{{{{stat}}}}}</label>")
+            stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
+            rows.append(f"<label><input type='checkbox' id='toggle-col{i}' checked> {stat_icon}</label>")
         rows.append("</div>\n")
 
     # === Focus Layout (table + 3-bar chart per stat) ===
@@ -685,10 +695,11 @@ def build_category_summary_report(
 """)
 
         # Radio buttons for selecting stat focus
+        default_stat = list(category_stats.keys())[0]
         for stat in category_stats:
             stat_icon = alt_stat_icon.get(stat, "{{"+stat+"}}")
             rows.append(
-                f'<$radio class="btn btn-sm btn-dark" field="{caption}_selected" value="{stat}"> {stat_icon} </$radio>'
+                f'<$radio class="btn btn-sm btn-dark" tiddler="$:/temp/detailed_state" default="{default_stat}" field="{caption}_selected" value="{stat}"> {stat_icon} </$radio>'
             )
 
         # One table and chart per stat
@@ -709,7 +720,7 @@ def build_category_summary_report(
             chart_data.sort(key=lambda x: x[sort_mode], reverse=True)
 
             # === Build table ===
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="{caption}_selected" type="match" text="{stat}" animate="yes">')
+            rows.append(f'<$reveal stateTitle="$:/temp/detailed_state" stateField="{caption}_selected" default="{default_stat}" type="match" text="{stat}" animate="yes">')
             rows.append('<div class="flex-row">\n    <div class="flex-col border">\n\n')
             format_stat = stat[0].upper() + stat[1:]
             rows.append(f"!! {format_stat}\n")
@@ -719,7 +730,7 @@ def build_category_summary_report(
             for p in chart_data:
                 rows.append(
                     f"| {p['Party']} | {p['Name']} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
-                    f"{p['FightTime']:,.1f} | {p['Total']:,.2f}| {p['Stat/1s']:,.2f}| {p['Stat/60s']:,.2f}|"
+                    f"{p['FightTime']:,.1f} | {p['Total']:,}| {p['Stat/1s']:,}| {p['Stat/60s']:,}|"
                 )
 
             rows.append("\n    </div>\n    <div class='flex-col border'>\n\n")
@@ -773,7 +784,7 @@ option = {{
     # === Summary Layout (one large table) ===
     elif layout == "summary":
         for toggle in TOGGLES:
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="category_radio" '
+            rows.append(f'<$reveal stateTitle="$:/temp/detailed_state" default="Total" stateField="category_radio" '
                         f'type="match" text="{toggle}" animate="yes">\n')
 
             header = "|thead-dark table-caption-top table-hover sortable|k\n"
@@ -793,16 +804,28 @@ option = {{
                        f"{fight_time:,.1f} |")
                 for stat, category in category_stats.items():
                     val = compute_values(player, stat, category)[toggle]
-                    row += f" {val:,.2f}|"
+                    if stat in pct_stats:
+                        val = f" {val:,.2f}%"
+                    elif stat in time_stats:
+                        val = f" {val:,.1f}"
+                    else:
+                        if toggle == "Stat/60s":
+                            val = f" {val:,.2f}"
+                        elif toggle == "Stat/1s":
+                            val = f" {val:,.3f}"
+                        else:
+                            val = f" {val:,.0f}"
+
+                    row += f" {val}|"
                 rows.append(row)
 
-            rows.append(f'|<$radio field="category_radio" value="Total"> Total  </$radio>'
-                        f' - <$radio field="category_radio" value="Stat/1s"> Stat/1s  </$radio>'
-                        f' - <$radio field="category_radio" value="Stat/60s"> Stat/60s  </$radio>'
+            rows.append(f'|<$radio tiddler="$:/temp/detailed_state" field="category_radio" default="Total" value="Total"> Total  </$radio>'
+                        f' - <$radio  tiddler="$:/temp/detailed_state" field="category_radio" value="Stat/1s"> Stat/1s  </$radio>'
+                        f' - <$radio  tiddler="$:/temp/detailed_state" field="category_radio" value="Stat/60s"> Stat/60s  </$radio>'
                         f' - {caption} Table|c\n</$reveal>')
 
         if enable_hide_columns:
-            rows.append("</div>\n")
+            rows.append("</div>\n</div>")
 
         tid_text = "\n".join(rows)
         temp_title = f"{tid_date_time}-{caption}-Summary"
@@ -1091,6 +1114,7 @@ def build_boon_report(
                 continue
             rows.append(
                 f'<$radio class="btn btn-sm btn-dark"'
+				f' tiddler="$:/temp/selectedBoon" default="Might"'
                 f' field="boon_selected" value="{boon_name}"> '
                 f'{{{{{boon_name}}}}} {boon_name}'
                 f' </$radio>'
@@ -1104,13 +1128,13 @@ def build_boon_report(
             skillIcon = buff_data[boon_id].get("icon", "")
             stacking = buff_data[boon_id].get("stacking", False)
 
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_selected" '
+            rows.append(f'<$reveal stateTitle="$:/temp/selectedBoon" stateField="boon_selected" default="Might"'
                         f'type="match" text="{boon_name}" animate="yes">\n')
             rows.append('\n<div class="flex-row">\n<div class="flex-col border">\n\n')
             rows.append(f"! [img width=24 [{boon_name}|{skillIcon}]] {boon_name}\n")
 
             for toggle in TOGGLES:
-                rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" '
+                rows.append(f'<$reveal stateTitle="$:/temp/selectedBoon" default="Total" stateField="boon_radio" '
                             f'type="match" text="{toggle}" animate="yes">\n')
 
                 header = "|thead-dark table-caption-top table-hover sortable|k\n"
@@ -1146,9 +1170,9 @@ def build_boon_report(
                     print(f"Sorting failed: {e}")
 
                 rows.append(
-                    f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio>'
-                    f' - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio>'
-                    f' - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
+                    f'|<$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Total"> Total Gen  </$radio>'
+                    f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Average"> Gen/Sec  </$radio>'
+                    f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
                     f' - {boon_name} Table|c'
                 )
                 rows.append("\n</$reveal>")
@@ -1211,7 +1235,7 @@ series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
         }
 
         for toggle in TOGGLES:
-            rows.append(f'<$reveal stateTitle=<<currentTiddler>> stateField="boon_radio" '
+            rows.append(f'<$reveal stateTitle="$:/temp/selectedBoon" default="Total" stateField="boon_radio" '
                         f'type="match" text="{toggle}" animate="yes">\n')
             rows.append(build_table_header(boons_meta, include_icons=bool(boon_type)))
 
@@ -1223,9 +1247,9 @@ series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
 
             caption = CATEGORY_CAPTIONS.get(category, category)
             rows.append(
-                f'|<$radio field="boon_radio" value="Total"> Total Gen  </$radio>'
-                f' - <$radio field="boon_radio" value="Average"> Gen/Sec  </$radio>'
-                f' - <$radio field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
+                f'|<$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Total"> Total Gen  </$radio>'
+                f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Average"> Gen/Sec  </$radio>'
+                f' - <$radio tiddler="$:/temp/selectedBoon" default="Total" field="boon_radio" value="Uptime"> Uptime Gen  </$radio>'
                 f' - {caption} Table|c'
             )
             rows.append("\n</$reveal>")
@@ -3176,8 +3200,10 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 	damage_totals = {
 		player: data['dpsTargets']['damage']
 		for player, data in top_stats['player'].items()
-		if data['statsTargets']['criticalRate'] > 50
-	}
+		if data['statsTargets']['critableDirectDamageCount'] > 0
+		and (data['statsTargets']['criticalRate'] / data['statsTargets']['critableDirectDamageCount']) > 0.45
+	}	
+
 	sorted_damage_totals = sorted(damage_totals.items(), key=lambda x: x[1], reverse=True)
 
 	# Iterate over each player and build a table of their damage output by skill
@@ -5184,6 +5210,8 @@ def generate_leaderboard(stat: str, db_path: str, top_n: int = 25) -> str:
 	for player_key, member_status in guild_members.items():
 		if member_status in (None, 0, "--==Non Member==--"):
 			member_bucket[player_key] = "❌"
+		elif member_status in ("-"):
+			member_bucket[player_key] = "❓"
 		else:
 			member_bucket[player_key] = "✅"
 			
@@ -5207,12 +5235,16 @@ def generate_leaderboard(stat: str, db_path: str, top_n: int = 25) -> str:
 
 		if avg in ('-', None) or avg == 0:
 			continue
+		
+		membership = member_bucket.get(player_key, '-')
+		if membership == "❌":
+			continue
 
 		if stat in ('kills', 'downs', 'downed', 'killed', 'resurrects'):
 			avg = f"{avg:,.2f}/min"
 		else:
 			avg = f"{avg:,.2f}/sec"
-		membership = member_bucket.get(player_key, '-')
+
 		tt_name = f'<span data-tooltip="{acc}">{name}</span>'
 		table += f"| {rank} |{tt_name} |{{{{{prof}}}}} {prof} | {round(rating, 1)} | {delta_str(delta)}| {raids} | {membership} | {avg}|\n"
 		rank += 1
@@ -5342,7 +5374,7 @@ def write_high_scores_to_db(highscores, fights, skill_data, db_path):
 			profession, player = prof_player.split("}}")
 			profession += "}}"
 			fight_time = (
-				f"{fights[int(fight_num)]["fight_date"]} - Fight #{fight_num}"
+				f'{fights[int(fight_num)]["fight_date"]} - Fight #{fight_num}'
 			)
 			fight_link = fights[int(fight_num)]["fight_link"]
 			save_high_score(
