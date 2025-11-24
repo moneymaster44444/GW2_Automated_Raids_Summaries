@@ -578,7 +578,8 @@ def build_category_summary_report(
 		"conditionDamageTakenCount": '{{conditionDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"powerDamageTakenCount": '{{powerDamageTaken}}[img width=16 [Hits|hits.png]]',
 		"downedDamageTakenCount": '{{downedDamageTaken}}[img width=16 [Hits|hits.png]]',
-		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]'
+		"damageBarrierCount": '{{damageBarrier}}[img width=16 [Hits|hits.png]]',
+		"downContribPct": '{{downContribution}} %'
 		}
     pct_stats = {
 		"criticalRate": "critableDirectDamageCount", "flankingRate":"connectedDirectDamageCount", "glanceRate":"connectedDirectDamageCount", "againstMovingRate": "connectedDamageCount"
@@ -599,6 +600,12 @@ def build_category_summary_report(
         val = player[category].get(stat, 0)
         if stat in ["receivedCrowdControlDuration","appliedCrowdControlDuration", "appliedCrowdControlDurationDownContribution"]:
             val = val / 1000
+        if stat == "downContribPct":
+            divisor_value = player[category].get("totalDmg", 0)
+            if divisor_value == 0:
+                return {"Total": 0, "Stat/1s": 0, "Stat/60s": 0}
+            val = round((player[category].get("downContribution", 0) / divisor_value) * 100,2)
+            return {"Total": val, "Stat/1s": val, "Stat/60s": val}
         return {
             "Total": val,
             "Stat/1s": val / fight_time,
@@ -712,6 +719,7 @@ Uncheck to Hide: """)
                     "Party": player["last_party"],
                     "Name": player["name"],
                     "Prof": player["profession"],
+					"Acct": player["account"],
                     "FightTime": player["active_time"] / 1000,
                     **{k: round(v, 2) for k, v in vals.items()},
                 })
@@ -728,8 +736,9 @@ Uncheck to Hide: """)
             rows.append("|!Party |!Name |!Prof |!{{FightTime}} |!Total|!Stat/1s|!Stat/60s|h")
 
             for p in chart_data:
+                tt_name = f"<span data-tooltip=\"{p['Acct']}\">{p['Name']}</span>"
                 rows.append(
-                    f"| {p['Party']} | {p['Name']} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
+                    f"| {p['Party']} |{tt_name} | {{{{{p['Prof']}}}}} {p['Prof'][:3]} | "
                     f"{p['FightTime']:,.1f} | {p['Total']:,}| {p['Stat/1s']:,}| {p['Stat/60s']:,}|"
                 )
 
@@ -762,7 +771,7 @@ option = {{
     {{ type: 'inside', yAxisIndex: 0 }}
   ]
 }};
-```$height="700px" $theme="dark"/>
+```$height="900px" $theme="dark"/>
 """
             rows.append(chart_block)
             rows.append("\n    </div>\n</div>\n\n")
@@ -799,12 +808,13 @@ option = {{
                 fight_time = player.get("active_time", 0) / 1000
                 if fight_time == 0:
                     continue
-                row = (f"| {player['last_party']} |{player['name']} | "
+                tt_name = f"<span data-tooltip=\"{player['account']}\">{player['name']}</span>"
+                row = (f"| {player['last_party']} |{tt_name} | "
                        f"{{{{{player['profession']}}}}} {player['profession'][:3]} | "
                        f"{fight_time:,.1f} |")
                 for stat, category in category_stats.items():
                     val = compute_values(player, stat, category)[toggle]
-                    if stat in pct_stats:
+                    if stat in pct_stats or stat == "downContribPct":
                         val = f" {val:,.2f}%"
                     elif stat in time_stats:
                         val = f" {val:,.1f}"
@@ -1199,7 +1209,7 @@ series:[{{type:'bar',name:'Total Gen',encode:{{x:'Total Gen',y:'Name'}}}},
 {{type:'bar',name:'Group Gen',encode:{{x:'Group Gen',y:'Name'}}}},
 {{type:'bar',name:'Self Gen',encode:{{x:'Self Gen',y:'Name'}}}}]
 }};
-```$height="800px" $width="100%" $theme="dark"/>
+```$height="900px" $width="100%" $theme="dark"/>
 """
             rows.append('  </div>\n  <div class="flex-col border">\n\n')
             rows.append(boon_chart)
@@ -2960,7 +2970,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Header for damage output table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
-	header += "|!Skill Name | !Damage Taken | !% of Total|h"
+	header += "|!Skill Name | !Damage | !Down Contrib | !% of Total|h"
 	rows.append(header)
 	
 	# Populate the table with top 25 skills by damage output
@@ -2969,7 +2979,8 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name}"
-			row = f"|{entry} | {skill['totalDamage']:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
+			down_contrib = skill.get("downContribution", 0)
+			row = f"|{entry} | {skill['totalDamage']:,.0f} | {down_contrib:,.0f} | {skill['totalDamage']/total_damage_distributed_value*100:,.1f}% |"
 			rows.append(row)
 
 	rows.append(f"| Squad Damage Output |c")
@@ -2977,7 +2988,7 @@ def build_top_damage_by_skill(total_damage_taken: dict, target_damage_dist: dict
 
 	# Header for damage taken table
 	header = "|thead-dark table-caption-top-left table-hover table-center sortable|k\n"
-	header += "|!Skill Name | !Damage Taken | !% of Total|h"
+	header += "|!Skill Name | !Damage | !% of Total|h"
 	rows.append(header)
 
 	# Populate the table with top 25 skills by damage taken
@@ -3223,7 +3234,7 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 		rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')		
 		header = "|thead-dark table-caption-top table-hover sortable w-75 table-center|k\n"
 		header += "|{{"+profession+"}}"+f" - {name} - {account}|c\n"
-		header += "|!Skill Name | !Damage | !Hits | !Dmg/Hit | !% of Total|h"
+		header += "|!Skill Name | !Damage | !Down Contrib | !Hits | !Dmg/Hit | !% of Total|h"
 		rows.append(header)
 
 		# Populate the table with the player's damage output by skill
@@ -3231,10 +3242,11 @@ def build_damage_outgoing_by_player_skill_tids(top_stats: dict, skill_data: dict
 			skill_name = skill_data.get(f"s{skill_id}", {}).get("name", buff_data.get(f"b{skill_id}", {}).get("name", ""))
 			skill_icon = skill_data.get(f"s{skill_id}", {}).get("icon", buff_data.get(f"b{skill_id}", {}).get("icon", ""))
 			connect_hits = top_stats['player'][player]['targetDamageDist'][skill_id]['connectedHits']
+			down_contrib = top_stats['player'][player]['targetDamageDist'][skill_id].get('downContribution', 0)
 			if connect_hits == 0:
 				connect_hits = 1
 			entry = f"[img width=24 [{skill_name}|{skill_icon}]]-{skill_name[:30]}"
-			row = f"|{entry} | {damage:,.0f} | {connect_hits} | {damage / connect_hits:,.1f} | {damage / total_damage * 100:,.1f}%|"
+			row = f"|{entry} | {damage:,.0f} | {down_contrib:,.0f} | {connect_hits} | {damage / connect_hits:,.1f} | {damage / total_damage * 100:,.1f}%|"
 			rows.append(row)
 		rows.append("\n</div>\n")
 		# Create the TID
