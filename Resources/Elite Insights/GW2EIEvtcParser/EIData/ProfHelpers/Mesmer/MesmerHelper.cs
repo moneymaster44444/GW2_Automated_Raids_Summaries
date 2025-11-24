@@ -85,7 +85,7 @@ internal static class MesmerHelper
         new EffectCastFinderByDst(PowerCleanse, EffectGUIDs.MesmerMantraOfResolveAndPowerCleanse2)
             .UsingSrcNotBaseSpecChecker(Spec.Mesmer)
             .UsingDstBaseSpecChecker(Spec.Mesmer)
-            .UsingSecondaryEffectCheckerInvertedSrc(EffectGUIDs.MesmerMantraOfResolveAndPowerCleanse)
+            .UsingSecondaryEffectInvertedSrcChecker(EffectGUIDs.MesmerMantraOfResolveAndPowerCleanse)
             .WithBuilds(GW2Builds.February2024NewWeapons),
         new EffectCastFinderByDst(MantraOfConcentration, EffectGUIDs.MesmerMantraOfConcentrationAndPowerBreak)
             .UsingDstBaseSpecChecker(Spec.Mesmer)
@@ -96,7 +96,7 @@ internal static class MesmerHelper
         // Rifle
         new BuffGiveCastFinder(DimensionalApertureSkill, DimensionalAperturePortalBuff),
         new EffectCastFinder(Abstraction, EffectGUIDs.MesmerRifleAbstraction)
-            .UsingSecondaryEffectChecker(EffectGUIDs.MesmerRifleAbstraction2)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.MesmerRifleAbstraction2)
             .UsingSrcBaseSpecChecker(Spec.Mesmer),
     ];
 
@@ -147,7 +147,7 @@ internal static class MesmerHelper
     [
         // Domination
         // - Empowered Illusions
-        new DamageLogDamageModifier(Mod_EmpoweredIllusions, "Empowered Illusions", "Illusions deal 15% increased strike damage", DamageSource.PetsOnly, 15.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.EmpoweredIllusions, IllusionsChecker, DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_EmpoweredIllusions, "Empowered Illusions", "15% for Illusions", DamageSource.PetsOnly, 15.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.EmpoweredIllusions, IllusionsChecker, DamageModifierMode.All)
             .UsingEarlyExit((a, log) => !a.GetMinions(log).Any(x => IsIllusion(x.ReferenceAgentItem))),
         // - Vicious Expression
         new BuffOnFoeDamageModifier(Mod_ViciousExpressionWithIllusions, NumberOfBoons, "Vicious Expression", "25% on boonless target", DamageSource.All, 25.0, DamageType.Strike, DamageType.All, Source.Mesmer, ByAbsence, TraitImages.ConfoundingSuggestions, DamageModifierMode.PvE)
@@ -170,6 +170,8 @@ internal static class MesmerHelper
         new BuffOnFoeDamageModifier(Mod_Fragility, Vulnerability, "Fragility", "0.5% per stack vuln on target", DamageSource.NoPets, 0.5, DamageType.Strike, DamageType.All, Source.Mesmer, ByStack, TraitImages.Fragility, DamageModifierMode.All),
         // - Power block
         new BuffOnActorDamageModifier(Mod_PowerBlock, PowerBlockBuff, "Power Block", "25%", DamageSource.NoPets, 25.0, DamageType.StrikeAndCondition, DamageType.All, Source.Mesmer, ByPresence, TraitImages.PowerBlock, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.June2025Balance),
+        new BuffOnActorDamageModifier(Mod_PowerBlock, PowerBlockBuff, "Power Block", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Mesmer, ByPresence, TraitImages.PowerBlock, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.June2025Balance),
         // Dueling
         // - Superiority Complex
@@ -228,8 +230,12 @@ internal static class MesmerHelper
         new Buff("Signet of Midnight", SignetOfMidnightBuff, Source.Mesmer, BuffClassification.Other, SkillImages.SignetOfMidnight),
         new Buff("Signet of Humility", SignetOfHumility, Source.Mesmer, BuffClassification.Other, SkillImages.SignetOfHumility),
         // Skills
-        new Buff("Distortion", DistortionBuff, Source.Mesmer, BuffStackType.Queue, 25, BuffClassification.Other, SkillImages.Distortion),
-        new Buff("Blur", Blur, Source.Mesmer, BuffClassification.Other, SkillImages.Distortion),
+        new Buff("Distortion", DistortionBuff, Source.Mesmer, BuffStackType.Queue, 25, BuffClassification.Other, SkillImages.Distortion)
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.OctoberVoERelease),
+        new Buff("Distortion", DistortionBuff, Source.Mesmer, BuffStackType.Queue, 25, BuffClassification.Defensive, SkillImages.Distortion)
+            .WithBuilds(GW2Builds.OctoberVoERelease),
+        new Buff("Blur", Blur, Source.Mesmer, BuffClassification.Other, SkillImages.Distortion)
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.OctoberVoERelease),
         new Buff("Mirror", Mirror, Source.Mesmer, BuffClassification.Other, SkillImages.Mirror),
         new Buff("Echo", Echo, Source.Mesmer, BuffClassification.Other, BuffImages.Echo),
         new Buff("Illusionary Counter", IllusionaryCounterBuff, Source.Mesmer, BuffClassification.Other, SkillImages.IllusionaryCounter),

@@ -230,7 +230,7 @@ internal class Artsariiv : ShatteredObservatory
             return;
         }
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Artsariiv)) ?? throw new MissingKeyActorsException("Artsariiv not found");
-        if (combatData.GetEffectEvents().Count > 0)
+        if (combatData.HasEffectData)
         {
             // TBC: this looks promising so far
             if (combatData.TryGetEffectEventsByGUID(EffectGUIDs.ArtsariivDeadExplosion, out var effects))
@@ -353,7 +353,7 @@ internal class Artsariiv : ShatteredObservatory
         environmentDecorations.Add(new RectangleDecoration(360, length + hitbox, lifespan, color, opacity, position).UsingRotationConnector(rotation));
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
         List<CastEvent> res = [];
         res.AddRange(ProfHelper.ComputeUnderBuffCastEvents(combatData, skillData, NovaLaunchSAK, NovaLaunchBuff));

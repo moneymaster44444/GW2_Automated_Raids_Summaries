@@ -3,6 +3,7 @@ using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
+using GW2EIGW2API;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -36,7 +37,7 @@ internal class SalvationPassInstance : SalvationPass
         MechanicList.Add(_matthias.Mechanics);
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Salvation Pass";
     }
@@ -153,10 +154,12 @@ internal class SalvationPassInstance : SalvationPass
         {
 
             var slothasorPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.Slothasor, [], "Slothasor", _slothasor);
+            var slublingTransforms = targetsByIDs.TryGetValue((int)TargetID.PlayerSlubling, out List<SingleActor>? value) ? value : [];
             foreach (var slothasorPhase in slothasorPhases)
             {
+                slothasorPhase.AddTargets(slublingTransforms, log, PhaseData.TargetPriority.NonBlocking);
                 var slothasor = slothasorPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.Slothasor));
-                phases.AddRange(Slothasor.ComputePhases(log, slothasor, slothasorPhase, requirePhases));
+                phases.AddRange(Slothasor.ComputePhases(log, slothasor, slublingTransforms, slothasorPhase, requirePhases));
             }
         }
         {
@@ -170,11 +173,13 @@ internal class SalvationPassInstance : SalvationPass
             }
         }
         {
-            var matthiasPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.Matthias, Targets.Where(x => x.IsSpecies(TargetID.MatthiasSacrificeCrystal)), "Matthias", _matthias);
+            var matthiasPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.Matthias, [], "Matthias", _matthias);
+            var sacrifices = targetsByIDs.TryGetValue((int)TargetID.MatthiasSacrificeCrystal, out List<SingleActor>? value) ? value : [];
             foreach (var matthiasPhase in matthiasPhases)
             {
+                matthiasPhase.AddTargets(sacrifices, log, PhaseData.TargetPriority.NonBlocking);
                 var matthias = matthiasPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.Matthias));
-                phases.AddRange(Matthias.ComputePhases(log, matthias, matthiasPhase, requirePhases));
+                phases.AddRange(Matthias.ComputePhases(log, matthias, sacrifices, matthiasPhase, requirePhases));
             }
         }
         return phases;
@@ -220,11 +225,19 @@ internal class SalvationPassInstance : SalvationPass
         ];
         return friendlies.Distinct().ToList();
     }
+    protected override HashSet<int> IgnoreForAutoNumericalRenaming()
+    {
+        return [
+            (int)TargetID.PlayerSlubling,
+            (int)TargetID.MatthiasSacrificeCrystal,
+        ];
+    }
 
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
-        Slothasor.FindMushrooms(logData, agentData, combatData, extensions);  
+        Slothasor.FindMushrooms(logData, agentData, combatData, extensions);
+        Slothasor.FindSlublingTransformations(logData, agentData, combatData, extensions);
         BanditTrio.FindCageAndBombs(agentData, combatData);
         Matthias.FindSacrifices(logData, agentData, combatData, extensions);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
@@ -241,12 +254,12 @@ internal class SalvationPassInstance : SalvationPass
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
         }
         return res;
     }

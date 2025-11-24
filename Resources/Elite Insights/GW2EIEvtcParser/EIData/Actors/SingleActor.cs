@@ -17,6 +17,7 @@ public abstract partial class SingleActor : Actor
     public int UniqueID => AgentItem.UniqueID;
     public long LastAware => AgentItem.LastAware;
     public long FirstAware => AgentItem.FirstAware;
+    public long HalfAware => AgentItem.HalfAware;
     public ushort InstID => AgentItem.EnglobingAgentItem.InstID;
 
     public AgentItem EnglobingAgentItem => AgentItem.EnglobingAgentItem;
@@ -67,11 +68,11 @@ public abstract partial class SingleActor : Actor
         if (Health == -2)
         {
             Health = -1;
-            IReadOnlyList<MaxHealthUpdateEvent> maxHpUpdates = combatData.GetMaxHealthUpdateEvents(EnglobingAgentItem);
+            IReadOnlyList<MaxHealthUpdateEvent> maxHpUpdates = combatData.GetMaxHealthUpdateEventsBySrc(EnglobingAgentItem);
             if (maxHpUpdates.Any())
             {
                 HealthDamageEvent? lastDamage = combatData.GetDamageTakenData(AgentItem).LastOrDefault(x => x.HealthDamage > 0);
-                long timeCheck = (FirstAware + LastAware) / 2;
+                long timeCheck = HalfAware;
                 if (lastDamage != null)
                 {
                     timeCheck = Math.Max(timeCheck, Math.Max(FirstAware, lastDamage.Time - 5000));
@@ -204,7 +205,7 @@ public abstract partial class SingleActor : Actor
         {
             BuffEnum.Group or BuffEnum.OffGroup => ([ ], [ ]),
             BuffEnum.Squad =>
-                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p != this), log, AgentItem, start, end),
+                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p != this), log, this, start, end),
             _ => BuffStatistics.GetBuffsForSelf(log, this, start, end),
         };
     }
@@ -352,7 +353,7 @@ public abstract partial class SingleActor : Actor
         {
             return CombatReplay;
         }
-        CombatReplay = new CombatReplay(log);
+        CombatReplay = AgentItem.PositionAttachedAgentItem != null ? new CombatReplayRotationOnly(log) : new CombatReplay(log);
         if (!log.CombatData.HasMovementData)
         {
             // no combat replay support on log
@@ -367,6 +368,12 @@ public abstract partial class SingleActor : Actor
         } 
         else
         {
+            if (AgentItem.PositionAttachedAgentItem != null)
+            {
+                var attachedActor = log.FindActor(AgentItem.PositionAttachedAgentItem);
+                attachedActor.InitCombatReplay(log);
+                CombatReplay.CopyPositionsFrom(attachedActor.CombatReplay);
+            }
             foreach (MovementEvent movementEvent in log.CombatData.GetMovementData(AgentItem))
             {
                 movementEvent.AddPoint3D(CombatReplay);
@@ -685,14 +692,14 @@ public abstract partial class SingleActor : Actor
         if (DamageEventByDst == null)
         {
             List<HealthDamageEvent> damageEvents = [.. log.CombatData.GetDamageData(AgentItem).Where(x => !x.ToFriendly)];
-            var minionsList = GetMinions(log); //TODO(Rennorb @perf: find average complexity
+            var minionsList = GetMinions(log); //TODO_PERF(Rennorb @ average complexity
             foreach (Minions mins in minionsList)
             {
                 damageEvents.AddRange(mins.GetDamageEvents(null, log));
             }
             damageEvents.SortByTime();
             DamageEventByDst = damageEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
-            DamageEventByDst[ParserHelper._nullAgent] = damageEvents;
+            DamageEventByDst[_nullAgent] = damageEvents;
         }
     }
 
@@ -718,7 +725,7 @@ public abstract partial class SingleActor : Actor
         {
             List<HealthDamageEvent> damageTakenEvents = [.. log.CombatData.GetDamageTakenData(AgentItem)];
             DamageTakenEventsBySrc = damageTakenEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            DamageTakenEventsBySrc[ParserHelper._nullAgent] = damageTakenEvents;
+            DamageTakenEventsBySrc[_nullAgent] = damageTakenEvents;
         }
     }
 
@@ -777,14 +784,14 @@ public abstract partial class SingleActor : Actor
         if (BreakbarDamageEventsByDst == null)
         {
             var breakbarDamageEvents = new List<BreakbarDamageEvent>(log.CombatData.GetBreakbarDamageData(AgentItem).Where(x => !x.ToFriendly));
-            var minionsList = GetMinions(log); //TODO(Rennorb) @perf: find average complexity
+            var minionsList = GetMinions(log); //TODO_PERF(Rennorb) @find average complexity
             foreach (Minions mins in minionsList)
             {
                 breakbarDamageEvents.AddRange(mins.GetBreakbarDamageEvents(null, log));
             }
             breakbarDamageEvents.SortByTime();
             BreakbarDamageEventsByDst = breakbarDamageEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
-            BreakbarDamageEventsByDst[ParserHelper._nullAgent] = breakbarDamageEvents;
+            BreakbarDamageEventsByDst[_nullAgent] = breakbarDamageEvents;
         }
     }
 
@@ -794,7 +801,7 @@ public abstract partial class SingleActor : Actor
         {
             var breakbarDamageTakenEvents = new List<BreakbarDamageEvent>(log.CombatData.GetBreakbarDamageTakenData(AgentItem));
             BreakbarDamageTakenEventsBySrc = breakbarDamageTakenEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            BreakbarDamageTakenEventsBySrc[ParserHelper._nullAgent] = breakbarDamageTakenEvents;
+            BreakbarDamageTakenEventsBySrc[_nullAgent] = breakbarDamageTakenEvents;
         }
     }
 
@@ -818,14 +825,14 @@ public abstract partial class SingleActor : Actor
         if (OutgoingCrowdControlEventsByDst == null)
         {
             var outgoingCrowdControlEvents = new List<CrowdControlEvent>(log.CombatData.GetOutgoingCrowdControlData(AgentItem).Where(x => !x.ToFriendly));
-            var minionsList = GetMinions(log);
+            var minionsList = GetMinions(log); //TODO_PERF(Rennorb) @find average complexity
             foreach (Minions mins in minionsList)
             {
                 outgoingCrowdControlEvents.AddRange(mins.GetOutgoingCrowdControlEvents(null, log));
             }
             outgoingCrowdControlEvents.SortByTime();
             OutgoingCrowdControlEventsByDst = outgoingCrowdControlEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
-            OutgoingCrowdControlEventsByDst[ParserHelper._nullAgent] = outgoingCrowdControlEvents;
+            OutgoingCrowdControlEventsByDst[_nullAgent] = outgoingCrowdControlEvents;
         }
     }
 
@@ -835,7 +842,7 @@ public abstract partial class SingleActor : Actor
         {
             var incomingCrowdControlEvents = new List<CrowdControlEvent>(log.CombatData.GetIncomingCrowdControlData(AgentItem));
             IncomingCrowdControlEventsBySrc = incomingCrowdControlEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            IncomingCrowdControlEventsBySrc[ParserHelper._nullAgent] = incomingCrowdControlEvents;
+            IncomingCrowdControlEventsBySrc[_nullAgent] = incomingCrowdControlEvents;
         }
     }
 

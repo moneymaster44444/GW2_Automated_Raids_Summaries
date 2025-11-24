@@ -8,6 +8,7 @@ using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
+using GW2EIGW2API;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -204,7 +205,7 @@ internal class Cairn : BastionOfThePenitent
                     }
                 }
                 #if DEBUG_EFFECTS
-                    CombatReplay.DebugAllNPCEffects(log, replay, new HashSet<long>(), 50000, 63000);
+                    CombatReplay.DebugAllNPCEffects(log, replay.Decorations, [], 50000, 63000);
                 #endif
                 break;
             default:
@@ -249,7 +250,7 @@ internal class Cairn : BastionOfThePenitent
         return GetGenericLogOffset(logData);
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
         List<CastEvent> res = [];
         res.AddRange(ProfHelper.ComputeUnderBuffCastEvents(combatData, skillData, CelestialDashSAK, CelestialDashBuff));
@@ -281,10 +282,10 @@ internal class Cairn : BastionOfThePenitent
 
     internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return combatData.GetSkills().Contains(Countdown) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return combatData.GetBuffApplyData(Countdown).Any(x => x.Time > 0) ? LogData.LogMode.CM : LogData.LogMode.Normal;
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Cairn";
     }

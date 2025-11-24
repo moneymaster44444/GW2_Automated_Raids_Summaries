@@ -4,6 +4,7 @@ using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
+using GW2EIGW2API;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.EIData.Decoration;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
@@ -232,7 +233,7 @@ public abstract class LogLogic
         return [ ];
     }
 
-    internal virtual string GetLogicName(CombatData combatData, AgentData agentData)
+    internal virtual string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         SingleActor? target = Targets.FirstOrDefault(x => x.IsSpecies(GenericTriggerID));
         if (target == null)
@@ -262,10 +263,9 @@ public abstract class LogLogic
         {
             _targets.AddRange(agentData.GetNPCsByID(TargetID.Instance).Select(a => new NPC(a)));
         }
-        //TODO(Rennorb) @perf @cleanup: is this required?
         _targets.SortByFirstAware();
         var targetSortIDs = GetTargetsSortIDs();
-        //TODO(Rennorb) @perf
+        //TODO_PERF(Rennorb)
         _targets = _targets.OrderBy(x =>
         {
             if (targetSortIDs.TryGetValue(GetTargetID(x.ID), out int sortKey))
@@ -369,7 +369,7 @@ public abstract class LogLogic
             return [ ];
         }
 
-        //TODO(Rennorb) @perf: find average complexity
+        //TODO_PERF(Rennorb): find average complexity
         var breakbarPhases = new List<PhaseData>(Targets.Count);
         var noBreakbarSpecies = ForbidBreakbarPhasesFor();
         foreach (SingleActor target in Targets)
@@ -401,7 +401,6 @@ public abstract class LogLogic
     internal virtual List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
     {
         List<PhaseData> phases = GetInitialPhase(log);
-        // TODO: To be removed once all specific instance logics are implemented
         if (IsInstance)
         {
             var targets = Targets.Where(x => x.GetHealth(log.CombatData) > 3e6 && x.LastAware - x.FirstAware > MinimumInCombatDuration);
@@ -462,7 +461,7 @@ public abstract class LogLogic
         return [ ];
     }
 
-    internal virtual List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal virtual List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
         return [ ];
     }
@@ -513,7 +512,7 @@ public abstract class LogLogic
     {
         if (EnvironmentDecorations == null)
         {
-            //TODO(Rennorb) @perf: capacity
+            //TODO_PERF(Rennorb): capacity
             EnvironmentDecorations = new(DecorationCache);
             ComputeEnvironmentCombatReplayDecorations(log, EnvironmentDecorations);
         }

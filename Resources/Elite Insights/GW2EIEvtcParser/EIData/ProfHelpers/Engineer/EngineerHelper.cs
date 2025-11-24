@@ -15,6 +15,8 @@ internal static class EngineerHelper
 {
     private class EngineerKitFinder : WeaponSwapCastFinder
     {
+        private readonly Dictionary<AgentItem, int> WeaponSwapIndexByCaster = [];
+        private readonly Dictionary<AgentItem, int> AnimatedCastIndexByCaster = [];
         public EngineerKitFinder(long skillID) : base(skillID, WeaponSetIDs.KitSet)
         {
             UsingChecker((swap, combatData, agentData, skillData) =>
@@ -24,10 +26,52 @@ internal static class EngineerHelper
                 {
                     return false;
                 }
-                WeaponSwapEvent? nextSwap = combatData.GetWeaponSwapData(swap.Caster).FirstOrDefault(x => x.Time > swap.Time + ServerDelayConstant);
+                if (!WeaponSwapIndexByCaster.TryGetValue(swap.Caster, out var swapIndex))
+                {
+                    swapIndex = 0;
+                }
+                var swaps = combatData.GetWeaponSwapData(swap.Caster);
+                WeaponSwapEvent? nextSwap = null;
+                for (var i = swapIndex; i < swaps.Count; i++)
+                {
+                    var curSwap = swaps[i];
+                    if (curSwap.Time > swap.Time + ServerDelayConstant)
+                    {
+                        swapIndex = i;
+                        nextSwap = curSwap;
+                        break;
+                    }
+                }
+                WeaponSwapIndexByCaster[swap.Caster] = swapIndex;
                 long nextSwapTime = nextSwap != null ? nextSwap.Time : long.MaxValue;
-                var castIDs = new HashSet<long>(combatData.GetAnimatedCastData(swap.Caster).Where(x => x.Time >= swap.Time + WeaponSwapDelayConstant && x.Time <= nextSwapTime).Select(x => x.SkillID));
-                return skill.ApiSkill.BundleSkills.Intersect(castIDs).Any();
+                if (!AnimatedCastIndexByCaster.TryGetValue(swap.Caster, out var castIndex))
+                {
+                    castIndex = 0;
+                }
+                var animatedCastData = combatData.GetAnimatedCastData(swap.Caster);
+                bool atLeastOneProcessed = false;
+                for (var i = castIndex; i < animatedCastData.Count; i++)
+                {
+                    var cast = animatedCastData[i];
+                    if (cast.Time >= swap.Time + WeaponSwapDelayConstant)
+                    {
+                        if (cast.Time > nextSwapTime)
+                        {
+                            if (atLeastOneProcessed)
+                            {
+                                AnimatedCastIndexByCaster[swap.Caster] = i - 1;
+                            }
+                            break;
+                        }
+                        atLeastOneProcessed = true;
+                        if (skill.ApiSkill.BundleSkills.Contains(cast.SkillID))
+                        {
+                            AnimatedCastIndexByCaster[swap.Caster] = i + 1;
+                            return true;
+                        }
+                    }
+                }
+                return false;
             });
             UsingNotAccurate();
         }
@@ -90,21 +134,21 @@ internal static class EngineerHelper
         new EffectCastFinderByDst(HealingMistOrSoothingDetonation, EffectGUIDs.EngineerHealingMist)
             .UsingDstBaseSpecChecker(Spec.Engineer),
         new EffectCastFinder(DetonateThrowMineOrMineField, EffectGUIDs.EngineerMineExplosion1)
-            .UsingSecondaryEffectChecker(EffectGUIDs.EngineerMineExplosion2)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.EngineerMineExplosion2)
             .UsingChecker((effect, combatData, agentData, skillData) =>
             {
                 // If Throw Mine and Mine Field are precasted out of combat, there won't be an DynamicEffectEnd event so we use the custom ID
                 return MineDetonationInstantCastChecker(effect, combatData, false, [ EffectGUIDs.EngineerMineField, EffectGUIDs.EngineerThrowMineInactive1 ]);
             }),
         new EffectCastFinder(DetonateMineField, EffectGUIDs.EngineerMineExplosion1)
-            .UsingSecondaryEffectChecker(EffectGUIDs.EngineerMineExplosion2)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.EngineerMineExplosion2)
             .UsingChecker((effect, combatData, agentData, skillData) =>
             {
                 // Find the DynamicEffectEnd of Mine Field at the time of the explosion effects.
                 return MineDetonationInstantCastChecker(effect, combatData, true, [ EffectGUIDs.EngineerMineField ]);
             }),
         new EffectCastFinder(DetonateThrowMine, EffectGUIDs.EngineerMineExplosion1)
-            .UsingSecondaryEffectChecker(EffectGUIDs.EngineerMineExplosion2)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.EngineerMineExplosion2)
             .UsingChecker((effect, combatData, agentData, skillData) =>
             {
                 // Find the DynamicEffectEnd of Throw Mine at the time of the explosion effects.

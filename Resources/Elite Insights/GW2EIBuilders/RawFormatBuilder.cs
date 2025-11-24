@@ -15,7 +15,7 @@ public class RawFormatBuilder
         {
             throw new InvalidDataException("Missing settings in RawFormatBuilder");
         }
-        _jsonLog = JsonLogBuilder.BuildJsonLog(log, settings, parserVersion, uploadResults.ToArray());
+        _jsonLog = JsonLogBuilder.BuildJsonLog(log, settings, parserVersion, uploadResults);
     }
 
     /// <summary>
@@ -23,7 +23,7 @@ public class RawFormatBuilder
     /// </summary>
     public JsonLog GetJson()
     {
-        //TODO(Rennorb) @perf: What in the javascript is this...
+        //TODO_PERF(Rennorb) @perf: What in the javascript is this...
         return JsonSerializer.Deserialize<JsonLog>(JsonSerializer.Serialize(_jsonLog, SerializerSettings.Default)!, SerializerSettings.Default)!;
     }
 

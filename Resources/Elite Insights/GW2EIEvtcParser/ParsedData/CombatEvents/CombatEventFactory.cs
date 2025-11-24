@@ -78,6 +78,7 @@ internal static class CombatEventFactory
             case StateChange.MaxHealthUpdate:
                 var maxHealthEvt = new MaxHealthUpdateEvent(stateChangeEvent, agentData);
                 Add(statusEvents.MaxHealthUpdateEvents, maxHealthEvt.Src, maxHealthEvt);
+                Add(statusEvents.MaxHealthUpdateEventsByMaxHP, maxHealthEvt.MaxHealth, maxHealthEvt);
                 break;
             case StateChange.PointOfView:
                 if (settings.AnonymousPlayers || stateChangeEvent.SrcAgent == 0)
@@ -509,7 +510,7 @@ internal static class CombatEventFactory
     public static List<AnimatedCastEvent> CreateCastEvents(Dictionary<ulong, List<CombatItem>> castEventsBySrcAgent, AgentData agentData, SkillData skillData, LogData logData)
     {
         using var _t = new AutoTrace("CreateCastEvents");
-        //TODO(Rennorb) @perf
+        //TODO_PERF(Rennorb)
         var res = new List<AnimatedCastEvent>();
         foreach (var castEvents in castEventsBySrcAgent.Values)
         {

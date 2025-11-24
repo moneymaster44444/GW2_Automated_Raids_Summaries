@@ -10,7 +10,44 @@ namespace GW2EIEvtcParser;
 
 public static class AgentManipulationHelper
 {
-
+    internal static void RedirectDamageAndCopyRemainingFromSrcToDst(AgentItem dst, AgentItem src, List<CombatItem> copies, IReadOnlyList<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
+    {
+        foreach (CombatItem cbt in combatData)
+        {
+            if (!dst.InAwareTimes(cbt.Time))
+            {
+                continue;
+            }
+            bool skip = !(cbt.DstMatchesAgent(src, extensions) || cbt.SrcMatchesAgent(src, extensions));
+            if (skip)
+            {
+                continue;
+            }
+            // redirect damage events
+            if (cbt.IsDamage(extensions))
+            {
+                // only redirect incoming damage
+                if (cbt.DstMatchesAgent(src, extensions))
+                {
+                    cbt.OverrideDstAgent(dst);
+                }
+            }
+            // copy the rest
+            else
+            {
+                var copy = new CombatItem(cbt);
+                if (copy.DstMatchesAgent(src, extensions))
+                {
+                    copy.OverrideDstAgent(dst);
+                }
+                if (copy.SrcMatchesAgent(src, extensions))
+                {
+                    copy.OverrideSrcAgent(dst);
+                }
+                copies.Add(copy);
+            }
+        }
+    }
     internal delegate bool ExtraRedirection(CombatItem evt, AgentItem from, AgentItem to);
     internal delegate void StateEventProcessing(CombatItem evt, AgentItem from, AgentItem to);
     /// <summary>
@@ -291,7 +328,7 @@ public static class AgentManipulationHelper
                 var previousStateTime = squadCombatStartCombatEnds[0];
                 foreach (var curAgent in npcsByInstdID.Value)
                 {
-                    var curStateTime = squadCombatStartCombatEnds.Last(x => x <= (curAgent.LastAware + curAgent.FirstAware) / 2);
+                    var curStateTime = squadCombatStartCombatEnds.Last(x => x <= curAgent.HalfAware);
                     if (previousAgent.ID == curAgent.ID && curAgent.Master == previousAgent.Master && curStateTime == previousStateTime)
                     {
                         agentToRegroup.Add(curAgent);

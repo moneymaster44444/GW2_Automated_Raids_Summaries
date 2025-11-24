@@ -12,6 +12,7 @@ using static GW2EIEvtcParser.LogLogic.LogLogicUtils;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SpeciesIDs;
+using GW2EIGW2API;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -41,7 +42,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
         MechanicList.Add(_deimos.Mechanics);
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Bastion Of The Penitent";
     }
@@ -354,12 +355,12 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
         }
         return res;
     }
@@ -434,7 +435,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
         var res = base.GetCustomWarningMessages(logData, agentData, combatData, evtcVersion);
         if (agentData.GetNPCsByID(TargetID.Deimos).Any(deimos =>
         {
-            var lastMaxHPUpdate = combatData.GetMaxHealthUpdateEvents(deimos).LastOrDefault(x => x.Time < deimos.HalfAware);
+            var lastMaxHPUpdate = combatData.GetMaxHealthUpdateEventsBySrc(deimos).LastOrDefault(x => x.Time < deimos.HalfAware);
             if (lastMaxHPUpdate != null)
             {
                 return lastMaxHPUpdate.MaxHealth < 40e6;

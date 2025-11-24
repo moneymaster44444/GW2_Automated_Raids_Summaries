@@ -60,11 +60,11 @@ public class Player : PlayerActor
         return (type) switch 
         {
             BuffEnum.Group =>
-                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p.Group == Group && this != p), log, AgentItem, start, end),
+                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p.Group == Group && this != p), log, this, start, end),
             BuffEnum.OffGroup => 
-                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p.Group != Group), log, AgentItem, start, end),
+                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p.Group != Group), log, this, start, end),
             BuffEnum.Squad =>
-                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p != this), log, AgentItem, start, end),
+                BuffStatistics.GetBuffsForPlayers(log.PlayerList.Where(p => p != this), log, this, start, end),
             _ =>  BuffStatistics.GetBuffsForSelf(log, this, start, end),
         };
     }
@@ -108,7 +108,6 @@ public class Player : PlayerActor
             foreach (var player in relevantPlayers)
             {
                 IReadOnlyList<MarkerEvent> markerEvents = log.CombatData.GetMarkerEvents(player);
-                //TODO(Rennorb) @perf: find average complexity
                 var commanderMarkerStates = new List<GenericSegment<GUID>>(markerEvents.Count);
                 foreach (MarkerEvent markerEvent in markerEvents)
                 {
@@ -143,7 +142,6 @@ public class Player : PlayerActor
                 return CommanderStates;
             }
 
-            //TODO(Rennorb) @perf: find average complexity
             var states = new List<(AgentItem p, GenericSegment<GUID> seg)>(statesByPlayer.Count * statesByPlayer.Values.FirstOrDefault()?.Count ?? 1);
             foreach (var (player, state) in statesByPlayer)
             {

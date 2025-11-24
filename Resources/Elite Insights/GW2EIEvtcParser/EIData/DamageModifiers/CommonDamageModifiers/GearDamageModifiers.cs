@@ -42,31 +42,16 @@ internal static class GearDamageModifiers
         new BuffOnFoeDamageModifier(Mod_ImpactSigil, [Stun, Knockdown], "Impact Sigil", "7% on stunned or knocked-down target", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.SuperiorSigilOfImpact, DamageModifierMode.All),
         // Relics
         new BuffOnFoeDamageModifier(Mod_RelicOfTheDragonhunter, RelicOfTheDragonhunterTargetBuff, "Relic of the Dragonhunter", "10% after trap hit", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfTheDragonhunter, DamageModifierMode.All)
+            .WithBuffOnFoeFromActor()
             .UsingEarlyExit((a, log) => log.CombatData.GetBuffApplyDataByIDBySrc(RelicOfTheDragonhunterTargetBuff, a.AgentItem).Count == 0)
-            .UsingChecker((x, log) =>
-            {
-                var src = log.FindActor(x.From);
-                var dst = log.FindActor(x.To);
-                return dst.HasBuff(log, src, RelicOfTheDragonhunterTargetBuff, x.Time);
-            })
             .UsingApproximate(), // Reapplication while buff is running is done via extension, extensions source finding is not capable of always finding the source
         new BuffOnFoeDamageModifier(Mod_RelicOfIsgarren, RelicOfIsgarrenTargetBuff, "Relic of Isgarren", "10% after evade", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfIsgarren, DamageModifierMode.All)
+            .WithBuffOnFoeFromActor()
             .UsingEarlyExit((a, log) => log.CombatData.GetBuffApplyDataByIDBySrc(RelicOfIsgarrenTargetBuff, a.AgentItem).Count == 0)
-            .UsingChecker((x, log) =>
-            {
-                var src = log.FindActor(x.From);
-                var dst = log.FindActor(x.To);
-                return dst.HasBuff(log, src, RelicOfIsgarrenTargetBuff, x.Time);
-            })
             .UsingApproximate(), // Reapplication while buff is running is done via extension, extensions source finding is not capable of always finding the source
         new BuffOnFoeDamageModifier(Mod_RelicOfPeitha, RelicOfPeithaTargetBuff, "Relic of Peitha", "10% after blade hit", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfPeitha, DamageModifierMode.All)
+            .WithBuffOnFoeFromActor()
             .UsingEarlyExit((a, log) => log.CombatData.GetBuffApplyDataByIDBySrc(RelicOfPeithaTargetBuff, a.AgentItem).Count == 0)
-            .UsingChecker((x, log) =>
-            {
-                var src = log.FindActor(x.From);
-                var dst = log.FindActor(x.To);
-                return dst.HasBuff(log, src, RelicOfPeithaTargetBuff, x.Time);
-            })
             .WithBuilds(GW2Builds.November2023Balance)
             .UsingApproximate(), // Reapplication while buff is running is done via extension, extensions source finding is not capable of always finding the source
         new BuffOnActorDamageModifier(Mod_RelicOfTheThief, RelicOfTheThief, "Relic of the Thief", "1% per stack", DamageSource.NoPets, 1.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByStack, ItemImages.RelicOfTheThief, DamageModifierMode.All),
@@ -85,12 +70,16 @@ internal static class GearDamageModifiers
         new BuffOnActorDamageModifier(Mod_RelicOfFire, FireAura, "Relic of Fire", "7% under fire aura", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfFire, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.March2025W8CMReleaseAndNewCoreRelics),
         // Relic of Bloodstone
-        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "15% strike damage", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.PvE)
+        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "15%", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.June2025Balance, GW2Builds.July2025BalanceHotFix),
-        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "10% strike damage", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.sPvPWvW)
+        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.June2025Balance, GW2Builds.July2025BalanceHotFix),
-        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "10% strike damage", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.All)
-            .WithBuilds(GW2Builds.July2025BalanceHotFix),
+        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.All)
+            .WithBuilds(GW2Builds.July2025BalanceHotFix, GW2Builds.November2025Balance),
+        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "7%", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.November2025Balance),
+        new BuffOnActorDamageModifier(Mod_RelicOfBloodstone, BloodstoneFervor, "Bloodstone Fervor", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfBloodstone, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.November2025Balance),
         //
         new DamageLogDamageModifier(Mod_RelicOfTheEagle,"Relic of the Eagle", "10% if target <50% HP", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ItemImages.RelicOfTheEagle, (x, log) => x.AgainstUnderFifty, DamageModifierMode.All)
             .WithBuilds(GW2Builds.March2025W8CMReleaseAndNewCoreRelics),
@@ -110,9 +99,12 @@ internal static class GearDamageModifiers
                 && (currentPosition - currentTargetPosition).Length() >= 600.0
             , DamageModifierMode.PvEWvW)
             .WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
-        new BuffOnFoeDamageModifier(Mod_RuneOfPerplexity, Confusion, "Rune of Perplexity", "-10% from confused foes", DamageSource.Incoming, -10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfPerplexity, DamageModifierMode.All).WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
+        new BuffOnFoeDamageModifier(Mod_RuneOfPerplexity, Confusion, "Rune of Perplexity", "-10% from confused foes", DamageSource.Incoming, -10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfPerplexity, DamageModifierMode.All)
+            .WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
         // Relics
         new BuffOnActorDamageModifier(Mod_RelicOfNourys, NouryssHungerDamageBuff, "Relic of Nourys", "-15%", DamageSource.Incoming, -15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfNourys, DamageModifierMode.All),
         new BuffOnActorDamageModifier(Mod_RelicOfSorrow, RelicOfSorrowBuff, "Relic of Sorrow", "-20%", DamageSource.Incoming, -20.0, DamageType.Strike, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfTheSorrow, DamageModifierMode.All),
+        new BuffOnActorDamageModifier(Mod_RelicOfTheFirstRevenant, Resistance, "Relic of the First Revenant", "-33% under resistance", DamageSource.Incoming, -33.0, DamageType.Condition, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfTheFirstRevenant, DamageModifierMode.All)
+            .WithBuilds(GW2Builds.OctoberVoERelease),
     ];
 }

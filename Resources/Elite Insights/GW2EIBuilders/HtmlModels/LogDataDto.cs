@@ -19,7 +19,7 @@ namespace GW2EIBuilders.HtmlModels;
 
 using BuffInstanceItem = long[];
 
-//TODO(Rennorb) @perf
+//TODO_PERF(Rennorb)
 internal class LogDataDto
 {
     public List<TargetDto>? Targets;
@@ -86,7 +86,7 @@ internal class LogDataDto
     public List<string>? UsedExtensions;
     public List<List<string>>? PlayersRunningExtensions;
     //
-    private LogDataDto(ParsedEvtcLog log, bool light, Version parserVersion, string[] uploadLinks)
+    private LogDataDto(ParsedEvtcLog log, bool light, Version parserVersion, UploadResults uploadLinks)
     {
         log.UpdateProgressWithCancellationCheck("HTML: building Meta Data");
         LogStart = log.LogMetadata.DateStartStd;
@@ -112,7 +112,7 @@ internal class LogDataDto
         RecordedAccountBy = log.LogMetadata.PoVAccount;
         var fractaleScaleEvent = log.CombatData.GetFractalScaleEvent();
         FractalScale = fractaleScaleEvent != null ? fractaleScaleEvent.Scale : 0;
-        UploadLinks = uploadLinks.ToList();
+        UploadLinks = [uploadLinks.DPSReportEILink];
         if (log.LogMetadata.UsedExtensions.Any())
         {
             UsedExtensions = [];
@@ -454,14 +454,14 @@ internal class LogDataDto
         }
     }
 
-    public static LogDataDto BuildLogData(ParsedEvtcLog log, bool cr, bool light, Version parserVersion, string[] uploadLinks)
+    public static LogDataDto BuildLogData(ParsedEvtcLog log, bool cr, bool light, Version parserVersion, UploadResults uploadLinks)
     {
         using var _t = new AutoTrace("BuildLogData");
 
-        var usedBuffs = new Dictionary<long, Buff>(128); //TODO(Rennorb) @perf: find capacity dependencies
-        var usedDamageMods = new HashSet<OutgoingDamageModifier>(32); //TODO(Rennorb) @perf: find capacity dependencies
-        var usedIncDamageMods = new HashSet<IncomingDamageModifier>(16); //TODO(Rennorb) @perf: find capacity dependencies
-        var usedSkills = new Dictionary<long, SkillItem>(256); //TODO(Rennorb) @perf: find capacity dependencies
+        var usedBuffs = new Dictionary<long, Buff>(128); //TODO_PERF(Rennorb) @find capacity dependencies
+        var usedDamageMods = new HashSet<OutgoingDamageModifier>(32); //TODO_PERF(Rennorb) @find capacity dependencies
+        var usedIncDamageMods = new HashSet<IncomingDamageModifier>(16); //TODO_PERF(Rennorb) @find capacity dependencies
+        var usedSkills = new Dictionary<long, SkillItem>(256); //TODO_PERF(Rennorb) @find capacity dependencies
 
         log.UpdateProgressWithCancellationCheck("HTML: building Log Data");
         var logData = new LogDataDto(log, light, parserVersion, uploadLinks);

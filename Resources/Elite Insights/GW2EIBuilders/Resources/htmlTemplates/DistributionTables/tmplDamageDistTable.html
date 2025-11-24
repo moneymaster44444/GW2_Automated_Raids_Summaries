@@ -64,6 +64,14 @@
                         Max <img :src="UIIcons.Damage" alt="Damage"
                         class="icon">
                     </th>
+                    <th class="damage-dist-cell" v-if="wvw && actor !== null" :class="getHeaderClass('Data', 22)" @click="sortBy('Data', 22, x => getDownContribution(x))"
+                        data-original-title="Down Contribution">
+                         <img :src="UIIcons.Damage" alt="Damage"
+                            class="icon">
+                        /
+                        <img :src="UIIcons.DownedEnemy" alt="Down"
+                            class="icon">
+                    </th> 
                     <th v-if="hasBreakbarDamage" class="damage-dist-cell"  
                         :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6, x => getBreakbarDamage(x))"    
                         data-original-title="% Breakbar Damage">
@@ -150,7 +158,7 @@
                         data-original-title="Time saved(in seconds) interupting skill casts">
                         <img :src="UIIcons.TimeSaved" alt="Saved"
                             class="icon icon-hover">
-                    </th>
+                    </th> 
                 </tr>
             </thead>
             <tbody>
@@ -179,6 +187,9 @@
                     </td>
                     <td :class="getBodyClass('Data', 5)">
                         {{ getMaxDamage(row) }}
+                    </td>
+                    <td v-if="wvw && actor !== null" :class="getBodyClass('Data', 22)">
+                        {{getDownContribution(row) < 0 ? 'N/A' : getDownContribution(row)}}
                     </td>
                     <td :class="getBodyClass('Data', 6)" v-if="hasBreakbarDamage">
                         {{ round3(100*getBreakbarDamage(row)/dmgdist.contributedBreakbarDamage) }}%
@@ -252,6 +263,9 @@
                     <td></td>
                     <td></td>
                     <td></td>   
+                    <td v-if="wvw && actor !== null">
+                        {{dmgdist.contributedDownContribution >= 0 ? dmgdist.contributedDownContribution : ''}}
+                    </td>
                     <td v-if="hasBreakbarDamage"></td>
                     <td v-if="hasBreakbarDamage" :data-original-title="Math.round(dmgdist.contributedBreakbarDamage/phase.durationS) +' bps'">
                         {{dmgdist.contributedBreakbarDamage}}
@@ -281,6 +295,7 @@
         template: `${template}`,
         data: function () {
             return {
+                wvw: logData.wvw,
                 sortdata: {
                     order: "desc",
                     index: 1,
@@ -362,6 +377,9 @@
             },
             getCastTimeSaved: function(data) {
                 return data[11];
+            },
+            getDownContribution: function(data) {
+                return data[22];
             }
         },
         computed: {

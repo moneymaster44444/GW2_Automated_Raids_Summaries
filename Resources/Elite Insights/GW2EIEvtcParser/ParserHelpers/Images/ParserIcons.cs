@@ -268,6 +268,7 @@ internal static class ParserIcons
     private const string TrashTormentedDeadMessenger = "https://i.imgur.com/1J2BTFg.png";
     private const string TrashEnforcer = "https://i.imgur.com/elHjamF.png";
     private const string TrashEcho = "https://i.imgur.com/kcN9ECn.png";
+    private const string TrashSlubling = "https://i.imgur.com/mrzh71d.png";
     private const string TrashKeepConstructCoreExquisiteConjunction = "https://i.imgur.com/yI34iqw.png";
     private const string TrashKeepConstructGhosts = "https://i.imgur.com/qeYT1Bf.png";
     private const string TrashInsidiousProjection = "https://i.imgur.com/9EdItBS.png";
@@ -288,7 +289,7 @@ internal static class ParserIcons
     private const string TrashWyvernPatriarch = "https://i.imgur.com/vjjNSpI.png";
     private const string TrashApocalypseBringer = "https://i.imgur.com/0LGKCn2.png";
     private const string TrashConjuredGreatsword = "https://i.imgur.com/vHka0QN.png";
-    private const string TrashConjuredPlayerSword = "https://wiki.guildwars2.com/images/0/07/Crimson_Antique_Blade.png";
+    private const string TrashConjuredPlayerSword = "https://render.guildwars2.com/file/3C4AA1BD79DAB49201C81D934AC7567B286E711B/631658.png";
     private const string TrashConjuredShield = "https://i.imgur.com/wUiI19S.png";
     private const string TrashConjuredAmalgamateAttackTarget = "https://i.imgur.com/Dr3grlm.png";
     private const string TrashCALeftArmAttackTarget = "https://i.imgur.com/QUe8eQf.png";
@@ -568,6 +569,7 @@ internal static class ParserIcons
     private const string MinionJuvenileSpinegazer = "https://i.imgur.com/mYAH1g7.png";
     private const string MinionJuvenileWarclaw = "https://i.imgur.com/dYuiG3W.png";
     private const string MinionJuvenileJanthiriBee = "https://i.imgur.com/WymxKGX.png";
+    private const string MinionJuvenileRaptorSwiftwing = "https://i.imgur.com/F33rSgz.png";
     private const string MinionBloodFiend = "https://i.imgur.com/PrOpULe.png";
     private const string MinionBoneFiend = "https://i.imgur.com/BEntBIt.png";
     private const string MinionFleshGolem = "https://i.imgur.com/JkYUNug.png";
@@ -930,6 +932,7 @@ internal static class ParserIcons
         { TargetID.TheDragonVoidPrimordus, TargetTheDragonVoidPrimordus },
         { TargetID.TheDragonVoidSooWon, TargetTheDragonVoidSooWon },
         { TargetID.TheDragonVoidZhaitan, TargetTheDragonVoidZhaitan },
+        { TargetID.TheDragonVoidUnknown, TrashGenericRedEnemySkull },
         { TargetID.SooWonOW, TargetSooWonOW },
         { TargetID.PrototypeVermilion, TargetPrototypeVermilion },
         { TargetID.PrototypeVermilionCM, TargetPrototypeVermilion },
@@ -1037,6 +1040,11 @@ internal static class ParserIcons
         { TargetID.SabirRectanglePlateform, NoImage},
         { TargetID.SabirSquarePlateform, NoImage},
         { TargetID.PoisonMushroom, TrashPoisonMushroom },
+        { TargetID.PlayerSlubling, TrashSlubling },
+        { TargetID.Slubling1, TrashSlubling },
+        { TargetID.Slubling2, TrashSlubling },
+        { TargetID.Slubling3, TrashSlubling },
+        { TargetID.Slubling4, TrashSlubling },
         { TargetID.SpearAggressionRevulsion, TrashSpearAggressionRevulsion },
         { TargetID.QadimLamp, TrashQadimLamp },
         { TargetID.PyreGuardianRetal, TrashPyreGuardianRetal },
@@ -1107,7 +1115,7 @@ internal static class ParserIcons
         { TargetID.ReanimatedHatred, TrashReanimatedHatred },
         { TargetID.ReanimatedSpite, TrashReanimatedSpite },
         { TargetID.SanctuaryPrism, TrashSanctuaryPrism },
-        { TargetID.VoidBrandstalker, TrashGenericRedEnemySkull },
+        { TargetID.VoidBrandstalkerOW, TrashGenericRedEnemySkull },
         { TargetID.SpiritOfDestruction, TrashSpiritOfDestructionOrPain },
         { TargetID.SpiritOfPain, TrashSpiritOfDestructionOrPain },
         { TargetID.DragonEnergyOrb, GenericEnemyIcon },
@@ -1181,43 +1189,43 @@ internal static class ParserIcons
         { TargetID.Deathling, Deathling },
         { TargetID.Glenna, TrashGlenna },
         { TargetID.VoidStormseer, TrashVoidStormseer },
-        { TargetID.VoidStormseer2, TrashVoidStormseer },
-        { TargetID.VoidStormseer3, TrashVoidStormseer },
-        { TargetID.VoidWarforged1, TrashVoidWarforged },
-        { TargetID.VoidWarforged2, TrashVoidWarforged },
+        { TargetID.VoidStormseerOW1, TrashVoidStormseer },
+        { TargetID.VoidStormseerOW2, TrashVoidStormseer },
+        { TargetID.VoidWarforgedElite, TrashVoidWarforged },
+        { TargetID.VoidWarforgedVeteran, TrashVoidWarforged },
         { TargetID.VoidRotswarmer, TrashVoidRotswarmer },
         { TargetID.VoidMelter, TrashVoidMelter },
-        { TargetID.VoidMelter1, TrashVoidMelter },
-        { TargetID.VoidMelter2, TrashVoidMelter },
+        { TargetID.VoidMelterOW1, TrashVoidMelter },
+        { TargetID.VoidMelterOW2, TrashVoidMelter },
         { TargetID.VoidGiant, TrashVoidGiant },
-        { TargetID.VoidGiant2, TrashVoidGiant },
+        { TargetID.VoidGiantOW, TrashVoidGiant },
         { TargetID.ZhaitansReach, TrashZhaitansReach },
         { TargetID.VoidAbomination, TrashVoidAbomination },
-        { TargetID.VoidAbomination2, TrashVoidAbomination },
+        { TargetID.VoidAbominationOW, TrashVoidAbomination },
         { TargetID.VoidColdsteel, TrashVoidColdsteel },
-        { TargetID.VoidColdsteel2, TrashVoidColdsteel },
-        { TargetID.VoidColdsteel3, TrashVoidColdsteel },
+        { TargetID.VoidColdsteelOW1, TrashVoidColdsteel },
+        { TargetID.VoidColdsteelOW2, TrashVoidColdsteel },
         { TargetID.VoidTangler, TrashVoidTangler },
-        { TargetID.VoidTangler2, TrashVoidTangler },
+        { TargetID.VoidTanglerOW, TrashVoidTangler },
         { TargetID.VoidObliterator, TrashVoidObliterator },
-        { TargetID.VoidObliterator2, TrashVoidObliterator },
+        { TargetID.VoidObliteratorOW, TrashVoidObliterator },
         { TargetID.VoidGoliath, TrashVoidGoliath },
         { TargetID.VoidBrandbomber, TrashVoidBrandbomber },
         { TargetID.VoidSkullpiercer, TrashVoidSkullpiercer },
         { TargetID.VoidTimeCaster, TrashVoidTimeCaster },
-        { TargetID.VoidTimeCaster2, TrashVoidTimeCaster },
+        { TargetID.VoidTimeCasterOW, TrashVoidTimeCaster },
         { TargetID.GravityBall, TrashGravityBall },
         { TargetID.JormagMovingFrostBeam, NoImage },
         { TargetID.JormagMovingFrostBeamNorth, NoImage },
         { TargetID.JormagMovingFrostBeamCenter, NoImage },
-        { TargetID.VoidThornheart1, TrashVoidThornheart },
-        { TargetID.VoidThornheart2, TrashVoidThornheart },
-        { TargetID.VoidBrandfang1, TrashVoidBrandfang },
-        { TargetID.VoidBrandfang2, TrashVoidBrandfang },
-        { TargetID.VoidBrandbeast, TrashVoidBrandbeast },
-        { TargetID.VoidBrandscale1, TrashVoidBrandscale },
-        { TargetID.VoidBrandscale2, TrashVoidBrandscale },
-        { TargetID.VoidFrostwing, TrashVoidFrostwing },
+        { TargetID.VoidThornheartOW1, TrashVoidThornheart },
+        { TargetID.VoidThornheartOW2, TrashVoidThornheart },
+        { TargetID.VoidBrandfangOW1, TrashVoidBrandfang },
+        { TargetID.VoidBrandfangOW2, TrashVoidBrandfang },
+        { TargetID.VoidBrandbeastOW, TrashVoidBrandbeast },
+        { TargetID.VoidBrandscaleOW1, TrashVoidBrandscale },
+        { TargetID.VoidBrandscaleOW2, TrashVoidBrandscale },
+        { TargetID.VoidFrostwingOW, TrashVoidFrostwing },
         //{ TargetID.CastleFountain, TrashCastleFountain },
         { TargetID.HauntingStatue, TrashHauntingStatue },
         { TargetID.GreenKnight, TrashRGBKnight },
@@ -1225,7 +1233,7 @@ internal static class ParserIcons
         { TargetID.BlueKnight, TrashRGBKnight },
         { TargetID.CloneArtsariiv, TrashCloneArtsariiv },
         { TargetID.MaiTrinRaidDuringEcho, TrashMaiTrinStrikeDuringEcho },
-        { TargetID.SooWonTail, TrashSooWonTail },
+        { TargetID.SooWonTailOW, TrashSooWonTail },
         { TargetID.TheEnforcer, TrashTheEnforcer },
         { TargetID.TheEnforcerCM, TrashTheEnforcer },
         { TargetID.TheMechRider, TrashTheMechRider },
@@ -1491,6 +1499,7 @@ internal static class ParserIcons
         { MinionID.JuvenileSpinegazer, MinionJuvenileSpinegazer },
         { MinionID.JuvenileWarclaw, MinionJuvenileWarclaw },
         { MinionID.JuvenileJanthiriBee, MinionJuvenileJanthiriBee },
+        { MinionID.JuvenileRaptorSwiftwing, MinionJuvenileRaptorSwiftwing },
         { MinionID.BloodFiend, MinionBloodFiend },
         { MinionID.BoneFiend, MinionBoneFiend },
         { MinionID.FleshGolem, MinionFleshGolem },

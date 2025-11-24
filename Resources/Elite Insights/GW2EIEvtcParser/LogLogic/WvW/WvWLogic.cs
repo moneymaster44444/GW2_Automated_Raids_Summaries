@@ -2,6 +2,7 @@
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
+using GW2EIGW2API;
 using static GW2EIEvtcParser.LogLogic.LogCategories;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -45,10 +46,10 @@ internal class WvWLogic : LogLogic
                 {
                     return new List<HealthDamageEvent>();
                 }
-                return log.FindActor(a).GetDamageEvents(null, log); //TODO(Rennorb) @perf
+                return log.FindActor(a).GetDamageEvents(null, log); //TODO_PERF(Rennorb)
             }).UsingChecker((x, log) => x.HasKilled && (x.To.Type == AgentItem.AgentType.NonSquadPlayer || x.To.IsSpecies(TargetID.WorldVersusWorld))),
             new EnemyDamageMechanic(new MechanicPlotlySetting(Symbols.TriangleDown, Colors.Red), "Kllng.Blw.Enemy", "Killing Blows inflicted enemy Players by Squad Players", "Killing Blows received by enemies", 0, (log, a) => {
-                return log.FindActor(a).GetDamageTakenEvents(null, log); //TODO(Rennorb) @perf
+                return log.FindActor(a).GetDamageTakenEvents(null, log); //TODO_PERF(Rennorb)
             }).UsingChecker((x, log) => x.HasKilled && x.CreditedFrom.Type == AgentItem.AgentType.Player),
         ]));
     }
@@ -134,14 +135,14 @@ internal class WvWLogic : LogLogic
         }
         return crMap;
     }
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
-        MapIDEvent? mapID = combatData.GetMapIDEvents().LastOrDefault();
-        if (mapID == null)
+        MapIDEvent? mapEvent = combatData.GetMapIDEvents().LastOrDefault();
+        if (mapEvent == null)
         {
             return _defaultName;
         }
-        switch (mapID.MapID)
+        switch (mapEvent.MapID)
         {
             case EternalBattleground:
                 LogCategoryInformation.SubCategory = SubLogCategory.EternalBattlegrounds;
@@ -237,6 +238,13 @@ internal class WvWLogic : LogLogic
                 }
                 //Icon = InstanceIconEternalBattlegrounds;
                 return (_detailed ? "Detailed " : "") + "Isle of Reflection";
+            default:
+                var map = apiController.GetAPIMap(mapEvent.MapID);
+                if (map != null)
+                {
+                    return (_detailed ? "Detailed " : "") + map.Name;
+                }
+                break;
         }
         return _defaultName;
     }

@@ -10,6 +10,7 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
+using GW2EIGW2API;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -523,7 +524,7 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
         return (dagda.GetHealth(combatData) > 56e6) ? LogData.LogMode.CM : LogData.LogMode.Normal;
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Cosmic Observatory";
     }
@@ -546,12 +547,9 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
                     {
                         playerCounter++;
                         IReadOnlyDictionary<long, BuffGraph> bgms = player.GetBuffGraphs(log);
-                        if (bgms != null && bgms.TryGetValue(AchievementEligibilityPrecisionAnxiety, out var bgm))
+                        if (player.HasBuff(log, AchievementEligibilityPrecisionAnxiety, encounterPhase.End - ServerDelayConstant))
                         {
-                            if (bgm.Values.Any(x => x.Value == 1))
-                            {
-                                buffCounter++;
-                            }
+                            buffCounter++;
                         }
                         IReadOnlyList<DeadEvent> deaths = log.CombatData.GetDeadEvents(player.AgentItem);
                         if (deaths.Count == 0)
@@ -560,9 +558,9 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
                         }
                     }
                 }
-                if (buffCounter == playerCounter && aliveCounter == playerCounter)
+                if (playerCounter == 10 && buffCounter == playerCounter && aliveCounter == playerCounter)
                 {
-                    instanceBuffs.MaybeAdd(GetOnPlayerCustomInstanceBuff(log, encounterPhase, AchievementEligibilityPrecisionAnxiety));
+                    instanceBuffs.Add(new(log.Buffs.BuffsByIDs[AchievementEligibilityPrecisionAnxiety], 1, encounterPhase));
                 }
             }
         }

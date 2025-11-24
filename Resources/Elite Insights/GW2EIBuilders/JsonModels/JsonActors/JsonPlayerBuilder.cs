@@ -27,7 +27,17 @@ internal static class JsonPlayerBuilder
         IReadOnlyList<PhaseData> phases = log.LogData.GetPhases(log);
         //
         jsonPlayer.Account = player.Account;
-        jsonPlayer.Weapons = player.GetWeaponSets(log).ToArray();
+        var weaponSets = player.GetWeaponSets(log);
+        jsonPlayer.Weapons = weaponSets[^1].ToArray().Weapons;
+        jsonPlayer.WeaponSets = weaponSets.Select(x =>
+        {
+            var (Weapons, Timeframe) = x.ToArray();
+            return new JsonWeaponSet()
+            {
+                Weapons = Weapons,
+                Timeframe = Timeframe,
+            };
+        }).ToList();
         jsonPlayer.Group = player.Group;
         jsonPlayer.Profession = player.Spec.ToString();
         jsonPlayer.FriendlyNPC = player is NPC;
@@ -94,6 +104,7 @@ internal static class JsonPlayerBuilder
                 targetDamageDistList[i] = JsonDamageDistBuilder.BuildJsonDamageDistList(
                     player.GetJustActorDamageEvents(target, log, phase.Start, phase.End).GroupBy(x => x.SkillID).ToDictionary(x => x.Key, x => x.ToList()),
                     player.GetJustActorBreakbarDamageEvents(target, log, phase.Start, phase.End).GroupBy(x => x.SkillID).ToDictionary(x => x.Key, x => x.ToList()),
+                    player.GetOffensiveStats(target, log, phase.Start, phase.End).DownContributionPerSkillID,
                     log,
                     skillMap,
                     buffMap
@@ -119,11 +130,11 @@ internal static class JsonPlayerBuilder
             IReadOnlyDictionary<long, BuffGraph> buffGraphs = player.GetBuffGraphs(log);
             if (buffGraphs.TryGetValue(SkillIDs.NumberOfClones, out var states))
             {
-                jsonPlayer.ActiveClones = JsonBuffsUptimeBuilder.GetBuffStates(states).ToList();
+                jsonPlayer.ActiveClones = JsonBuffsUptimeBuilder.GetBuffStates(states);
             }
             if (buffGraphs.TryGetValue(SkillIDs.NumberOfRangerPets, out states))
             {
-                jsonPlayer.ActiveRangerPets = JsonBuffsUptimeBuilder.GetBuffStates(states).ToList();
+                jsonPlayer.ActiveRangerPets = JsonBuffsUptimeBuilder.GetBuffStates(states);
             }
         }
         jsonPlayer.TargetDamageDist = targetDamageDist;
@@ -162,7 +173,7 @@ internal static class JsonPlayerBuilder
         jsonPlayer.OffGroupBuffVolumesActive = GetPlayerBuffOutgoingVolumes(phases.Select(phase => player.GetActiveBuffVolumes(BuffEnum.OffGroup, log, phase.Start, phase.End)).ToList(), log, buffMap);
         jsonPlayer.SquadBuffVolumesActive = GetPlayerBuffOutgoingVolumes(phases.Select(phase => player.GetActiveBuffVolumes(BuffEnum.Squad, log, phase.Start, phase.End)).ToList(), log, buffMap);
         //
-        IReadOnlyList<Consumable> consumables = player.GetConsumablesList(log, log.LogData.LogStart, log.LogData.LogEnd);
+        IReadOnlyList<Consumable> consumables = player.GetConsumablesList(log);
         if (consumables.Count > 0)
         {
             var consumablesJSON = new List<JsonConsumable>(consumables.Count);
@@ -198,7 +209,7 @@ internal static class JsonPlayerBuilder
         return jsonPlayer;
     }
 
-    //TODO(Rennorb) @perf
+    //TODO_PERF(Rennorb)
     private static List<JsonPlayerBuffsGeneration>? GetPlayerBuffGenerations(List<IReadOnlyDictionary<long, BuffStatistics>> buffs, ParsedEvtcLog log, Dictionary<long, Buff> buffMap)
     {
         IReadOnlyList<PhaseData> phases = log.LogData.GetPhases(log);
@@ -270,7 +281,7 @@ internal static class JsonPlayerBuilder
                     data.Add(value);
                 }
             }
-            if (buff.Classification == Buff.BuffClassification.Other && profEnums.Contains(buff.Source))
+            if (buff.Classification == Buff.BuffClassification.Other && profEnums.Intersect(buff.Sources).Any())
             {
                 if (player.GetBuffDistribution(log, phases[0].Start, phases[0].End).GetUptime(pair.Key) > 0)
                 {
@@ -292,7 +303,7 @@ internal static class JsonPlayerBuilder
         return res;
     }
 
-    //TODO(Rennorb) @perf
+    //TODO_PERF(Rennorb)
     private static List<JsonPlayerBuffOutgoingVolumes>? GetPlayerBuffOutgoingVolumes(List<IReadOnlyDictionary<long, BuffVolumeStatistics>> buffVolumes, ParsedEvtcLog log, Dictionary<long, Buff> buffMap)
     {
         IReadOnlyList<PhaseData> phases = log.LogData.GetPhases(log);
@@ -364,7 +375,7 @@ internal static class JsonPlayerBuilder
                     data.Add(value);
                 }
             }
-            if (buff.Classification == Buff.BuffClassification.Other && profEnums.Contains(buff.Source))
+            if (buff.Classification == Buff.BuffClassification.Other && profEnums.Intersect(buff.Sources).Any())
             {
                 if (player.GetBuffDistribution(log, phases[0].Start, phases[0].End).GetUptime(pair.Key) > 0)
                 {

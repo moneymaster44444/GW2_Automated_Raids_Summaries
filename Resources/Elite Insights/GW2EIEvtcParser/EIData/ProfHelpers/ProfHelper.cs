@@ -166,7 +166,7 @@ internal static class ProfHelper
         //    return effects != null && effects.Any(x => x.Time > evt.Time);
         //}).UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new EffectCastFinder(RelicOfTheWizardsTower, EffectGUIDs.RelicWhiteCircle)
-            .UsingSecondaryEffectChecker(EffectGUIDs.RelicOfTheWizardsTower)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.RelicOfTheWizardsTower)
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new EffectCastFinder(RelicOfTheTwinGenerals, EffectGUIDs.RelicOfTheTwinGenerals)
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
@@ -179,10 +179,10 @@ internal static class ProfHelper
             })
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new EffectCastFinder(RelicOfTheBeehive, EffectGUIDs.RelicWhiteCircle)
-            .UsingSecondaryEffectChecker(EffectGUIDs.RelicOfTheBeehive1, 1000, ServerDelayConstant)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.RelicOfTheBeehive1, 1000)
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new EffectCastFinder(RelicOfMountBalrior, EffectGUIDs.RelicOfMountBalrior1)
-            .UsingSecondaryEffectChecker(EffectGUIDs.RelicOfMountBalrior2)
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.RelicOfMountBalrior2)
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new EffectCastFinder(RelicOfTheHolosmith, EffectGUIDs.RelicOfTheHolosmith)
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
@@ -230,7 +230,7 @@ internal static class ProfHelper
         new EffectCastFinderByDst(SkyscaleSkill, EffectGUIDs.SkyscaleLaunch),
         new EffectCastFinder(SkyscaleFireballSkill, EffectGUIDs.SkyscaleFireball),
         new EffectCastFinder(SkyscaleBlastSkill, EffectGUIDs.SkyscaleBlast1)
-            .UsingSecondaryEffectChecker(EffectGUIDs.SkyscaleBlast2),
+            .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.SkyscaleBlast2),
     ];
 
     internal static void AttachMasterToGadgetByCastData(CombatData combatData, IReadOnlyCollection<AgentItem> gadgets, IReadOnlyList<long> castIDS, long castEndThreshold)
@@ -642,8 +642,11 @@ internal static class ProfHelper
                 break;
             case Spec.Soulbeast:
             case Spec.Untamed:
+                RangerHelper.ComputeProfessionCombatReplayActors(player, log, replay);
+                break;
             case Spec.Galeshot:
                 RangerHelper.ComputeProfessionCombatReplayActors(player, log, replay);
+                GaleshotHelper.ComputeProfessionCombatReplayActors(player, log, replay);
                 break;
             // Revenant
             case Spec.Revenant:
@@ -670,6 +673,7 @@ internal static class ProfHelper
                 break;
             case Spec.Antiquary:
                 ThiefHelper.ComputeProfessionCombatReplayActors(player, log, replay);
+                AntiquaryHelper.ComputeProfessionCombatReplayActors(player, log, replay);
                 break;
             // Warrior
             case Spec.Warrior:
@@ -688,10 +692,10 @@ internal static class ProfHelper
     }
 
     #if DEBUG_EFFECTS
-    internal static void DEBUG_ComputeProfessionCombatReplayActors(AbstractPlayer p, ParsedEvtcLog log, CombatReplay replay)
+    internal static void DEBUG_ComputeProfessionCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        var knownEffects = new HashSet<long>();
-        CombatReplay.DebugEffects(p, log, replay, knownEffects);
+        var knownEffects = new HashSet<GUID>();
+        CombatReplay.DebugEffects(p, log, replay.Decorations, knownEffects);
     }
     #endif
 
@@ -796,7 +800,7 @@ internal static class ProfHelper
             var phantasmalForceStatus = minion.GetBuffStatus(log, PhantasmalForce).Where(x => x.Value > 0);
             replay.Decorations.AddRotatedOverheadIconsWithValueAsText(phantasmalForceStatus, minion, TraitImages.PhantasmalForce_Mistrust, 90, 15);
         }
-        if (NecromancerHelper.IsUndeadMinion(minion.AgentItem))
+        if (NecromancerHelper.IsUndeadMinion(minion.AgentItem) || RitualistHelper.IsSpiritMinion(minion.AgentItem))
         {
             AddOffensiveBoonsDecorations(minion, master, log, replay);
         }

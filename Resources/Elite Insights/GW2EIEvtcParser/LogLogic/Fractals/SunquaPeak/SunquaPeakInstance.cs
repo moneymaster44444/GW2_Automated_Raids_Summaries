@@ -10,6 +10,7 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SpeciesIDs;
 using static GW2EIEvtcParser.SkillIDs;
+using GW2EIGW2API;
 
 namespace GW2EIEvtcParser.LogLogic;
 internal class SunquaPeakInstance : SunquaPeak
@@ -27,7 +28,7 @@ internal class SunquaPeakInstance : SunquaPeak
         MechanicList.Add(_aiKeeperOfThePeak.Mechanics);
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Sunqua Peak Fractal";
     }
@@ -55,7 +56,7 @@ internal class SunquaPeakInstance : SunquaPeak
         }
     }
 
-    private int HandleSingleAiPhases(List<EncounterPhaseData> encounterPhases, PhaseData mainPhase, IReadOnlyList<SingleActor> ais, SingleActor ai, ParsedEvtcLog log, List<PhaseData> phases, TargetID aiID, int offset)
+    private int HandleSingleAiPhase(List<EncounterPhaseData> encounterPhases, PhaseData mainPhase, IReadOnlyList<SingleActor> ais, SingleActor ai, ParsedEvtcLog log, List<PhaseData> phases, TargetID aiID, int offset)
     {
         offset++;
         bool dark = aiID == TargetID.DarkAiKeeperOfThePeak;
@@ -92,7 +93,7 @@ internal class SunquaPeakInstance : SunquaPeak
         return offset;
     }
 
-    private int HandleFullAiPhases(List<EncounterPhaseData> encounterPhases, PhaseData mainPhase, IReadOnlyList<SingleActor> ais, SingleActor elementalAi, SingleActor darkAi, ParsedEvtcLog log, List<PhaseData> phases, int offset)
+    private int HandleFullAiPhase(List<EncounterPhaseData> encounterPhases, PhaseData mainPhase, IReadOnlyList<SingleActor> ais, SingleActor elementalAi, SingleActor darkAi, ParsedEvtcLog log, List<PhaseData> phases, int offset)
     {
         offset++;
         long start = elementalAi.FirstAware;
@@ -128,49 +129,57 @@ internal class SunquaPeakInstance : SunquaPeak
         return offset;
     }
 
-    private List<EncounterPhaseData> HandleAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases, TargetID aiID)
+    private List<EncounterPhaseData> HandleSingleAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases, TargetID aiID)
     {
-        var encounterPhases = new List<EncounterPhaseData>();
+        var singlePhases = new List<EncounterPhaseData>();
         var mainPhase = phases[0];
         if (targetsByIDs.TryGetValue((int)aiID, out var ais))
         {
             var nonEnglobedAis = ais.Where(x => !x.AgentItem.IsEnglobedAgent).ToList();
             bool dark = aiID == TargetID.DarkAiKeeperOfThePeak;
-            if (!dark)
-            {
-                int fullOffset = 0;
-                var englobedElAis = ais.Where(x => x.AgentItem.IsEnglobedAgent).ToList();
-                if (englobedElAis.Count > 0 && targetsByIDs.TryGetValue((int)TargetID.DarkAiKeeperOfThePeak, out var darkAis))
-                {
-                    var englobedDarkAis = darkAis.Where(x => x.AgentItem.IsEnglobedAgent);
-                    foreach (var elementalAi in englobedElAis)
-                    {
-                        var darkAi = englobedDarkAis.FirstOrDefault(x => x.EnglobingAgentItem == elementalAi.EnglobingAgentItem);
-                        if (darkAi != null)
-                        {
-                            fullOffset = HandleFullAiPhases(encounterPhases, mainPhase, englobedElAis, elementalAi, darkAi, log, phases, fullOffset);
-                        }
-                    }
-                }
-            }
             int offset = 0;
             foreach (var ai in nonEnglobedAis)
             {
-                offset = HandleSingleAiPhases(encounterPhases, mainPhase, nonEnglobedAis, ai, log, phases, aiID, offset);       
+                offset = HandleSingleAiPhase(singlePhases, mainPhase, nonEnglobedAis, ai, log, phases, aiID, offset);       
             }
         }
-        NumericallyRenameEncounterPhases(encounterPhases);
-        return encounterPhases;
+        NumericallyRenameEncounterPhases(singlePhases);
+        return singlePhases;
     }
 
-    private List<EncounterPhaseData> HandleFullAndElementalAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
+
+    private List<EncounterPhaseData> HandleFullAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
     {
-        return HandleAiPhases(targetsByIDs, log, phases, TargetID.AiKeeperOfThePeak);
+        var fullPhases = new List<EncounterPhaseData>();
+        var mainPhase = phases[0];
+        if (targetsByIDs.TryGetValue((int)TargetID.AiKeeperOfThePeak, out var ais))
+        {
+            int fullOffset = 0;
+            var englobedElAis = ais.Where(x => x.AgentItem.IsEnglobedAgent).ToList();
+            if (englobedElAis.Count > 0 && targetsByIDs.TryGetValue((int)TargetID.DarkAiKeeperOfThePeak, out var darkAis))
+            {
+                var englobedDarkAis = darkAis.Where(x => x.AgentItem.IsEnglobedAgent);
+                foreach (var elementalAi in englobedElAis)
+                {
+                    var darkAi = englobedDarkAis.FirstOrDefault(x => x.AgentItem.Is(elementalAi.AgentItem));
+                    if (darkAi != null)
+                    {
+                        fullOffset = HandleFullAiPhase(fullPhases, mainPhase, englobedElAis, elementalAi, darkAi, log, phases, fullOffset);
+                    }
+                }
+            }
+        }
+        NumericallyRenameEncounterPhases(fullPhases);
+        return fullPhases;
+    }
+    private List<EncounterPhaseData> HandleElementalAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
+    {
+        return HandleSingleAiPhases(targetsByIDs, log, phases, TargetID.AiKeeperOfThePeak);
     }
 
     private List<EncounterPhaseData> HandleDarkAiPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
     {
-        return HandleAiPhases(targetsByIDs, log, phases, TargetID.DarkAiKeeperOfThePeak);
+        return HandleSingleAiPhases(targetsByIDs, log, phases, TargetID.DarkAiKeeperOfThePeak);
     }
 
     internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
@@ -179,31 +188,30 @@ internal class SunquaPeakInstance : SunquaPeak
         var china = log.CombatData.GetLanguageEvent()?.Language == LanguageEvent.LanguageEnum.Chinese;
         var targetsByIDs = Targets.GroupBy(x => x.ID).ToDictionary(x => x.Key, x => x.ToList());
         {
-            var fullOrElementalAiPhases = HandleFullAndElementalAiPhases(targetsByIDs, log, phases);
-            foreach (var fullOrElementalAiPhase in fullOrElementalAiPhases)
+            var fullAiPhases = HandleFullAiPhases(targetsByIDs, log, phases);
+            foreach (var fullAiPhase in fullAiPhases)
             {
-                if (fullOrElementalAiPhase.LogID == (_aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.FullAiMask))
                 {
-                    var fullAiPhase = fullOrElementalAiPhase;
-                    {
-                        var darkAi = fullAiPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.DarkAiKeeperOfThePeak));
-                        var darkAiPhase = AiKeeperOfThePeak.GetFightPhase(log, darkAi, fullAiPhase, "Dark Phase");
-                        phases.Add(darkAiPhase);
-                        phases.AddRange(AiKeeperOfThePeak.ComputeDarkPhases(log, darkAi, darkAiPhase, china, requirePhases));
-                    }
-                    {
-                        var elementalAi = fullAiPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.AiKeeperOfThePeak));
-                        var elementalAiPhase = AiKeeperOfThePeak.GetFightPhase(log, elementalAi, fullAiPhase, "Elemental Phase");
-                        phases.Add(elementalAiPhase);
-                        phases.AddRange(AiKeeperOfThePeak.ComputeElementalPhases(log, elementalAi, elementalAiPhase, requirePhases));
-                    }
-                } 
-                else
+                    var darkAi = fullAiPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.DarkAiKeeperOfThePeak));
+                    var darkAiPhase = AiKeeperOfThePeak.GetFightPhase(log, darkAi, fullAiPhase, "Dark Phase");
+                    phases.Add(darkAiPhase);
+                    phases.AddRange(AiKeeperOfThePeak.ComputeDarkPhases(log, darkAi, darkAiPhase, china, requirePhases));
+                }
                 {
-                    var elementalAiPhase = fullOrElementalAiPhase;
-                    var elementalAi = elementalAiPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.AiKeeperOfThePeak));
+                    var elementalAi = fullAiPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.AiKeeperOfThePeak));
+                    var elementalAiPhase = AiKeeperOfThePeak.GetFightPhase(log, elementalAi, fullAiPhase, "Elemental Phase");
+                    phases.Add(elementalAiPhase);
                     phases.AddRange(AiKeeperOfThePeak.ComputeElementalPhases(log, elementalAi, elementalAiPhase, requirePhases));
                 }
+            }
+        }
+        {
+            var elementalAiPhases = HandleElementalAiPhases(targetsByIDs, log, phases);
+            foreach (var elementalAiPhase in elementalAiPhases)
+            {
+                var elementalAi = elementalAiPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.AiKeeperOfThePeak));
+                phases.AddRange(AiKeeperOfThePeak.ComputeElementalPhases(log, elementalAi, elementalAiPhase, requirePhases));
+
             }
         }
         {
@@ -260,9 +268,9 @@ internal class SunquaPeakInstance : SunquaPeak
         return _aiKeeperOfThePeak.SpecialBuffEventProcess(combatData, skillData);
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
-        return _aiKeeperOfThePeak.SpecialCastEventProcess(combatData, skillData);
+        return _aiKeeperOfThePeak.SpecialCastEventProcess(combatData, agentData, skillData);
     }
 
     internal override List<HealthDamageEvent> SpecialDamageEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)

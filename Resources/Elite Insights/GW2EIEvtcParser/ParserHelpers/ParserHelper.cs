@@ -196,6 +196,10 @@ public static class ParserHelper
     {
         return state != StateChange.Unknown && state != StateChange.ReplInfo && state != StateChange.StatReset && state != StateChange.APIDelayed && state != StateChange.Idle && state != StateChange.AgentChange;
     }
+    internal static bool IsSupportedStateChangeForInstanceLogs(StateChange state)
+    {
+        return state != StateChange.BuffInitial;
+    }
 
     /*
     public static string UppercaseFirst(string s)
@@ -491,25 +495,25 @@ public static class ParserHelper
     public static IReadOnlyDictionary<BuffAttribute, string> BuffAttributesStrings { get; private set; } = new Dictionary<BuffAttribute, string>()
     {
         { BuffAttribute.Power, "Power" },
-        { BuffAttribute.PowerSidekick, "Power" },
+        { BuffAttribute.PowerSidekick, "Power (converted)" },
         { BuffAttribute.Precision, "Precision" },
-        { BuffAttribute.PrecisionSidekick, "Precision" },
+        { BuffAttribute.PrecisionSidekick, "Precision (converted)" },
         { BuffAttribute.Toughness, "Toughness" },
-        { BuffAttribute.ToughnessSidekick, "Toughness" },
+        { BuffAttribute.ToughnessSidekick, "Toughness (converted)" },
         { BuffAttribute.DefensePercent, "Defense" },
         { BuffAttribute.Vitality, "Vitality" },
-        { BuffAttribute.VitalitySidekick, "Vitality" },
+        { BuffAttribute.VitalitySidekick, "Vitality (converted)" },
         { BuffAttribute.VitalityPercent, "Vitality" },
         { BuffAttribute.Ferocity, "Ferocity" },
-        { BuffAttribute.FerocitySidekick, "Ferocity" },
+        { BuffAttribute.FerocitySidekick, "Ferocity (converted)" },
         { BuffAttribute.Healing, "Healing Power" },
-        { BuffAttribute.HealingSidekick, "Healing Power" },
+        { BuffAttribute.HealingSidekick, "Healing Power (converted)" },
         { BuffAttribute.Condition, "Condition Damage" },
-        { BuffAttribute.ConditionSidekick, "Condition Damage" },
+        { BuffAttribute.ConditionSidekick, "Condition Damage (converted)" },
         { BuffAttribute.Concentration, "Concentration" },
-        { BuffAttribute.ConcentrationSidekick, "Concentration" },
+        { BuffAttribute.ConcentrationSidekick, "Concentration (converted)" },
         { BuffAttribute.Expertise, "Expertise" },
-        { BuffAttribute.ExpertiseSidekick, "Expertise" },
+        { BuffAttribute.ExpertiseSidekick, "Expertise (converted)" },
         { BuffAttribute.AllStatsPercent, "All Stats" },
         { BuffAttribute.FishingPower, "Fishing Power" },
         { BuffAttribute.Armor, "Armor" },
@@ -542,6 +546,7 @@ public static class ParserHelper
         { BuffAttribute.HealingEffectivenessIncomingMultiplicative, "Incoming Healing Effectiveness (Mult)" },
         { BuffAttribute.HealingEffectivenessConvOutgoing, "Outgoing Healing Effectiveness" },
         { BuffAttribute.HealingEffectivenessOutgoingAdditive, "Outgoing Healing Effectiveness" },
+        { BuffAttribute.HealingEffectivenessOutgoingAdditive2, "Outgoing Healing Effectiveness" },
         { BuffAttribute.HealingOutputFormula, "Healing Formula" },
         { BuffAttribute.ExperienceFromKills, "Experience From Kills" },
         { BuffAttribute.ExperienceFromAll, "Experience From All" },
@@ -582,6 +587,7 @@ public static class ParserHelper
         { BuffAttribute.SiphonIncomingAdditive2, "%" },
         { BuffAttribute.HealingEffectivenessConvOutgoing , "%" },
         { BuffAttribute.HealingEffectivenessOutgoingAdditive , "%" },
+        { BuffAttribute.HealingEffectivenessOutgoingAdditive2 , "%" },
         { BuffAttribute.ExperienceFromKills, "%" },
         { BuffAttribute.ExperienceFromAll, "%" },
         { BuffAttribute.GoldFind, "%" },
