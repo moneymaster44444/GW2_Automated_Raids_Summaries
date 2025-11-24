@@ -55,8 +55,24 @@ if not "%EC%"=="0" (
   exit /b %EC%
 )
 
+REM -- Create \Resources\Config\Secrets\discord_webhook.txt file
+set "SECRETS_DIR=%ROOT%Resources\Config\Secrets"
+set "WEBHOOK_FILE=%SECRETS_DIR%\discord_webhook.txt"
+
+REM Ensure secrets directory exists
+if not exist "%SECRETS_DIR%" mkdir "%SECRETS_DIR%"
+
+REM Create blank webhook file only if it does not already exist
+if not exist "%WEBHOOK_FILE%" (
+    echo Creating blank discord_webhook.txt
+    type nul > "%WEBHOOK_FILE%"
+) else (
+    echo discord_webhook.txt already exists - leaving unchanged
+)
+
 echo.
 echo Generated:
 echo   %REAL_EI%
 echo   %REAL_COMB%
+if exist "%WEBHOOK_FILE%" echo   %WEBHOOK_FILE%
 exit /b 0
