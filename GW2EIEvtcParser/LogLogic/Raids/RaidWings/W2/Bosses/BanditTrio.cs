@@ -4,6 +4,7 @@ using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
+using GW2EIGW2API;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -237,7 +238,7 @@ internal class BanditTrio : SalvationPass
         SingleActor zane = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Zane)) ?? throw new MissingKeyActorsException("Zane not found");
         SingleActor narella = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Narella)) ?? throw new MissingKeyActorsException("Narella not found");
         phases[0].AddTargets(Targets, log);
-        ComputePhases(log, berg, zane, narella, (EncounterPhaseData)phases[0], requirePhases);
+        phases.AddRange(ComputePhases(log, berg, zane, narella, (EncounterPhaseData)phases[0], requirePhases));
         return phases;
     }
 
@@ -270,7 +271,7 @@ internal class BanditTrio : SalvationPass
         ];
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Bandit Trio";
     }

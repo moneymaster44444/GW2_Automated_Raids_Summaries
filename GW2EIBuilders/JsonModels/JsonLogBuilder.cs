@@ -120,7 +120,7 @@ internal static class JsonLogBuilder
         return damageModDesc;
     }
 
-    public static JsonLog BuildJsonLog(ParsedEvtcLog log, RawFormatSettings settings, Version parserVersion, string[] uploadLinks)
+    public static JsonLog BuildJsonLog(ParsedEvtcLog log, RawFormatSettings settings, Version parserVersion, UploadResults uploadLinks)
     {
         var jsonLog = new JsonLog();
         //
@@ -178,7 +178,7 @@ internal static class JsonLogBuilder
         jsonLog.Success = log.LogData.Success;
         jsonLog.Targetless = log.LogData.Logic.Targetless;
         jsonLog.GW2Build = log.LogMetadata.GW2Build;
-        jsonLog.UploadLinks = uploadLinks;
+        jsonLog.UploadLinks = [uploadLinks.DPSReportEILink];
         jsonLog.Language = log.LogMetadata.Language;
         jsonLog.LanguageID = (byte)log.LogMetadata.LanguageID;
         jsonLog.FractalScale = log.CombatData.GetFractalScaleEvent() != null ? log.CombatData.GetFractalScaleEvent()!.Scale : 0;
@@ -188,19 +188,19 @@ internal static class JsonLogBuilder
         jsonLog.MissingPreEvent = log.LogData.MissingPreEvent;
         jsonLog.Anonymous = log.ParserSettings.AnonymousPlayers;
         jsonLog.DetailedWvW = log.ParserSettings.DetailedWvWParse && log.LogData.Logic.ParseMode == LogLogic.ParseModeEnum.WvW;
-        var personalBuffs = new Dictionary<string, HashSet<long>>(20); //TODO(Rennorb) @perf
-        var personalDamageMods = new Dictionary<string, HashSet<long>>(20); //TODO(Rennorb) @perf
-        var skillMap = new Dictionary<long, SkillItem>(200); //TODO(Rennorb) @perf
-        var skillDescs = new Dictionary<string, SkillDesc>(200); //TODO(Rennorb) @perf
-        var buffMap = new Dictionary<long, Buff>(100); //TODO(Rennorb) @perf
-        var buffDescs = new Dictionary<string, BuffDesc>(100); //TODO(Rennorb) @perf
-        var damageModMap = new Dictionary<int, DamageModifier>(50); //TODO(Rennorb) @perf
-        var damageModDesc = new Dictionary<string, DamageModDesc>(50); //TODO(Rennorb) @perf
+        var personalBuffs = new Dictionary<string, HashSet<long>>(20); //TODO_PERF(Rennorb)
+        var personalDamageMods = new Dictionary<string, HashSet<long>>(20); //TODO_PERF(Rennorb)
+        var skillMap = new Dictionary<long, SkillItem>(200); //TODO_PERF(Rennorb)
+        var skillDescs = new Dictionary<string, SkillDesc>(200); //TODO_PERF(Rennorb)
+        var buffMap = new Dictionary<long, Buff>(100); //TODO_PERF(Rennorb)
+        var buffDescs = new Dictionary<string, BuffDesc>(100); //TODO_PERF(Rennorb)
+        var damageModMap = new Dictionary<int, DamageModifier>(50); //TODO_PERF(Rennorb)
+        var damageModDesc = new Dictionary<string, DamageModDesc>(50); //TODO_PERF(Rennorb)
 
         var instanceBuffs = log.LogData.Logic.GetInstanceBuffs(log);
         if (instanceBuffs.Any())
         {
-            var presentFractalInstabilities = new List<long>(3); //TODO(Rennorb) @perf
+            var presentFractalInstabilities = new List<long>(3);
             var presentInstanceBuffs = new List<IReadOnlyList<long>>(instanceBuffs.Count);
             foreach (var instanceBuff in instanceBuffs)
             {
@@ -209,7 +209,7 @@ internal static class JsonLogBuilder
                 {
                     buffMap[buff.ID] = buff;
                 }
-                if (buff.Source == ParserHelper.Source.FractalInstability)
+                if (buff.Sources.Contains(ParserHelper.Source.FractalInstability))
                 {
                     presentFractalInstabilities.Add(buff.ID);
                 }

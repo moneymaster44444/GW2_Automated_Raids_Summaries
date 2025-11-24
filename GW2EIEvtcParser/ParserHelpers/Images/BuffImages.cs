@@ -456,6 +456,7 @@ public static class BuffImages
     #region Guardian
     // Spear
     public const string Illuminated = "https://render.guildwars2.com/file/0A200D7371125E9E9ADE1FA9F71C5528AFC5A5DE/3379001.png";
+    public const string RadiantForge = "https://render.guildwars2.com/file/C64AE4AF57E83451F763B80C125410773909730A/3680147.png";
     public const string RadiantArmamentsHammer = "https://render.guildwars2.com/file/4ECA0C916F5D54C3C12AC135AB5A1E2D4BC792E5/3680142.png";
     public const string RadiantArmamentsStaff = "https://render.guildwars2.com/file/06BD9362B2F9FAE403181D0F9BE96A12664C22CA/3680148.png";
     public const string RadiantArmamentsSword = "https://render.guildwars2.com/file/79B0DCC5E4A0A8BBE04AC0024D01A0F36D0B0C79/3680151.png";
@@ -491,9 +492,17 @@ public static class BuffImages
     public const string FormOfTheMonk = "https://render.guildwars2.com/file/43E1C29C447FFFFE067DB83CE53E099D3C091D2A/3680048.png";
     public const string FormOfTheAssassin = "https://render.guildwars2.com/file/FA48DB2E91CC6C964B3B774C36B2CC6F12CA3205/3680045.png";
     public const string FormOfTheWarrior = "https://render.guildwars2.com/file/08D392BC0416E0B9409A0CBFB7DA6E1ED80CDE30/3680049.png";
+    public const string CosmicWisdom = "https://render.guildwars2.com/file/5DA12A719EBDBFA95C7F416BAC7101D035DEBC22/3680202.png";
     #endregion
     #region Thief
     public const string ExhilaratingEphemera = "https://render.guildwars2.com/file/CE22E9489B9754A65A750A2F07351222FDCAA17B/3680053.png";
+    public const string ScoundrelsLuck = "https://render.guildwars2.com/file/6F4E6201D89B35DDAD47EDEC453C51B70DFA409F/3680052.png";
+    public const string ProdigiousPincher = "https://render.guildwars2.com/file/092ED8ABB495EFD759DA0BE64D1C285A21076D15/3680054.png";
+    public const string CombatHigh = "https://render.guildwars2.com/file/394C98BFA71163D6DCB75F2294CD2B56B8126BC7/3680055.png";
+    public const string CanachCoinTossHead = "https://i.imgur.com/2m630qZ.png";
+    public const string CanachCoinTossTail = "https://i.imgur.com/lxeruPM.png";
+    public const string CanachCoinTossBackfiredHead = "https://i.imgur.com/l7SjOSw.png";
+    public const string CanachCoinTossBackfiredTail = "https://i.imgur.com/0VuijTx.png";
     #endregion
     #region Warrior
     #endregion

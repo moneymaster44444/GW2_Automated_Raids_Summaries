@@ -2,6 +2,7 @@
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
+using GW2EIGW2API;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogCategories;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
@@ -39,7 +40,7 @@ internal class UnknownInstanceLogic : UnknownEncounterLogic
         };
         foreach (TargetID targetID in allTargetIDs)
         {
-            //TODO(Rennorb) @perf: invert this iteration?  make the agentData the outer loop and then just test the enum for isDefined?
+            //TODO_PERF(Rennorb): invert this iteration?  make the agentData the outer loop and then just test the enum for isDefined?
             if (agentData.GetNPCsByID(targetID).Any())
             {
                 if (blackList.Contains(targetID) || !maxHPUpdates.TryGetValue((int)targetID, out var maxHPs) || !maxHPs.Any(x => MaxHealthUpdateEvent.GetMaxHealth(x) > 5e5))
@@ -117,6 +118,20 @@ internal class UnknownInstanceLogic : UnknownEncounterLogic
             }
         }
         return base.AdjustLogic(agentData, combatData, parserSettings);
+    }
+
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
+    {
+        var mapIDEvent = combatData.GetMapIDEvents().FirstOrDefault();
+        if (mapIDEvent != null)
+        {
+            var map = apiController.GetAPIMap(mapIDEvent.MapID);
+            if (map != null)
+            {
+                return map.Name;
+            }
+        }
+        return base.GetLogicName(combatData, agentData, apiController);
     }
 
     internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)

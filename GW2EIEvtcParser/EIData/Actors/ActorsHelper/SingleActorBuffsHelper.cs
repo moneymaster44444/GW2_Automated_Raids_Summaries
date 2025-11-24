@@ -16,7 +16,7 @@ partial class SingleActor
     private Dictionary<long, BuffGraph>? _buffGraphs;
     private Dictionary<AgentItem, Dictionary<long, BuffGraph>>? _buffGraphsPerAgent;
     private CachingCollection<BuffDistribution>? _buffDistribution;
-    private CachingCollection<IReadOnlyDictionary<long, long>>? _buffPresence;
+    private CachingCollectionWithTarget<IReadOnlyDictionary<long, long>>? _buffPresenceBy;
     private CachingCollectionCustom<BuffEnum, (Dictionary<long, BuffStatistics> Buffs, Dictionary<long, BuffStatistics> ActiveBuffs)>? _buffStats;
     private CachingCollectionCustom<BuffEnum, (Dictionary<long, BuffVolumeStatistics> Volumes, Dictionary<long, BuffVolumeStatistics> ActiveVolumes)>? _buffVolumes;
     private CachingCollection<(Dictionary<long, BuffByActorStatistics> Rates, Dictionary<long, BuffByActorStatistics> ActiveRates)>? _buffsDictionary;
@@ -320,7 +320,7 @@ partial class SingleActor
 
     private BuffDistribution ComputeBuffDistribution(ParsedEvtcLog log, Dictionary<long, AbstractBuffSimulator> buffSimulators, long start, long end)
     {
-        var res = new BuffDistribution(buffSimulators.Count, 8); //TODO(Rennorb) @perf: find capacity dependencies
+        var res = new BuffDistribution(buffSimulators.Count, 8); //TODO_PERF(Rennorb) @find capacity dependencies
         foreach (var (buff, simulator) in buffSimulators)
         {
             foreach (BuffSimulationItem simul in GetBuffGenerationSimulationItems(log, simulator, start, end))
@@ -343,37 +343,61 @@ partial class SingleActor
     }
     #endregion DISTRIBUTION
     #region PRESENCE
-    public IReadOnlyDictionary<long, long> GetBuffPresence(ParsedEvtcLog log, long start, long end)
+    /// <summary>
+    /// Returns a dictionnary of <BuffID, PresenceValue> for given interval by provided actor
+    /// This dictionary will only container buff ids for intensity stacking buffs
+    /// </summary>
+    /// <param name="log"></param>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <param name="by"></param>
+    /// <returns>dictionnary of <BuffID, PresenceValue></returns>
+    public IReadOnlyDictionary<long, long> GetBuffPresence(ParsedEvtcLog log, long start, long end, SingleActor? by = null)
     {
 
         SimulateBuffsAndComputeGraphs(log);
 
-        if (!_buffPresence.TryGetValue(start, end, out var value))
+        if (!_buffPresenceBy.TryGetValue(start, end, by, out var value))
         {
-            if (AgentItem.IsEnglobedAgent)
+            if (by != null && by.AgentItem.IsEnglobedAgent)
             {
-                value = log.FindActor(EnglobingAgentItem).GetBuffPresence(log, Math.Max(start, FirstAware), Math.Min(end, LastAware));
+                var byActor = log.FindActor(by.AgentItem.EnglobingAgentItem);
+                if (AgentItem.IsEnglobedAgent)
+                {
+                    value = log.FindActor(EnglobingAgentItem).GetBuffPresence(log, Math.Max(start, Math.Max(FirstAware, by.FirstAware)), Math.Min(end, Math.Min(LastAware, by.LastAware)), byActor);
+                } 
+                else
+                {
+                    value = ComputeBuffPresence(log, _buffSimulators, Math.Max(start, by.FirstAware), Math.Min(end, by.LastAware), byActor);
+                }
+            }
+            else if (AgentItem.IsEnglobedAgent)
+            {
+                value = log.FindActor(EnglobingAgentItem).GetBuffPresence(log, Math.Max(start, FirstAware), Math.Min(end, LastAware), by);
             }
             else
             {
-                value = ComputeBuffPresence(log, _buffSimulators, start, end);
+                value = ComputeBuffPresence(log, _buffSimulators, start, end, by);
             }
-            _buffPresence.Set(start, end, value);
+            _buffPresenceBy.Set(start, end, by, value);
         }
         return value;
     }
 
-    private Dictionary<long, long> ComputeBuffPresence(ParsedEvtcLog log, Dictionary<long, AbstractBuffSimulator> buffSimulators, long start, long end)
+    private Dictionary<long, long> ComputeBuffPresence(ParsedEvtcLog log, Dictionary<long, AbstractBuffSimulator> buffSimulators, long start, long end, SingleActor? by)
     {
         var buffPresence = new Dictionary<long, long>(buffSimulators.Count);
         foreach (var (buff, simulator) in buffSimulators)
         {
-            foreach (BuffSimulationItem simul in GetBuffGenerationSimulationItems(log, simulator, start, end))
+            if (simulator.Buff.Type == BuffType.Intensity)
             {
-                long duration = simul.GetClampedDuration(start, end);
-                if (duration != 0)
+                foreach (BuffSimulationItem simul in GetBuffGenerationSimulationItems(log, simulator, start, end))
                 {
-                    buffPresence.IncrementValue(buff, duration);
+                    long duration = by != null ? simul.GetClampedDuration(start, end, by) : simul.GetClampedDuration(start, end);
+                    if (duration != 0)
+                    {
+                        buffPresence.IncrementValue(buff, duration);
+                    }
                 }
             }
         }
@@ -440,7 +464,7 @@ partial class SingleActor
     public IReadOnlyDictionary<long, BuffGraph> GetBuffGraphs(ParsedEvtcLog log, SingleActor by)
     {
         SimulateBuffsAndComputeGraphs(log);
-        _buffGraphsPerAgent ??= new(8); //TODO(Rennorb) @perf: find capacity dependencies
+        _buffGraphsPerAgent ??= new(8); //TODO_PERF(Rennorb) @find capacity dependencies
         AgentItem agent = by.AgentItem;
         if (!_buffGraphsPerAgent.TryGetValue(agent, out var result))
         {
@@ -639,7 +663,7 @@ partial class SingleActor
     /// <exception cref="InvalidOperationException"></exception>
     public List<Segment> GetBuffStatus(ParsedEvtcLog log, long[] buffIDs, long start, long end)
     {
-        //TODO(Rennorb) @perf
+        //TODO_PERF(Rennorb)
         var result = new List<Segment>();
         foreach (long id in buffIDs)
         {
@@ -814,14 +838,12 @@ partial class SingleActor
         BuffDistribution buffDistribution = GetBuffDistribution(log, start, end);
         var rates = new Dictionary<long, BuffByActorStatistics>();
         var ratesActive = new Dictionary<long, BuffByActorStatistics>();
-        long duration = end - start;
-        long activeDuration = GetActiveDuration(log, start, end);
 
         foreach (Buff buff in GetTrackedBuffs(log))
         {
             if (buffDistribution.HasBuffID(buff.ID))
             {
-                (rates[buff.ID], ratesActive[buff.ID]) = BuffByActorStatistics.GetBuffByActor(log, buff, buffDistribution, duration, activeDuration);
+                (rates[buff.ID], ratesActive[buff.ID]) = BuffByActorStatistics.GetBuffByActor(log, buff, this, start, end, buffDistribution);
             }
         }
         return (rates, ratesActive);
@@ -900,7 +922,7 @@ partial class SingleActor
 
     [MemberNotNull(nameof(_buffGraphs))]
     [MemberNotNull(nameof(_buffDistribution))]
-    [MemberNotNull(nameof(_buffPresence))]
+    [MemberNotNull(nameof(_buffPresenceBy))]
     [MemberNotNull(nameof(_buffSimulators))]
     internal void SimulateBuffsAndComputeGraphs(ParsedEvtcLog log)
     {
@@ -915,7 +937,7 @@ partial class SingleActor
             log.FindActor(EnglobingAgentItem).SimulateBuffsAndComputeGraphs(log);
             _buffGraphs = new Dictionary<long, BuffGraph>();
             _buffDistribution = new CachingCollection<BuffDistribution>(log);
-            _buffPresence = new CachingCollection<IReadOnlyDictionary<long, long>>(log);
+            _buffPresenceBy = new CachingCollectionWithTarget<IReadOnlyDictionary<long, long>>(log);
             _buffSimulators = new Dictionary<long, AbstractBuffSimulator>();
             return;
         }
@@ -936,7 +958,7 @@ partial class SingleActor
 
         // Init status
         _buffDistribution = new(log);
-        _buffPresence     = new(log);
+        _buffPresenceBy   = new(log);
         _buffSimulators   = new(trackedBuffs.Count * 2);
         var buffStackItemPool = new BuffStackItemPool();
         foreach (Buff buff in trackedBuffs)
@@ -1044,11 +1066,16 @@ partial class SingleActor
     #region CONSUMABLES
     public IReadOnlyList<Consumable> GetConsumablesList(ParsedEvtcLog log, long start, long end)
     {
+        return GetConsumablesList(log).Where(x => x.Time >= start && x.Time <= end).ToList();
+    }
+
+    public IReadOnlyList<Consumable> GetConsumablesList(ParsedEvtcLog log)
+    {
         if (_consumeList == null)
         {
             SetConsumablesList(log);
         }
-        return _consumeList.Where(x => x.Time >= start && x.Time <= end).ToList();
+        return _consumeList;
     }
 
     [MemberNotNull((nameof(_consumeList)))]
@@ -1066,14 +1093,10 @@ partial class SingleActor
                 {
                     continue;
                 }
-                long time = 0;
-                if (!ba.Initial)
-                {
-                    time = ba.Time;
-                }
+                long time = ba.Time;
                 if (time <= log.LogData.LogEnd)
                 {
-                    Consumable? existing = _consumeList.Find(x => x.Time == time && x.Buff.ID == consumable.ID);
+                    Consumable? existing = _consumeList.Find(x => Math.Abs(x.Time - time) < ServerDelayConstant && x.Buff.ID == consumable.ID);
                     if (existing != null)
                     {
                         existing.Stack++;

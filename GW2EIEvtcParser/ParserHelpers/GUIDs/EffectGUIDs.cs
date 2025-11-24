@@ -174,14 +174,25 @@ public static class EffectGUIDs
     public static readonly GUID HarbingerDoomApproaches = new("88C0010F0B7148469B88E2A1B4500DCC");
     public static readonly GUID HarbingerVitalDrawSelfDst = new("667EAEE89766E14E883E6ECA5D3D267B"); // Target self
     public static readonly GUID HarbingerVitalDrawAoE = new("859611F71893924989B056F6A011C160"); // Ground effect
+    public static readonly GUID RitualistSummonSpirits = new("0BC4AABB74F2AC43963CBB7B52993559"); // Around dst = src
+    public static readonly GUID RitualistInnervateAnguish1 = new("98E9E5F26FF76F449A181654E4F39695");
+    public static readonly GUID RitualistInnervateAnguish2 = new("A170A1C61CD09742A79848D143749003");
+    public static readonly GUID RitualistInnervateWanderlust1 = new("BEFD0FD6AC4AE24096590DCDC655F16C");
+    public static readonly GUID RitualistInnervateWanderlust2 = new("A8FA2AFABB3FC840893E441F47693524");
+    public static readonly GUID RitualistInnervatePreservation1 = new("81146A66FCE3A342B00D4D2EB2A7643E");
+    public static readonly GUID RitualistInnervatePreservation2 = new("9F62B1407B5E2A45B068967C0F176315");
     #endregion
 
     #region Elementalist
     public static readonly GUID ElementalistArmorOfEarth1 = new("D43DC34DEF81B746BC130F7A0393AAC7");
-    public static readonly GUID ElementalistArmorOfEarth2 = new("D0C072102FAA6A4EA8A16CB73F3B96DD"); // happens at the same time as the other, could be relevant to check should collisions appear
-    //public static readonly GUID ElementalistCleansingFire              = new("5FA6527231BB8041AC783396142C6200"); // also used with mesmer the prestige, collides with some air traits
+    public static readonly GUID ElementalistArmorOfEarth2 = new("D0C072102FAA6A4EA8A16CB73F3B96DD"); // happens at the same time as the other, collides with Fire Shield and gaining Fire Aura
+    public static readonly GUID ElementalistCleansingFire1 = new("BFFE3477ECFA26458D69E93EE76EFF6B");
+    public static readonly GUID ElementalistCleansingFire2 = new("61F5669F9FAC1F48B47635C9F3833CEF");
+    public static readonly GUID ElementalistCleansingFire3 = new("ABF2332D28C7D6449A5B822E5714ADA4"); // Reused on mesmer Mantra of Resolve / Power Cleanse
+    public static readonly GUID ElementalistCleansingFire4 = new("5FA6527231BB8041AC783396142C6200"); // Also used with mesmer the prestige, collides with some air traits, mesmer and necromancer
+    // public static readonly GUID ElementalistFireShield = new("D0C072102FAA6A4EA8A16CB73F3B96DD"); // Conflicts with Armor of Earth and Fire Aura
     public static readonly GUID ElementalistSignetOfAir = new("30A96C0E559DBD489FEE36DA96CC374A");
-    //public static readonly GUID ElementalistLightningFlash             = new("40818C8E9CC6EF4388C2821FCC26A9EC"); // Conflicts with certain field combos, thief teleport skills, guardian judges/merciful intervention
+    // public static readonly GUID ElementalistLightningFlash = new("40818C8E9CC6EF4388C2821FCC26A9EC"); // Conflicts with certain field combos, thief teleport skills, guardian judges/merciful intervention
     public static readonly GUID ElementalistMeteorShowerCircle = new("0F42F49776A5F74E8A0CADC4BCF53904");
     public static readonly GUID ElementalistMeteorShowerMeteor = new("F3DD685A8E52124A9FCC653C90EA789A");
     public static readonly GUID ElementalistStaticFieldStaff = new("1ED1C9E57048CF419AFB9C31329FF51E");
@@ -235,6 +246,10 @@ public static class EffectGUIDs
     public static readonly GUID CatalystDeployEarthJadeSphere = new("A674D3E7BC0C4342BC7A4EF0EE8FF8F0");
     public static readonly GUID EvokerOttersCompassion1 = new("A30DE35C04E1454EB3B0DCC0BCF9BD9A");
     public static readonly GUID EvokerOttersCompassion2 = new("6507424A0B7C384A9C6DB125E4724854");
+    public static readonly GUID EvokerHaresAgility1 = new("CA9899BBDAC8C348B9011250945C9A7B");
+    public static readonly GUID EvokerHaresAgility2 = new("FF3DE8D09A6FE846B24A7CDFACB8078C");
+    public static readonly GUID EvokerHaresAgility3 = new("49D88C81A3FD384A854186A78B0B4615");
+    public static readonly GUID EvokerHaresAgility4 = new("227B4A35A1AB6E459DA5E1FA42786B2D");
     #endregion
 
     #region Warrior
@@ -281,6 +296,7 @@ public static class EffectGUIDs
     public static readonly GUID RenegadeRazorclawsRage = new("71B04F91F9B3DF4A8954059FCFAD630E");
     public static readonly GUID RenegadeDarkrazorsDaring = new("C8FDB04E59C1034CABEFBECE470AA1BC");
     public static readonly GUID RenegadeIcerazorsIre = new("E725FC2FD486A84EBEAC403DB4DA30DE");
+    public static readonly GUID ConduitFormOfTheDervishScythe = new("B0CF6359EBF9BF4EB94E1A2A347E5ECD"); // Duration 1166, can be around Dst and Ground
     #endregion
 
     #region Guardian
@@ -351,6 +367,12 @@ public static class EffectGUIDs
     public static readonly GUID DragonhunterFragmentsOfFaith = new("C84644DDAA59E542989FDB98CD69134C");
     public static readonly GUID DragonhunterHuntersWardCage = new("F70A6157503537478331C8F82C0AB76E");
     public static readonly GUID DragonhunterSymbolOfEnergy = new("8493CB203B40E04BAE5DC6F141B40743");
+    public static readonly GUID LuminaryRadiantJustice1 = new("FB78801BB31CAF488B55F2F57EF9B070");
+    public static readonly GUID LuminaryRadiantJustice2 = new("7535B4CB815232418B69092F3390A7AB");
+    public static readonly GUID LuminaryRadiantResolve1 = new("4A83F0B627B75C47894941C4D35BA89F");
+    public static readonly GUID LuminaryRadiantResolve2 = new("FBA4C4F041E78748AC1CA5FF5D37D2DA");
+    public static readonly GUID LuminaryRadiantCourage1 = new("03850757F14FD44A9998D4CAD71CC589");
+    public static readonly GUID LuminaryRadiantCourage2 = new("08E6D231507CDD458EDECF67D264228C");
     #endregion
 
     #region Engineer
@@ -384,6 +406,10 @@ public static class EffectGUIDs
     public static readonly GUID MechanistShiftSignet1 = new("E1C1DD7F866B4149A1BADD216C9AA69D"); // happens twice, without owner at destination, with owner at origin?
     public static readonly GUID MechanistShiftSignet2 = new("DB22850AE209B34BBD11372F56D42D43");
     public static readonly GUID MechanistOverclockSignet = new("734834E7EB7CD74EB129ACBCE5C64C1D");
+    public static readonly GUID AmalgamDefensiveProtocolCleanse1 = new("F2FB8A03178A2B43B82E0113F20DF932"); // 1s duration
+    public static readonly GUID AmalgamDefensiveProtocolCleanse2 = new("ADBBEC856C76A94C85E688B6687E625E"); // Audio effect, might be POV only
+    public static readonly GUID AmalgamSymbioticShielding1 = new("842F977C318FDC4F96C99C385C1D0672"); // 1s duration
+    public static readonly GUID AmalgamSymbioticShielding2 = new("3CEE0C49EDF847489C66B898D8B828A5"); // Audio effect, might be POV only
     #endregion
 
     #region Ranger
@@ -421,6 +447,7 @@ public static class EffectGUIDs
     public static readonly GUID UntamedEnvelopingHaze = new("F2B1B61970FC59418AC049BF3A07FFD4");
     public static readonly GUID GaleshotSummonCycloneBow = new("C1F1E386CC1E0B448435269DBBFB34D7"); // Duration 2333 - IsAroundDst
     public static readonly GUID GaleshotDismissCycloneBow = new("9242D10B4F04274EB6E9EBCDB2262181"); // Duration 0 - IsAroundDst
+    public static readonly GUID GaleshotMistral = new("CA7B7C8E95211940AB47CDBC13586A65"); // Duration 6000
     #endregion
 
     #region Thief
@@ -460,6 +487,13 @@ public static class EffectGUIDs
     public static readonly GUID SpecterWellOfSorrow3 = new("1B56F702912BE7428182CA57036AEE99"); // ~1240ms delay
     public static readonly GUID SpecterShadowfall1 = new("FB21A6E213C240459BD8E9524088FA66");
     public static readonly GUID SpecterShadowfall2 = new("D8E380E80E843A4092C8DD53C5A51F0F"); // ~880ms delay
+    public static readonly GUID AntiquarySkrittScuffle = new("4AD741FD431EBD42B88D26173DA0234A"); // 15000 duration, has end time
+    public static readonly GUID AntiquaryUnstableSkrittBomb1 = new("F0A23BA5903B91409D3940AD3335DEF1"); // 3800 duration - ground effect
+    public static readonly GUID AntiquaryUnstableSkrittBomb2 = new("CBB8CA160E3DCC419317DD54FDDF679A"); // 0 duration - around dst = src
+    public static readonly GUID AntiquaryChakShield1 = new("1B48B91A5B0EC540BEA2765583412CBC"); // Duration 4000
+    public static readonly GUID AntiquaryChakShield2 = new("ABF301D245327B4D80C3C058FA1CFB35"); // Duration 0 - dst agent
+    public static readonly GUID AntiquaryChakShield3 = new("F011BC77BB1D4D40BDE0C0788F51224B"); // Duration 3000
+    public static readonly GUID AntiquaryChakShield4 = new("EE180AE86C6D314E90A6E35D6C9BA5C6"); // Duration 5500
     #endregion
 
     #region Fractals
@@ -937,8 +971,8 @@ public static class EffectGUIDs
     public static readonly GUID HarvestTemplePurificationOrbSpawns = new("4F982CD060507C44A25844BF0ADFCB54");
     public static readonly GUID HarvestTempleVoidPoolOrbGettingReadyToBeDangerous = new("D11320204E28E643A48469AA8E4845BA");
     public static readonly GUID HarvestTempleInfluenceOfTheVoidPool = new("912F68E45158C14E9A30D6011B7B0C7F");
-    public static readonly GUID HarvestTempleSooWonClaw = new("CB877C57D1423240BACDF8D6B52A440F");
-    public static readonly GUID HarvestTempleSooWonVoidOrbs1 = new("F6964A4DE51DF04CA7E0F011BEE7D854"); // 2080 duration - these are the orbs spawning just before the claw swipe
+    public static readonly GUID HarvestTempleSooWonClawSlap = new("CB877C57D1423240BACDF8D6B52A440F");
+    public static readonly GUID HarvestTempleSooWonClawSlapOrbs = new("F6964A4DE51DF04CA7E0F011BEE7D854"); // 2080 duration - these are the orbs spawning just before the claw swipe
     public static readonly GUID HarvestTempleSooWonVoidOrbs2 = new("88E9C3112BF6DA4486845A0433782E9C"); // 2080 duration - these are the orbs spawning just before the claw swipe
     public static readonly GUID HarvestTempleTormentOfTheVoidClawIndicator = new("3F24896D3EF8D5459B399DAC8D0AD150"); // AoE indicator for bouncing orbs after Soo-Won's Claw Slap attack
     public static readonly GUID HarvestTempleScalableOrangeAoE = new("C1A523D71A841048897211B1020B8D95"); // Generic orange aoe - variable radius - variable duration
@@ -946,8 +980,8 @@ public static class EffectGUIDs
     public static readonly GUID HarvestTempleTsunami1 = new("8F96447526A09B4F8545CBEA1B0046D4"); // There are multiple effects when the Tsunami goes off
     public static readonly GUID HarvestTempleTsunami2 = new("C2CF236673BC0141B6EE5A918869728A"); // There are multiple effects when the Tsunami goes off
     public static readonly GUID HarvestTempleTsunami3 = new("E4700E828E058649B9B94F170DEF8659"); // There are multiple effects when the Tsunami goes off
-    public static readonly GUID HarvestTempleSooWonTsunamiSlamIndicator = new("0D594F550B0BF043B0B299FC26A8463B");
-    public static readonly GUID HarvestTempleTailSlamIndicator = new("49BD7FF8309E4047B4D17C83E660A461");
+    public static readonly GUID HarvestTempleSooWonTsunamiSlamClawIndicator = new("0D594F550B0BF043B0B299FC26A8463B");
+    public static readonly GUID HarvestTempleTsunamiSlamTailIndicator = new("49BD7FF8309E4047B4D17C83E660A461");
     public static readonly GUID HarvestTempleVoidBrandbomberBrandedArtillery = new("3ED61C8A1C2E594A8AD2E2E69AF16322"); // duration 2310
     public static readonly GUID HarvestTempleVoidExplosion = new("A478BD35F568974091FC99670B5A9700"); // Last Laugh AoE - Same effect for all sizes - 2050 duration
     public static readonly GUID HarvestTempleVoidStormseerIceSpike = new("2B9395E6BDE51E4C90AD3A9CA78FBCE7"); // duration 5000

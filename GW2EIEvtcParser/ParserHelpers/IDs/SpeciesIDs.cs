@@ -56,6 +56,7 @@ public static class SpeciesIDs
         Slubling3 = 16077,
         Slubling4 = 16104,
         PoisonMushroom = SpeciesIDs.PoisonMushroom,
+        PlayerSlubling = SpeciesIDs.PlayerSlubling,
         // - Bandit Trio
         Berg = 16088,
         Zane = 16137,
@@ -90,7 +91,7 @@ public static class SpeciesIDs
         IcePatch = 16139,
         Storm = 16108,
         Tornado = 16068,
-        MatthiasSacrificeCrystal = MatthiasSacrifice,
+        MatthiasSacrificeCrystal = SpeciesIDs.MatthiasSacrificeCrystal,
         // - Wing 3
         // - Escort
         McLeodTheSilent = 16253,
@@ -485,6 +486,7 @@ public static class SpeciesIDs
         TheDragonVoidSooWon = SpeciesIDs.TheDragonVoidSooWon,
         TheDragonVoidPrimordus = SpeciesIDs.TheDragonVoidPrimordus,
         TheDragonVoidMordremoth = SpeciesIDs.TheDragonVoidMordremoth,
+        TheDragonVoidUnknown = SpeciesIDs.TheDragonVoidUnknown,
         PushableVoidAmalgamate = SpeciesIDs.PushableVoidAmalgamate,
         VoidAmalgamate = 24375,
         KillableVoidAmalgamate = 23956,
@@ -500,8 +502,8 @@ public static class SpeciesIDs
         VoidTimeCaster = 25025,
         VoidBrandbomber = 24783,
         VoidBurster = 24464,
-        VoidWarforged1 = 24129,
-        VoidWarforged2 = 24855,
+        VoidWarforgedElite = 24129,
+        VoidWarforgedVeteran = 24855,
         VoidStormseer = 24677,
         VoidMelter = 24223,
         VoidGoliath = 24761,
@@ -660,46 +662,46 @@ public static class SpeciesIDs
         #region OPEN WORLD
         // Soo Won OW
         SooWonOW = 35552, // Gadget
-        SooWonTail = 51756,
-        VoidGiant2 = 24310,
-        VoidTimeCaster2 = 24586,
-        VoidBrandstalker = 24951,
-        VoidColdsteel2 = 23791,
-        VoidObliterator2 = 24947,
-        VoidAbomination2 = 23886,
-        VoidBomber = 24714,
-        VoidBrandbeast = 23917,
-        VoidBrandcharger1 = 24936,
-        VoidBrandcharger2 = 24039,
-        VoidBrandfang1 = 24912,
-        VoidBrandfang2 = 24772,
-        VoidBrandscale1 = 24053,
-        VoidBrandscale2 = 24426,
-        VoidColdsteel3 = 24063,
-        VoidCorpseknitter1 = 24756,
-        VoidCorpseknitter2 = 24607,
-        VoidDespoiler1 = 23874,
-        VoidDespoiler2 = 25179,
-        VoidFiend1 = 23707,
-        VoidFiend2 = 24737,
-        VoidFoulmaw = 24766,
-        VoidFrostwing = 24780,
-        VoidGlacier1 = 23753,
-        VoidGlacier2 = 24235,
-        VoidInfested1 = 24390,
-        VoidInfested2 = 24997,
-        VoidMelter1 = 24497,
-        VoidMelter2 = 24807,
-        VoidRimewolf1 = 24698,
-        VoidRimewolf2 = 23798,
-        VoidRotspinner1 = 25057,
-        VoidStorm = 24007,
-        VoidStormseer2 = 24419,
-        VoidStormseer3 = 23962,
-        VoidTangler2 = 23567,
-        VoidThornheart1 = 24406,
-        VoidThornheart2 = 23688,
-        VoidWorm = 23701,
+        SooWonTailOW = 51756,
+        VoidGiantOW = 24310,
+        VoidTimeCasterOW = 24586,
+        VoidBrandstalkerOW = 24951,
+        VoidColdsteelOW1 = 23791,
+        VoidObliteratorOW = 24947,
+        VoidAbominationOW = 23886,
+        VoidBomberOW = 24714,
+        VoidBrandbeastOW = 23917,
+        VoidBrandchargerOW1 = 24936,
+        VoidBrandchargerOW2 = 24039,
+        VoidBrandfangOW1 = 24912,
+        VoidBrandfangOW2 = 24772,
+        VoidBrandscaleOW1 = 24053,
+        VoidBrandscaleOW2 = 24426,
+        VoidColdsteelOW2 = 24063,
+        VoidCorpseknitterOW1 = 24756,
+        VoidCorpseknitterOW2 = 24607,
+        VoidDespoilerOW1 = 23874,
+        VoidDespoilerOW2 = 25179,
+        VoidFiendOW1 = 23707,
+        VoidFiendOW2 = 24737,
+        VoidFoulmawOW = 24766,
+        VoidFrostwingOW = 24780,
+        VoidGlacierOW1 = 23753,
+        VoidGlacierOW2 = 24235,
+        VoidInfestedOW1 = 24390,
+        VoidInfestedOW2 = 24997,
+        VoidMelterOW1 = 24497,
+        VoidMelterOW2 = 24807,
+        VoidRimewolfOW1 = 24698,
+        VoidRimewolfOW2 = 23798,
+        VoidRotspinnerOW1 = 25057,
+        VoidStormOW = 24007,
+        VoidStormseerOW1 = 24419,
+        VoidStormseerOW2 = 23962,
+        VoidTanglerOW = 23567,
+        VoidThornheartOW1 = 24406,
+        VoidThornheartOW2 = 23688,
+        VoidWormOW = 23701,
         #endregion OPEN WORLD
 
         #region STORY
@@ -917,6 +919,7 @@ public static class SpeciesIDs
         JuvenileSpinegazer = 26220,
         JuvenileWarclaw = 26628,
         JuvenileJanthiriBee = 26851,
+        JuvenileRaptorSwiftwing = 27259,
         // Guardian Weapon Summons
         BowOfTruth = 6383,
         HammerOfWisdom = 5791,
@@ -978,7 +981,7 @@ public static class SpeciesIDs
         // Antiquary
         KryptisTurret = SpeciesIDs.KryptisTurret,
         HoloDancer = SpeciesIDs.HoloDancer,
-        SkrittThievesGuild = 27026, // TODO Find this ID
+        SkrittThievesGuild = 27026,
         // Elementalist Summons
         LesserAirElemental = 8711,
         LesserEarthElemental = 8712,
@@ -1103,7 +1106,7 @@ public static class SpeciesIDs
     private const int PyreGuardianRetal = -6;
     private const int QadimLamp = -7;
     private const int DarkAiKeeperOfThePeak = -8;
-    private const int MatthiasSacrifice = -9;
+    private const int MatthiasSacrificeCrystal = -9;
     private const int BloodstoneFragment = -10;
     private const int BloodstoneShardMainFight = -11;
     private const int ChargedBloodstone = -12;
@@ -1203,6 +1206,8 @@ public static class SpeciesIDs
     private const int KryptisTurret = -105;
     private const int HoloDancer = -106;
     private const int ParentAiKeeperOfThePeak = -107;
+    private const int PlayerSlubling = -108;
+    private const int TheDragonVoidUnknown = -109;
 
     public const int IgnoredSpecies = int.MinValue;
     public const int NonIdentifiedSpecies = 0;

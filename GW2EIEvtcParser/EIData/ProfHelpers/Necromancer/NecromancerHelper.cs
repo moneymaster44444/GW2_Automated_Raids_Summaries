@@ -96,7 +96,7 @@ internal static class NecromancerHelper
 
         // Death Magic
         // - Necromantic Corruption
-        new DamageLogDamageModifier(Mod_NecromanticCorruption, "Necromantic Corruption", "25% strike damage for minions", DamageSource.PetsOnly, 25.0, DamageType.Strike, DamageType.All, Source.Necromancer, TraitImages.NecromanticCorruption, (x, log) => IsUndeadMinion(x.From), DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_NecromanticCorruption, "Necromantic Corruption", "25% for Minions", DamageSource.PetsOnly, 25.0, DamageType.Strike, DamageType.All, Source.Necromancer, TraitImages.NecromanticCorruption, (x, log) => IsUndeadMinion(x.From), DamageModifierMode.All)
             .UsingEarlyExit((a, log) => !a.GetMinions(log).Any(x => IsUndeadMinion(x.ReferenceAgentItem))),
     ];
 
@@ -110,8 +110,7 @@ internal static class NecromancerHelper
         // - Dark Defiance
         new BuffOnActorDamageModifier(Mod_DarkDefiance, Protection, "Dark Defiance", "-20%", DamageSource.Incoming, -20, DamageType.Condition, DamageType.All, Source.Necromancer, ByPresence, TraitImages.DarkDefiance, DamageModifierMode.All),
         // - Beyond the Veil
-        new BuffOnActorDamageModifier(Mod_BeyondTheVeil, DeathsCarapace, "Beyond the Veil", "-10%", DamageSource.Incoming, -10, DamageType.Condition, DamageType.All, Source.Necromancer, ByPresence, TraitImages.BeyondTheVeil, DamageModifierMode.PvE)
-            .UsingChecker((dl, log) => dl.To.GetBuffStatus(log, DeathsCarapace, dl.Time).Value >= 10)
+        new BuffOnActorDamageModifier(Mod_BeyondTheVeil, DeathsCarapace, "Beyond the Veil", "-10%", DamageSource.Incoming, -10, DamageType.Condition, DamageType.All, Source.Necromancer, new GainComputerByAtLeastNStacksPresent(10), TraitImages.BeyondTheVeil, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.October2019Balance),
     ];
 

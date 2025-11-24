@@ -57,6 +57,7 @@ public abstract class DamageModifier
         }
     }
     internal abstract AgentItem GetFoe(HealthDamageEvent evt);
+    internal abstract AgentItem GetActor(HealthDamageEvent evt);
 
 
     internal List<DamageModifierEvent> ComputeDamageModifier(SingleActor actor, ParsedEvtcLog log)

@@ -175,9 +175,24 @@ public class BuffsContainer
             }
         }
         BuffsByClassification = currentBuffs.GroupBy(x => x.Classification).ToDictionary(x => x.Key, x => (IReadOnlyList<Buff>)x.ToList());
-        BuffsBySource = currentBuffs.GroupBy(x => x.Source).ToDictionary(x => x.Key, x => (IReadOnlyList<Buff>)x.ToList());
+        var buffsBySource = new Dictionary<ParserHelper.Source, List<Buff>>();
+        foreach (var buff in currentBuffs)
+        {
+            foreach (var source in buff.Sources)
+            {
+                if (buffsBySource.TryGetValue(source, out var list))
+                {
+                    list.Add(buff);
+                }
+                else
+                {
+                    buffsBySource[source] = [buff];
+                }
+            }
+        }
+        BuffsBySource = buffsBySource.ToDictionary(x => x.Key, x => (IReadOnlyList<Buff>)x.Value);
         //
-        _buffSourceFinder = GetBuffSourceFinder(combatData, new HashSet<long>(BuffsByClassification[BuffClassification.Boon].Select(x => x.ID)));
+        _buffSourceFinder = GetBuffSourceFinder(combatData, [.. BuffsByClassification[BuffClassification.Boon].Select(x => x.ID)]);
         // Band aid for the stack type situation with fake inactive/infinite durations
         if (combatData.HasStackIDs)
         {
@@ -198,7 +213,7 @@ public class BuffsContainer
                             {
                                 foreach (BuffRemoveSingleEvent remove in removePair)
                                 {
-                                    BuffApplyEvent? apply = applyList.LastOrDefault(x => x.Time <= remove.Time); //TODO(Rennorb) @perf
+                                    BuffApplyEvent? apply = applyList.LastOrDefault(x => x.Time <= remove.Time); //TODO_PERF(Rennorb)
                                     if (apply != null && apply.OriginalAppliedDuration == remove.RemovedDuration)
                                     {
                                         int activeTime = apply.OriginalAppliedDuration - apply.AppliedDuration;

@@ -65,11 +65,12 @@ public sealed class ProgramHelper : IDisposable
 #pragma warning restore CA1823 // Avoid unused private fields
 
     public static readonly string SkillAPICacheLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Content/SkillList.json";
+    public static readonly string MapAPICacheLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Content/MapList.json";
     public static readonly string SpecAPICacheLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Content/SpecList.json";
     public static readonly string TraitAPICacheLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Content/TraitList.json";
     public static readonly string EILogPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Logs/";
 
-    public static readonly GW2APIController APIController = new(SkillAPICacheLocation, SpecAPICacheLocation, TraitAPICacheLocation);
+    public static readonly GW2APIController APIController = new(SkillAPICacheLocation, SpecAPICacheLocation, TraitAPICacheLocation, MapAPICacheLocation);
 
     private CancellationTokenSource? RunningMemoryCheck = null;
 
@@ -425,11 +426,30 @@ public sealed class ProgramHelper : IDisposable
 
         DirectoryInfo saveDirectory = GetSaveDirectory(fInfo);
 
-        string result = log.LogData.Success ? "kill" : "fail";
+        string resultStr;
+        string resultSuffix;
+        if (log.LogData.Success)
+        {
+            if (log.LogData.IsInstance)
+            {
+                resultSuffix = "success";
+                resultStr = "successful";
+            }
+            else
+            {
+                resultSuffix = "kill";
+                resultStr = "killed";
+            }
+        }
+        else
+        {
+            resultSuffix = "fail";
+            resultStr = "failed";
+        }
         string logLengthTerm = Settings.AddDuration ? "_" + (log.LogData.LogDuration / 1000).ToString() + "s" : "";
         string PoVClassTerm = Settings.AddPoVProf && log.LogMetadata.PoV != null ? "_" + log.LogMetadata.PoV.Spec.ToString().ToLower(System.Globalization.CultureInfo.CurrentCulture) : "";
         string fName = Path.GetFileNameWithoutExtension(fInfo.FullName);
-        fName = $"{fName}{PoVClassTerm}_{log.LogData.Logic.Extension}{logLengthTerm}_{result}";
+        fName = $"{fName}{PoVClassTerm}_{log.LogData.Logic.Extension}{logLengthTerm}_{resultSuffix}";
 
         var uploadResults = new UploadResults(uploadStrings[0]);
         operation.OutLocation = saveDirectory.FullName;
@@ -479,7 +499,7 @@ public sealed class ProgramHelper : IDisposable
                 using var _t1 = new AutoTrace("Generate JSON");
                 operation.UpdateProgressWithCancellationCheck("Program: Creating JSON");
                 string outputFile = Path.Combine(saveDirectory.FullName, $"{fName}.json");
-                
+
                 using Stream str = Settings.CompressRaw || log.LogData.IsInstance
                     ? new MemoryStream()
                     : new FileStream(outputFile, FileMode.Create, FileAccess.Write);
@@ -499,6 +519,6 @@ public sealed class ProgramHelper : IDisposable
                 operation.UpdateProgressWithCancellationCheck("Program: JSON created");
             }
         }
-        operation.UpdateProgressWithCancellationCheck($"Completed for {result}ed {log.LogData.Logic.Extension}");
+        operation.UpdateProgressWithCancellationCheck($"Completed for {resultStr} {log.LogData.Logic.Extension}");
     }
 }

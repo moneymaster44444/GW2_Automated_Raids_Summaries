@@ -8,6 +8,7 @@ using static GW2EIEvtcParser.LogLogic.LogLogicUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SpeciesIDs;
+using GW2EIGW2API;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -29,7 +30,7 @@ internal class AetherbladeHideoutInstance : EndOfDragonsRaidEncounter
         return _aetherbladeHideout.GetCombatReplayMap(log);
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Strike Mission: Aetherblade Hideout";
     }
@@ -71,9 +72,9 @@ internal class AetherbladeHideoutInstance : EndOfDragonsRaidEncounter
         return _aetherbladeHideout.SpecialBuffEventProcess(combatData, skillData);
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
     {
-        return _aetherbladeHideout.SpecialCastEventProcess(combatData, skillData);
+        return _aetherbladeHideout.SpecialCastEventProcess(combatData, agentData, skillData);
     }
 
     internal override List<HealthDamageEvent> SpecialDamageEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
@@ -81,7 +82,6 @@ internal class AetherbladeHideoutInstance : EndOfDragonsRaidEncounter
         return _aetherbladeHideout.SpecialDamageEventProcess(combatData, agentData, skillData);
     }
 
-    // TODO: handle duplicates due multiple base method calls in Combat Replay methods
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
         _aetherbladeHideout.ComputeNPCCombatReplayActors(target, log, replay);

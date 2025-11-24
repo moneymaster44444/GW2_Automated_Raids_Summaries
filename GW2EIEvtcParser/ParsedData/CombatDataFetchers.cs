@@ -92,7 +92,7 @@ partial class CombatData
 
     public AttackTargetEvent? GetAttackTargetEventByAttackTarget(AgentItem attackTarget)
     {
-        if (_metaDataEvents.AttackTargetEventByAttackTarget.TryGetValue(attackTarget, out var attackTargetEvent)) 
+        if (_metaDataEvents.AttackTargetEventByAttackTarget.TryGetValue(attackTarget.EnglobingAgentItem, out var attackTargetEvent)) 
         {
             return attackTargetEvent;
         }
@@ -252,9 +252,13 @@ partial class CombatData
         return GetTimeValueOrEmpty(_statusEvents.BarrierUpdateEvents, src);
     }
 
-    public IReadOnlyList<MaxHealthUpdateEvent> GetMaxHealthUpdateEvents(AgentItem src)
+    public IReadOnlyList<MaxHealthUpdateEvent> GetMaxHealthUpdateEventsBySrc(AgentItem src)
     {
         return GetTimeValueOrEmpty(_statusEvents.MaxHealthUpdateEvents, src);
+    }
+    public IReadOnlyList<MaxHealthUpdateEvent> GetMaxHealthUpdateEventsByMaxHP(long maxHP)
+    {
+        return _statusEvents.MaxHealthUpdateEventsByMaxHP.GetValueOrEmpty(maxHP);
     }
     public IReadOnlyList<HealthUpdateEvent> GetHealthUpdateEvents(AgentItem src)
     {
@@ -571,7 +575,7 @@ partial class CombatData
     /// <returns>true on success</returns>
     public bool TryGetEffectEventsByGUIDs(Span<GUID> effects, out List<EffectEvent> effectEvents)
     {
-        //TODO(Rennorb) @perf: fid average complexity
+        //TODO_PERF(Rennorb): find average complexity
         effectEvents = new(effects.Length * 10);
         foreach (var effectGUID in effects)
         {
@@ -695,7 +699,7 @@ partial class CombatData
     /// <returns>true on success</returns>
     public bool TryGetEffectEventsBySrcWithGUIDs(AgentItem agent, ReadOnlySpan<GUID> effects, out List<EffectEvent> effectEvents)
     {
-        //TODO(Rennorb) @perf: find average complexity
+        //TODO_PERF(Rennorb): find average complexity
         effectEvents = new List<EffectEvent>(effects.Length * 10);
         foreach (var effectGUID in effects)
         {
@@ -710,7 +714,7 @@ partial class CombatData
     /// <returns>true on success</returns>
     public bool TryGetEffectEventsByDstWithGUIDs(AgentItem agent, ReadOnlySpan<GUID> effects, out List<EffectEvent> effectEvents)
     {
-        //TODO(Rennorb) @perf: find average complexity
+        //TODO_PERF(Rennorb): find average complexity
         effectEvents = new List<EffectEvent>(effects.Length * 10);
         foreach (var effectGUID in effects)
         {

@@ -246,7 +246,7 @@ internal static class LogLogicUtils
 
     internal static string? AddNameSuffixBasedOnInitialPosition(SingleActor target, IReadOnlyList<CombatItem> combatData, IReadOnlyCollection<(string, Vector2)> positionData, float maxDiff = InchDistanceThreshold)
     {
-        var positionEvts = combatData.Where(x => x.SrcMatchesAgent(target.AgentItem) && x.IsStateChange == StateChange.Position).Take(5);
+        var positionEvts = combatData.Where(x => x.SrcMatchesAgent(target.AgentItem.EnglobingAgentItem) && x.IsStateChange == StateChange.Position).Take(5);
         foreach (var positionEvt in positionEvts)
         {
             var position = MovementEvent.GetPoint3D(positionEvt).XY();
@@ -343,13 +343,13 @@ internal static class LogLogicUtils
     /// <returns>Filtered list with matched <paramref name="startEffects"/>, <paramref name="endEffects"/> and distance between them.</returns>
     internal static List<(EffectEvent endEffect, EffectEvent startEffect, float distance)> MatchEffectToEffect(IEnumerable<EffectEvent> startEffects, IEnumerable<EffectEvent> endEffects)
     {
-        var matchedEffects = new List<(EffectEvent, EffectEvent, float)>(); //TODO(Rennorb) @perf
+        var matchedEffects = new List<(EffectEvent, EffectEvent, float)>(); //TODO_PERF(Rennorb)
         foreach (EffectEvent startEffect in startEffects)
         {
             var candidateEffectEvents = endEffects.Where(x => x.Time > startEffect.Time + 200 && Math.Abs(x.Time - startEffect.Time) < 10000);
             if (candidateEffectEvents.Any())
             {
-                EffectEvent matchedEffect = candidateEffectEvents.MinBy(x => (x.Position - startEffect.Position).LengthSquared()); //TODO(Rennorb) @perf
+                EffectEvent matchedEffect = candidateEffectEvents.MinBy(x => (x.Position - startEffect.Position).LengthSquared()); //TODO_PERF(Rennorb)
                 float minimalDistance = (matchedEffect.Position - startEffect.Position).Length();
                 matchedEffects.Add((matchedEffect, startEffect, minimalDistance));
             }

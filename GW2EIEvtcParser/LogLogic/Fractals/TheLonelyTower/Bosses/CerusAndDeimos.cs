@@ -2,6 +2,7 @@
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
+using GW2EIGW2API;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -36,14 +37,13 @@ internal class CerusAndDeimos : LonelyTower
         return LogData.LogMode.CM;
     }
 
-    internal override string GetLogicName(CombatData combatData, AgentData agentData)
+    internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Cerus and Deimos";
     }
 
     internal override long GetLogOffset(EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData)
     {
-        // TODO: verify this
         long startToUse = base.GetLogOffset(evtcVersion, logData, agentData, combatData);
         if (evtcVersion.Build >= ArcDPSBuilds.NewLogStart)
         {
