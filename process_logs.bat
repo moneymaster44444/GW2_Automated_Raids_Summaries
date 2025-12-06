@@ -39,6 +39,73 @@ set "DISCORD_POSTED=0"
 set "DISCORD_REASON="
 set "DISCORD_POSTED_NAME="
 
+rem ==========================================
+rem First-time setup: ensure configs and EI CLI exist
+rem ==========================================
+
+rem Ensure config files via establish_config_files.bat
+set "NEED_CONFIG_SETUP=0"
+if not exist "%EI_CONF%" set "NEED_CONFIG_SETUP=1"
+if not exist "%COMBINER_INI%" set "NEED_CONFIG_SETUP=1"
+if not exist "%DISCORD_WEBHOOKS_FILE%" set "NEED_CONFIG_SETUP=1"
+
+if "%NEED_CONFIG_SETUP%"=="1" (
+  if exist "%ROOT%establish_config_files.bat" (
+    echo [SETUP] Running establish_config_files.bat to create config files...
+    call "%ROOT%establish_config_files.bat"
+    if errorlevel 1 (
+      echo [ERROR] establish_config_files.bat failed.
+      goto :_fail
+    )
+  ) else (
+    echo [ERROR] establish_config_files.bat not found at:
+    echo         %ROOT%establish_config_files.bat
+    goto :_fail
+  )
+)
+
+rem Re-check required config files after establish_config_files.bat
+if not exist "%EI_CONF%" (
+  echo [ERROR] EliteInsights.conf not found after setup: %EI_CONF%
+  goto :_fail
+)
+if not exist "%COMBINER_INI%" (
+  echo [ERROR] top_stats_config.ini not found after setup: %COMBINER_INI%
+  goto :_fail
+)
+if not exist "%DISCORD_WEBHOOKS_FILE%" (
+  echo [WARN] Discord webhook file not found after setup:
+  echo        %DISCORD_WEBHOOKS_FILE%
+  rem Not fatal, we just skip Discord later, so no goto :_fail here
+)
+
+rem Ensure EI CLI via build_elite_insights.bat (if neither exe exists)
+set "NEED_EI_BUILD=0"
+if not exist "%EI_CLI_DIR%\GuildWars2EliteInsights-CLI.exe" (
+  if not exist "%EI_CLI_DIR%\GW2EIParserCLI.exe" (
+    set "NEED_EI_BUILD=1"
+  )
+)
+
+if "%NEED_EI_BUILD%"=="1" (
+  if exist "%ROOT%build_elite_insights.bat" (
+    echo [SETUP] Running build_elite_insights.bat to build EI CLI...
+    call "%ROOT%build_elite_insights.bat"
+    if errorlevel 1 (
+      echo [ERROR] build_elite_insights.bat failed.
+      goto :_fail
+    )
+  ) else (
+    echo [ERROR] build_elite_insights.bat not found at:
+    echo         %ROOT%build_elite_insights.bat
+    goto :_fail
+  )
+)
+
+rem ==========================================
+rem Normal pipeline start
+rem ==========================================
+
 echo ==========================================
 echo Running GW2 log processing pipeline...
 echo Repo: %ROOT%
@@ -58,12 +125,12 @@ del /q "%ROOT%*.evtc"  >nul 2>&1
 
 rem Pre-run: cleanup of previous run intermediates
 echo [CLEANUP] Removing leftover intermediates from previous run...
-del /q "%DROP_DIR%\*.json"     >nul 2>&1
+del /q "%DROP_DIR%\*.json"       >nul 2>&1
 del /q "%EI_JSON_DIR%\*.json"    >nul 2>&1
 del /q "%EI_JSON_DIR%\*.json.gz" >nul 2>&1
 del /q "%EI_JSON_DIR%\*.log"     >nul 2>&1
 
-rem Ensure config files exist
+rem Ensure config files exist (final guard)
 if not exist "%EI_CONF%" (
   echo [ERROR] EliteInsights.conf not found: %EI_CONF%
   echo         Run establish_config_files.bat first.
@@ -227,7 +294,7 @@ if not exist "%TW_BUILD_DIR%" (
   call tiddlywiki "%TW_BUILD_DIR%" --load "%TW_SHELL%" || goto :_fail
 )
 
-rem Always (re)import the startup auto-import action (safe & idempotent)
+rem Always (re)import the startup auto-import action (safe and idempotent)
 echo [INFO] Refreshing startup auto-import action...
 call tiddlywiki "%TW_BUILD_DIR%" --import "%AUTO_TID%" text/plain || goto :_fail
 
