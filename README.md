@@ -15,44 +15,41 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 ---
 ## How to Use
 
-### 1. (First time only) From the repo root, run:
-   ```
-   establish_config_files.bat
-   build_elite_insights.bat
-   ``` 
-### 2. Place your arcDPS logs into:
+### 1. Place your arcDPS logs into:
    ```
    Raid_Logs
    ```
-### 3. (Optional) Set Discord webhook URL to automatically post the results to Discord
+### 2. Run:
+   ```bat
+   process_logs.bat
+   ```
+   You will find the resulting HTML file in `Raids_Summaries`.
 
+## (Optional) Set Discord webhook URL to automatically post the results to Discord*
+  
    Create a webhook on a Discord channel of your choice and save the webhook URL to:
    ```
    \Resources\Config\Secrets\discord_webhook.txt
    ```
-### 4. Run:
-   ```bat
-   process_logs.bat
-   ```
-   If you did step 3 then you are done. Your summary HTML will post to Discord at the end of the batch run.
-
-   Otherwise, manually post the resulting HTML file in `Raids_Summaries` to Discord:
+  
+   Your summary HTML in `\Raids_Summaries` will post to Discord at the end of the batch run.  
+   <sub>* Note: you must run `process_logs.bat` at least once to find `discord_webhook.txt`</sub>  
    
 ---
 ## Details: Batch Files Overview
 
 - `establish_config_files.bat`
   
-  Creates the required config files for Elite Insights and EI Combiner.
-  Run this **once** after cloning the project.
-
+  Creates the required config files for Elite Insights and EI Combiner.  
+  This runs automatically in `process_logs.bat` as necessary.
+  
 - `build_elite_insights.bat`
   
   Builds the Elite Insights CLI executable at:  
   ```
   Resources\Elite Insights\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe
-  ```
-  Run this **once** after cloning the project (after `establish_config_files.bat`).
+  ```  
+  This runs automatically in `process_logs.bat` as necessary.
 
 - `process_logs.bat`
   
@@ -64,9 +61,9 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
 
 - `get_latest_ei_and_ei_combiner.bat`
   
-  This is a development tool to pull the latest releases of Elite Insights and EI Combiner into this repo.
-  Updates may introduce breaking changes that require adjustments in this repo.
-  Always test after running it.
+  This is a development tool to pull the latest releases of Elite Insights and EI Combiner into this repo.  
+  Updates may introduce breaking changes that require adjustments in this repo.  
+  Always test after running it.  
 
 ---
 
