@@ -45,3 +45,4 @@ Desktop.ini
 *.json
 *.html
 /Resources/Config/Secrets/discord_webhook.txt
+*.gz

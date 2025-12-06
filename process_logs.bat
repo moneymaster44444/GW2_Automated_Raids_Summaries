@@ -5,36 +5,36 @@ rem ==========================================
 rem Process arcDPS logs -> EI JSON -> Drag_and_Drop JSON -> TW5 Auto-Imported HTML
 rem ==========================================
 
-rem --- Resolve repo root (this script must live at repo root) ---
+rem Resolve repo root (this script must live at repo root)
 set "ROOT=%~dp0"
 
-rem --- Canonical paths (aligned with your config scripts) ---
+rem Canonical paths (aligned with your config scripts)
 set "LOGS_DIR=%ROOT%Raid_Logs"
 set "EI_JSON_DIR=%ROOT%Raids_Summaries\EI_json_output"
 set "DROP_DIR=%ROOT%Raids_Summaries"
 
-rem --- Config files created by establish_config_files.bat ---
+rem Config files created by establish_config_files.bat
 set "EI_CONF=%ROOT%Resources\Config\EliteInsights.conf"
 set "COMBINER_INI=%ROOT%Resources\Config\top_stats_config.ini"
 
-rem --- Elite Insights CLI publish/output dir (target of dotnet publish) ---
+rem Elite Insights CLI publish/output dir (target of dotnet publish)
 set "EI_CLI_DIR=%ROOT%Resources\Elite Insights\GW2EI.bin\Release\CLI"
 
-rem --- Possible EI CLI exe names ---
+rem Possible EI CLI exe names
 set "EI_EXE_NAME1=GW2EIParserCLI.exe"
 set "EI_EXE_NAME2=GuildWars2EliteInsights-CLI.exe"
 
-rem --- EI CLI project (for fallback publish) ---
+rem EI CLI project (for fallback publish)
 set "EI_CSPROJ=%ROOT%Resources\Elite Insights\GW2EIParserCLI\GW2EIParserCLI.csproj"
 
-rem --- EI Combiner (Python script) ---
+rem EI Combiner (Python script)
 set "PYTHON_EXE=python"
 set "COMBINER_PY=%ROOT%Resources\EI Combiner\tw5_top_stats.py"
 
-rem --- Discord webhook secrets file (first non-empty, non-# line is used) ---
+rem Discord webhook secrets file (first non-empty, non-# line is used)
 set "DISCORD_WEBHOOKS_FILE=%ROOT%Resources\Config\Secrets\discord_webhook.txt"
 
-rem --- Discord status flags (for final summary) ---
+rem Discord status flags (for final summary)
 set "DISCORD_POSTED=0"
 set "DISCORD_REASON="
 set "DISCORD_POSTED_NAME="
@@ -47,21 +47,23 @@ echo Out : %EI_JSON_DIR%
 echo ==========================================
 echo.
 
-rem --- Pre-run: make sure folders exist ---
+rem Pre-run: make sure folders exist
 if not exist "%LOGS_DIR%"    mkdir "%LOGS_DIR%"
 if not exist "%EI_JSON_DIR%" mkdir "%EI_JSON_DIR%"
 if not exist "%DROP_DIR%"    mkdir "%DROP_DIR%"
 
-rem --- Pre-run: DELETE any stray arcDPS logs at repo root (do not move) ---
+rem Pre-run: DELETE any stray arcDPS logs at repo root (do not move)
 del /q "%ROOT%*.zevtc" >nul 2>&1
 del /q "%ROOT%*.evtc"  >nul 2>&1
 
-rem --- Pre-run: requested cleanup of previous run intermediates ---
-echo [CLEANUP] Removing leftover JSONs from previous run...
+rem Pre-run: cleanup of previous run intermediates
+echo [CLEANUP] Removing leftover intermediates from previous run...
 del /q "%DROP_DIR%\*.json"     >nul 2>&1
-del /q "%EI_JSON_DIR%\*.json"  >nul 2>&1
+del /q "%EI_JSON_DIR%\*.json"    >nul 2>&1
+del /q "%EI_JSON_DIR%\*.json.gz" >nul 2>&1
+del /q "%EI_JSON_DIR%\*.log"     >nul 2>&1
 
-rem --- Ensure config files exist ---
+rem Ensure config files exist
 if not exist "%EI_CONF%" (
   echo [ERROR] EliteInsights.conf not found: %EI_CONF%
   echo         Run establish_config_files.bat first.
@@ -73,7 +75,7 @@ if not exist "%COMBINER_INI%" (
   goto :_fail
 )
 
-rem --- Resolve EI CLI path (try common names, then search, then build) ---
+rem Resolve EI CLI path (try common names, then search, then build)
 set "EI_CLI_EXE="
 if exist "%EI_CLI_DIR%\%EI_EXE_NAME1%" set "EI_CLI_EXE=%EI_CLI_DIR%\%EI_EXE_NAME1%"
 if not defined EI_CLI_EXE if exist "%EI_CLI_DIR%\%EI_EXE_NAME2%" set "EI_CLI_EXE=%EI_CLI_DIR%\%EI_EXE_NAME2%"
@@ -102,7 +104,7 @@ echo [OK] Using EI CLI:
 echo      "%EI_CLI_EXE%"
 echo.
 
-rem --- [1/3] Parse logs with EI ---
+rem [1/3] Parse logs with EI
 echo [1/3] Parsing arcDPS logs with Elite Insights...
 set "FOUND_LOG=0"
 
@@ -119,7 +121,7 @@ if not "%FOUND_LOG%"=="1" (
 echo [OK] EI parse step complete.
 echo.
 
-rem --- [2/3] Run EI Combiner ---
+rem [2/3] Run EI Combiner
 echo [2/3] Running EI Combiner...
 if not exist "%COMBINER_PY%" (
   echo [ERROR] Combiner script not found: %COMBINER_PY%
@@ -134,7 +136,7 @@ if errorlevel 1 (
 )
 echo.
 
-rem --- [3/3] Find newest Drag_and_Drop JSON in EI_JSON_DIR only ---
+rem [3/3] Find newest Drag_and_Drop JSON in EI_JSON_DIR only
 echo [3/3] Finalizing Drag_and_Drop JSON...
 set "LATEST_JSON="
 
@@ -148,7 +150,7 @@ if not defined LATEST_JSON (
   goto :_post_cleanup_success
 )
 
-rem --- Copy newest into Raids_Summaries ---
+rem Copy newest into Raids_Summaries
 copy /y "%LATEST_JSON%" "%DROP_DIR%" >nul
 if errorlevel 1 (
   echo [WARN] Could not copy JSON to Raids_Summaries.
@@ -166,7 +168,7 @@ rem ==========================================================
 rem [4] Auto-import into TiddlyWiki and build single-file HTML
 rem ==========================================================
 
-rem --- Hard reset of previous TiddlyWiki output (delete Top_Stats_Html) ---
+rem Hard reset of previous TiddlyWiki output (delete Top_Stats_Html)
 set "TW_BUILD_DIR=%ROOT%Top_Stats_Html"
 if exist "%TW_BUILD_DIR%" (
   echo [CLEANUP] Removing previous TiddlyWiki output at: "%TW_BUILD_DIR%"
@@ -184,11 +186,11 @@ if exist "%TW_BUILD_DIR%" (
   )
 )
 
-rem --- Inputs for TiddlyWiki stage ---
+rem Inputs for TiddlyWiki stage
 set "TW_SHELL=%ROOT%Resources\EI Combiner\Example_Output\Top_Stats_Index.html"
 set "AUTO_TID=%ROOT%auto-import.tid"
 
-rem --- Sanity checks ---
+rem Sanity checks
 where tiddlywiki >nul 2>&1
 if errorlevel 1 (
   echo [ERROR] "tiddlywiki" not found on PATH. Did you run: npm install -g tiddlywiki ?
@@ -200,7 +202,7 @@ if not exist "%AUTO_TID%" (
   goto :_fail
 )
 
-rem --- Work out the filename we just copied into %DROP_DIR% ---
+rem Work out the filename we just copied into %DROP_DIR%
 for %%A in ("%LATEST_JSON%") do set "LATEST_NAME=%%~nxA"
 set "LATEST_DROP_JSON=%DROP_DIR%\%LATEST_NAME%"
 
@@ -210,7 +212,7 @@ if not exist "%LATEST_DROP_JSON%" (
   goto :_fail
 )
 
-rem --- One-time init of the build wiki (first run only) ---
+rem One-time init of the build wiki (first run only)
 if not exist "%TW_BUILD_DIR%" (
   echo [INFO] Initializing build wiki at: %TW_BUILD_DIR%
   call tiddlywiki "%TW_BUILD_DIR%" --init server || goto :_fail
@@ -225,7 +227,7 @@ if not exist "%TW_BUILD_DIR%" (
   call tiddlywiki "%TW_BUILD_DIR%" --load "%TW_SHELL%" || goto :_fail
 )
 
-rem --- Always (re)import the startup auto-import action (safe & idempotent)
+rem Always (re)import the startup auto-import action (safe & idempotent)
 echo [INFO] Refreshing startup auto-import action...
 call tiddlywiki "%TW_BUILD_DIR%" --import "%AUTO_TID%" text/plain || goto :_fail
 
@@ -240,14 +242,14 @@ if exist "%TW_OUT%" (
   echo [OK] Build complete:
   echo      %TW_OUT%
 
-  rem --- Compute date tag robustly ---
+  rem Compute date tag robustly
   call :compute_date_tag
   echo [INFO] Using date tag: !DATE_TAG!
 
-  rem --- Final path in Raids_Summaries ---
+  rem Final path in Raids_Summaries
   set "TW_FINAL=%DROP_DIR%\INC_!DATE_TAG!.html"
 
-  rem --- Copy then delete original (safer than MOVE if anything goes wrong) ---
+  rem Copy then delete original (safer than MOVE if anything goes wrong)
   copy /y "%TW_OUT%" "!TW_FINAL!" >nul
   if errorlevel 1 (
     echo [WARN] Copy failed; leaving original at:
@@ -258,7 +260,7 @@ if exist "%TW_OUT%" (
       echo [OK] Final HTML written to:
       echo      !TW_FINAL!
 
-      rem --- Discord notify (webhook) ---
+      rem Discord notify (webhook)
       if exist "%DISCORD_WEBHOOKS_FILE%" (
         call :notify_discord "!TW_FINAL!" "%DISCORD_WEBHOOKS_FILE%"
       ) else (
@@ -277,7 +279,7 @@ if exist "%TW_OUT%" (
 )
 
 :_post_cleanup_success
-rem --- Post-run: DELETE any stray arcDPS logs at repo root (do not move) ---
+rem Post-run: DELETE any stray arcDPS logs at repo root
 del /q "%ROOT%*.zevtc" >nul 2>&1
 del /q "%ROOT%*.evtc"  >nul 2>&1
 
@@ -288,7 +290,7 @@ echo Drag_and_Drop JSON available under:
 echo   %DROP_DIR%
 echo Raid Summary HTML is at:
 
-rem -- pick the right HTML path for summary
+rem pick the right HTML path for summary
 set "SUMMARY_HTML="
 if defined TW_FINAL (
   set "SUMMARY_HTML=!TW_FINAL!"
@@ -298,7 +300,7 @@ if defined TW_FINAL (
 
 echo   !SUMMARY_HTML!
 
-rem -- Discord summary line (print exactly one line based on DISCORD_POSTED)
+rem Discord summary line (print exactly one line based on DISCORD_POSTED)
 if "%DISCORD_POSTED%"=="1" (
   rem prefer the exact posted name if we have it
   if defined DISCORD_POSTED_NAME (
@@ -329,7 +331,7 @@ if errorlevel 1 echo     [WARN] EI returned non-zero for %~nx1
 goto :eof
 
 :compute_date_tag
-rem --- Helper: compute MM-dd-yy date tag into DATE_TAG ---
+rem Helper: compute MM-dd-yy date tag into DATE_TAG
 set "DATE_TAG="
 
 rem 1) Try Windows PowerShell (prefer 64-bit System32; then Sysnative; then PATH)
@@ -381,14 +383,14 @@ set "RET_POSTED=0"
 set "RET_REASON="
 set "RET_NAME="
 
-rem --- sanity checks ---
+rem Sanity checks
 if not exist "!HTML_PATH!" (
   echo [WARN] Discord notify: HTML missing: !HTML_PATH!
   set "RET_REASON=MissingFile"
   goto :notify_end
 )
 
-rem --- find a PowerShell we can run (PS 5.1 OK) ---
+rem Find a PowerShell we can run (PS 5.1 OK)
 for %%P in (
   "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
   "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
@@ -400,7 +402,7 @@ if not defined PSBIN (
   goto :notify_end
 )
 
-rem --- read first usable webhook URL from hooks file ---
+rem Read first usable webhook URL from hooks file
 set "WEBHOOK_URL="
 if exist "!HOOKS_FILE!" (
   for /f "usebackq tokens=* delims=" %%L in ("!HOOKS_FILE!") do (
@@ -416,7 +418,7 @@ if not defined WEBHOOK_URL (
   goto :notify_end
 )
 
-rem --- write one-off PowerShell uploader (uses .NET HttpClient multipart) ---
+rem Write one-off PowerShell uploader (uses .NET HttpClient multipart)
 set "TMPPS=%TEMP%\post_discord_%RANDOM%.ps1"
 >  "!TMPPS!" echo param([string]$Url, [string]$FilePath)
 >> "!TMPPS!" echo try {
