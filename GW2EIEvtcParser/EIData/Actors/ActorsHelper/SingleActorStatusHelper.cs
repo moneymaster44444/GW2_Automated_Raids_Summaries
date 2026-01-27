@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.ParsedData.AgentItem;
@@ -73,7 +72,7 @@ partial class SingleActor
         }
     }
     #region STATUS
-    private void GetAgentStatus(ParsedEvtcLog log, List<Segment> dead, List<Segment> down, List<Segment> dc, List<Segment> actives, CombatData combatData)
+    private void GetAgentStatus(List<Segment> dead, List<Segment> down, List<Segment> dc, List<Segment> actives, CombatData combatData)
     {
         var downEvents = combatData.GetDownEvents(AgentItem);
         var aliveEvents = combatData.GetAliveEvents(AgentItem);
@@ -149,19 +148,24 @@ partial class SingleActor
             }
         }
     }
+    public (IReadOnlyList<Segment> deads, IReadOnlyList<Segment> downs, IReadOnlyList<Segment> dcs, IReadOnlyList<Segment> actives) GetStatus(ParsedEvtcLog log)
+    {
+        GetStatus(log.CombatData);
+        return (_deads, _downs, _dcs, _actives);
+    }
     [MemberNotNull(nameof(_downs))]
     [MemberNotNull(nameof(_dcs))]
     [MemberNotNull(nameof(_actives))]
     [MemberNotNull(nameof(_deads))]
-    public (IReadOnlyList<Segment> deads, IReadOnlyList<Segment> downs, IReadOnlyList<Segment> dcs, IReadOnlyList<Segment> actives) GetStatus(ParsedEvtcLog log)
+    private (IReadOnlyList<Segment> deads, IReadOnlyList<Segment> downs, IReadOnlyList<Segment> dcs, IReadOnlyList<Segment> actives) GetStatus(CombatData combatData)
     {
-        _downs ??= new(log.CombatData.GetDownEvents(AgentItem).Count);
-        _dcs ??= new(log.CombatData.GetDespawnEvents(AgentItem).Count);
-        _deads ??= new(log.CombatData.GetDeadEvents(AgentItem).Count);
+        _downs ??= new(combatData.GetDownEvents(AgentItem).Count);
+        _dcs ??= new(combatData.GetDespawnEvents(AgentItem).Count);
+        _deads ??= new(combatData.GetDeadEvents(AgentItem).Count);
         if (_actives == null)
         {
             _actives = new(_downs.Capacity + _dcs.Capacity + _deads.Capacity);
-            GetAgentStatus(log, _deads, _downs, _dcs, _actives, log.CombatData);
+            GetAgentStatus(_deads, _downs, _dcs, _actives, combatData);
         }
         return (_deads, _downs, _dcs, _actives);
     }
@@ -197,19 +201,40 @@ partial class SingleActor
     }
     public bool IsActive(ParsedEvtcLog log, long time)
     {
-        (_, _, _, IReadOnlyList<Segment> actives) = GetStatus(log);
-        return actives.Any(x => x.ContainsPoint(time));
+        return IsActive(log.CombatData, time);
     }
     public bool IsActive(ParsedEvtcLog log, long start, long end)
     {
-        (_, _, _, IReadOnlyList<Segment> actives) = GetStatus(log);
+        return IsActive(log.CombatData, start, end);
+    }
+    public bool IsActive(ParsedEvtcLog log, long start, long end, long duration)
+    {
+        return IsActive(log.CombatData, start, end, duration);
+    }
+    internal bool IsActive(CombatData combatData, long time)
+    {
+        (_, _, _, IReadOnlyList<Segment> actives) = GetStatus(combatData);
+        return actives.Any(x => x.ContainsPoint(time));
+    }
+    internal bool IsActive(CombatData combatData, long start, long end)
+    {
+        (_, _, _, IReadOnlyList<Segment> actives) = GetStatus(combatData);
         return actives.Any(x => x.Intersects(start, end));
+    }
+    internal bool IsActive(CombatData combatData, long start, long end, long duration)
+    {
+        if (duration < 0)
+        {
+            return false;
+        }
+        (_, _, _, IReadOnlyList<Segment> actives) = GetStatus(combatData);
+        return actives.Sum(x => x.IntersectingArea(start, end)) > duration;
     }
     #endregion STATUS
     #region BREAKBAR
     internal void GetAgentBreakbarStatus(List<Segment> nones, List<Segment> actives, List<Segment> immunes, List<Segment> recovering, CombatData combatData)
     {
-        var status = new List<(long Time, BreakbarStateEvent evt)>();
+        List<(long Time, BreakbarStateEvent evt)> status = [];
         if (AgentItem.IsEnglobedAgent)
         {
             var firstEvent = combatData.GetBreakbarStateEvents(EnglobingAgentItem).LastOrDefault(x => x.Time < FirstAware);
@@ -232,47 +257,47 @@ partial class SingleActor
         }
         for (int i = 0; i < status.Count - 1; i++)
         {
-            var cur = status[i];
-            if (i == 0 && cur.Time > FirstAware)
+            var (Time, evt) = status[i];
+            if (i == 0 && Time > FirstAware)
             {
-                AddSegment(nones, FirstAware, cur.Time);
+                AddSegment(nones, FirstAware, Time);
             }
             var next = status[i + 1];
-            switch (cur.evt.State)
+            switch (evt.State)
             {
                 case BreakbarState.Active:
-                    AddSegment(actives, cur.Time, next.Time);
+                    AddSegment(actives, Time, next.Time);
                     break;
                 case BreakbarState.Immune:
-                    AddSegment(immunes, cur.Time, next.Time);
+                    AddSegment(immunes, Time, next.Time);
                     break;
                 case BreakbarState.None:
-                    AddSegment(nones, cur.Time, next.Time);
+                    AddSegment(nones, Time, next.Time);
                     break;
                 case BreakbarState.Recover:
-                    AddSegment(recovering, cur.Time, next.Time);
+                    AddSegment(recovering, Time, next.Time);
                     break;
             }
         }
         // check last value
         if (status.Count > 0)
         {
-            var cur = status.Last();
-            if (LastAware - cur.Time >= ParserHelper.ServerDelayConstant)
+            var (Time, evt) = status.Last();
+            if (LastAware - Time >= ServerDelayConstant)
             {
-                switch (cur.evt.State)
+                switch (evt.State)
                 {
                     case BreakbarState.Active:
-                        AddSegment(actives, cur.Time, LastAware);
+                        AddSegment(actives, Time, LastAware);
                         break;
                     case BreakbarState.Immune:
-                        AddSegment(immunes, cur.Time, LastAware);
+                        AddSegment(immunes, Time, LastAware);
                         break;
                     case BreakbarState.None:
-                        AddSegment(nones, cur.Time, LastAware);
+                        AddSegment(nones, Time, LastAware);
                         break;
                     case BreakbarState.Recover:
-                        AddSegment(recovering, cur.Time, LastAware);
+                        AddSegment(recovering, Time, LastAware);
                         break;
                 }
             }

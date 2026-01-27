@@ -12,14 +12,14 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 
 namespace GW2EIEvtcParser.LogLogic;
 
 internal class DecimaTheStormsinger : MountBalrior
 {
-    private bool IsCMTriggerID => GenericTriggerID == (int)TargetID.DecimaCM;
 
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic([ChorusOfThunderDamage, ChorusOfThunderCM], new MechanicPlotlySetting(Symbols.Circle, Colors.LightOrange), "ChorThun.H", "Hit by Chorus of Thunder (Spreads AoE / Conduit AoE)", "Chorus of Thunder Hit", 0),
                 new PlayerDstEffectMechanic(EffectGUIDs.DecimaChorusOfThunderAoE, new MechanicPlotlySetting(Symbols.Circle, Colors.LightGrey), "ChorThun.T", "Targeted by Chorus of Thunder (Spreads)", "Chorus of Thunder Target", 0),
@@ -85,52 +85,12 @@ internal class DecimaTheStormsinger : MountBalrior
                 new PlayerDstHealthDamageHitMechanic(Sparkwave, new MechanicPlotlySetting(Symbols.TriangleDown, Colors.LightOrange), "Sparkwave.H", "Hit by Sparkwave (Transcendent Boulders Cone)", "Sparkwave Hit", 0),
                 new PlayerDstHealthDamageHitMechanic(ChargedGround, new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.CobaltBlue), "CharGrnd.H", "Hit by Charged Ground (Transcendent Boulders AoEs)", "Charged Ground Hit", 0),
             ]),
-            new PlayerDstHealthDamageHitMechanic([FulgentFenceCM, FluxlanceFusilladeCM, FluxlanceSalvoCM1, FluxlanceSalvoCM2, FluxlanceSalvoCM3, FluxlanceSalvoCM4, FluxlanceSalvoCM5, ChorusOfThunderCM, DiscordantThunderCM, HarmoniousThunder], new MechanicPlotlySetting(Symbols.Pentagon, Colors.Lime), "BugDance.Achiv", "Achievement Eligibility: This Bug Can Dance", "Achiv: This Bug Can Dance", 0).UsingChecker((adhe, log) =>
-            {
-                // If you are dead, lose the achievement
-                if (adhe.To.IsDead(log, log.LogData.LogStart, log.LogData.LogEnd))
-                {
-                    return true;
-                }
-
-                // If you get hit by Fulgent Fence, lose the achievement
-                if (adhe.SkillID == FulgentFenceCM && adhe.HasHit)
-                {
-                    return true;
-                }
-
-                var damageTaken = log.CombatData.GetDamageTakenData(adhe.To);
-                bool hasExposed = log.CombatData.GetBuffData(ExposedPlayer).Any(x => x is BuffApplyEvent && x.To.Is(adhe.To) && Math.Abs(x.Time - adhe.Time) < ServerDelayConstant);
-
-                // If you get hit by your own Fluxlance only during the current sequence, keep the achievement
-                // If you get hit by 2 Fluxlance in the current sequence, lose the achievement
-                long[] fluxlanceIDs = [FluxlanceFusilladeCM, FluxlanceSalvoCM1, FluxlanceSalvoCM2, FluxlanceSalvoCM3, FluxlanceSalvoCM4, FluxlanceSalvoCM5];
-                var fluxlanceTimes = damageTaken.Where(x => (fluxlanceIDs.Contains(x.SkillID)) && x.HasHit).Select(x => x.Time).OrderBy(x => x);
-                foreach (long fluxlanceTime in fluxlanceTimes)
-                {
-                    // Fluxlance sequence lasts about 5 seconds, giving it 7 as margin
-                    if (Math.Abs(fluxlanceTime - adhe.Time) < 7000 && fluxlanceIDs.Contains(adhe.SkillID) && hasExposed)
-                    {
-                        return true;
-                    }
-                }
-
-                // If you get hit by your own thunder, keep the achievement
-                // If you get hit by a thunder on another player or on a conduit, lose the achievement
-                long[] thunderIDs = [ChorusOfThunderCM, DiscordantThunderCM, HarmoniousThunder];
-                var thunderTimes = damageTaken.Where(x => (thunderIDs.Contains(x.SkillID)) && x.HasHit).Select(x => x.Time).OrderBy(x => x);
-                foreach (long thunderTime in thunderTimes)
-                {
-                    if (Math.Abs(thunderTime - adhe.Time) < ServerDelayConstant && thunderIDs.Contains(adhe.SkillID) && hasExposed)
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            })
-                .UsingEnable(log => log.LogData.IsCM)
-                .UsingAchievementEligibility(),
+            new MechanicGroup([
+                new AchievementEligibilityMechanic(Ach_ThisBugCanDance, new MechanicPlotlySetting(Symbols.Pentagon, Colors.DarkerLime), "BugDance.Achiv.L", "Achievement Eligibility: This Bug Can Dance Lost", "Achiv: This Bug Can Dance Lost", 0)
+                        .UsingChecker((evt, log) => evt.Lost),
+                new AchievementEligibilityMechanic(Ach_ThisBugCanDance, new MechanicPlotlySetting(Symbols.Pentagon, Colors.Lime), "BugDance.Achiv.K", "Achievement Eligibility: This Bug Can Dance Kept", "Achiv: This Bug Can Dance Kept", 0)
+                        .UsingChecker((evt, log) => !evt.Lost)
+            ]),
             new EnemyDstBuffApplyMechanic(ChargeDecima, new MechanicPlotlySetting(Symbols.BowtieOpen, Colors.DarkMagenta), "Charge", "Charge Stacks", "Charge Stack", 0),
         ]);
 
@@ -152,7 +112,7 @@ internal class DecimaTheStormsinger : MountBalrior
         return crMap;
     }
 
-    internal override IReadOnlyList<TargetID>  GetTargetsIDs()
+    internal override IReadOnlyList<TargetID> GetTargetsIDs()
     {
         return
         [
@@ -200,26 +160,22 @@ internal class DecimaTheStormsinger : MountBalrior
         var conduitsGadgets = maxHPEventsAgents
             .Where(x => x.Type == AgentItem.AgentType.Gadget && x.HitboxWidth == 100 && x.HitboxHeight == 200)
             .Distinct();
-        var effects = combatData.Where(x => x.IsEffect && agentData.GetAgent(x.SrcAgent, x.Time).IsSpecies(TargetID.EnlightenedConduitCM));
+        var effects = combatData.Where(x => x.IsEffect && agentData.GetAgent(x.SrcAgent, x.Time).IsSpecies(TargetID.EnlightenedConduitCM)).ToList();
+        var effectSrcs = effects.Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Distinct().ToList();
         foreach (var conduitGadget in conduitsGadgets)
         {
             conduitGadget.OverrideID(TargetID.EnlightenedConduitGadget, agentData);
             conduitGadget.OverrideType(AgentItem.AgentType.NPC, agentData);
             var effectByConduitOnGadget = effects
-                .Where(x => x.DstMatchesAgent(conduitGadget)).FirstOrDefault();
+                .FirstOrDefault(x => x.DstMatchesAgent(conduitGadget));
             if (effectByConduitOnGadget != null)
             {
                 conduitGadget.SetMaster(agentData.GetAgent(effectByConduitOnGadget.SrcAgent, effectByConduitOnGadget.Time));
             }
-        }
-        var bigConduitsGadgets = maxHPEventsAgents
-            .Where(x => x.Type == AgentItem.AgentType.Gadget)
-            .Distinct();
-
-        foreach (var conduitGadget in conduitsGadgets)
-        {
-            conduitGadget.OverrideID(TargetID.BigEnlightenedConduitGadget, agentData);
-            conduitGadget.OverrideType(AgentItem.AgentType.NPC, agentData);
+            else if (effectSrcs.Any(x => conduitGadget.InAwareTimes(x)))
+            {
+                conduitGadget.OverrideID(TargetID.BigEnlightenedConduitGadget, agentData);
+            }
         }
     }
 
@@ -233,13 +189,14 @@ internal class DecimaTheStormsinger : MountBalrior
     {
         long start = long.MaxValue;
         long end = long.MinValue;
-        foreach (SingleActor boulder in boulders) {
+        foreach (SingleActor boulder in boulders)
+        {
             start = Math.Min(boulder.FirstAware, start);
             var deadEvent = log.CombatData.GetDeadEvents(boulder.AgentItem).FirstOrDefault();
             if (deadEvent != null)
             {
                 end = Math.Max(deadEvent.Time, end);
-            } 
+            }
             else
             {
                 end = Math.Max(boulder.LastAware, end);
@@ -351,21 +308,22 @@ internal class DecimaTheStormsinger : MountBalrior
     internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
     {
         List<PhaseData> phases = GetInitialPhase(log);
-        SingleActor decima = Targets.FirstOrDefault(x => IsCMTriggerID ? x.IsSpecies(TargetID.DecimaCM) : x.IsSpecies(TargetID.Decima)) ?? throw new MissingKeyActorsException("Decima not found"); ;
+        bool isCMTriggerID = GenericTriggerID == (int)TargetID.DecimaCM;
+        SingleActor decima = Targets.FirstOrDefault(x => isCMTriggerID ? x.IsSpecies(TargetID.DecimaCM) : x.IsSpecies(TargetID.Decima)) ?? throw new MissingKeyActorsException("Decima not found"); ;
         phases[0].AddTarget(decima, log);
-        if (IsCMTriggerID)
+        if (isCMTriggerID)
         {
             AddTargetsToPhase(phases[0], [TargetID.TranscendentBoulder], log, PhaseData.TargetPriority.Blocking);
         }
         phases.AddRange(ComputePhases(log, decima, Targets, (EncounterPhaseData)phases[0], requirePhases));
-        
+
         return phases;
     }
 
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -498,7 +456,7 @@ internal class DecimaTheStormsinger : MountBalrior
                 {
                     foreach (EffectEvent effect in deathZone)
                     {
-                        // Effect duration lasting longer than necessay
+                        // Effect duration lasting longer than necessary
                         // Depending on the mechanic the difference between logged duration and the damage effect is ~300ms to ~1120ms.
                         lifespan = effect.ComputeLifespanWithSecondaryEffects(log, [EffectGUIDs.DecimaEarthrendHit1, EffectGUIDs.DecimaSeismicCrashHit]);
                         var zone = new CircleDecoration(300, lifespan, Colors.Red, 0.2, new PositionConnector(effect.Position));
@@ -606,11 +564,11 @@ internal class DecimaTheStormsinger : MountBalrior
                 );
                 break;
             case (int)TargetID.EnlightenedConduit:
-                AddThunderAoE(target, log, replay, target.AgentItem);
-                AddEnlightenedConduitDecorations(log, target, replay, FluxlanceTargetBuff1, DecimaConduitWallWarningBuffCM, DecimaConduitWallBuff);
+                AddThunderAoE(target, log, replay);
+                AddEnlightenedConduitDecorations(log, target, replay, FluxlanceTargetBuff1, DecimaConduitWallWarningBuff, DecimaConduitWallBuff);
                 break;
             case (int)TargetID.EnlightenedConduitCM:
-                AddEnlightenedConduitDecorations(log, target, replay, FluxlanceTargetBuffCM1, DecimaConduitWallWarningBuff, DecimaConduitWallBuffCM);
+                AddEnlightenedConduitDecorations(log, target, replay, FluxlanceTargetBuffCM1, DecimaConduitWallWarningBuffCM, DecimaConduitWallBuffCM);
                 break;
             case (int)TargetID.EnlightenedConduitGadget:
                 AgentConnector gadgetEffectConnector;
@@ -619,10 +577,10 @@ internal class DecimaTheStormsinger : MountBalrior
                 List<string> chargeIcons = [ParserIcons.TargetOrder1Overhead, ParserIcons.TargetOrder2Overhead, ParserIcons.TargetOrder3Overhead];
                 if (target.AgentItem.Master != null)
                 {
-                    gadgetEffectConnector = new AgentConnector(target.AgentItem.Master);
+                    gadgetEffectConnector = new AgentConnector(target);
                     chargeTierBuffs = [EnlightenedConduitGadgetChargeTier1BuffCM, EnlightenedConduitGadgetChargeTier2BuffCM, EnlightenedConduitGadgetChargeTier3BuffCM];
                     // Chorus of Thunder / Discordant Thunder - Orange AoE
-                    AddThunderAoE(target, log, replay, target.AgentItem.Master);
+                    AddThunderAoE(target, log, replay);
                 }
                 else
                 {
@@ -734,13 +692,22 @@ internal class DecimaTheStormsinger : MountBalrior
 
     private static void AddEnlightenedConduitDecorations(ParsedEvtcLog log, SingleActor target, CombatReplay replay, long fluxLanceTargetBuffID, long wallWarningBuffID, long wallBuffID)
     {
-
         // Focused Fluxlance - Green Arrow from Decima to the Conduit
         var greenArrow = GetBuffApplyRemoveSequence(log.CombatData, fluxLanceTargetBuffID, target, true, true).Where(x => x is BuffApplyEvent);
+        const long duration = 5500;
+        bool isCM = fluxLanceTargetBuffID == FluxlanceTargetBuffCM1;
+        // Prior to build 172309 normal mode required 5 players instead of 3.
+        string img = isCM || log.LogMetadata.GW2Build < GW2Builds.December2024MountBalriorNerfs ? ParserIcons.GreenMarkerSize5Overhead : ParserIcons.GreenMarkerSize3Overhead;
         foreach (var apply in greenArrow)
         {
-            replay.Decorations.Add(new LineDecoration((apply.Time, apply.Time + 5500), Colors.DarkGreen, 0.2, new AgentConnector(apply.To), new AgentConnector(apply.By)).WithThickess(80, true));
-            replay.Decorations.Add(new LineDecoration((apply.Time + 5500, apply.Time + 6500), Colors.DarkGreen, 0.5, new AgentConnector(apply.To), new AgentConnector(apply.By)).WithThickess(80, true));
+            (long start, long end) lifespan = (apply.Time, apply.Time + duration);
+            replay.Decorations.Add(new LineDecoration((apply.Time, apply.Time + duration), Colors.DarkGreen, 0.2, new AgentConnector(apply.To), new AgentConnector(apply.By)).WithThickess(80, true));
+            replay.Decorations.Add(new LineDecoration((apply.Time + duration, apply.Time + duration + 1000), Colors.DarkGreen, 0.5, new AgentConnector(apply.To), new AgentConnector(apply.By)).WithThickess(80, true));
+            if (apply.To.TryGetCurrentInterpolatedPosition(log, apply.Time, out Vector3 pos1) && apply.By.TryGetCurrentInterpolatedPosition(log, apply.Time, out Vector3 pos2))
+            {
+                Vector3 centralPos = (pos1 + pos2) / 2;
+                replay.Decorations.Add(new IconDecoration(img, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.7f, lifespan, new PositionConnector(centralPos)));
+            }
         }
 
         // Warning indicator of walls spawning between Conduits.
@@ -809,7 +776,7 @@ internal class DecimaTheStormsinger : MountBalrior
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -832,11 +799,11 @@ internal class DecimaTheStormsinger : MountBalrior
         replay.Decorations.AddOverheadIcons(player.GetBuffStatus(log, TargetOrder5JW).Where(x => x.Value > 0), player, ParserIcons.TargetOrder5Overhead);
 
         // Chorus of Thunder / Discordant Thunder - Orange AoE
-        AddThunderAoE(player, log, replay, player.AgentItem);
+        AddThunderAoE(player, log, replay);
     }
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -844,11 +811,11 @@ internal class DecimaTheStormsinger : MountBalrior
     /// <summary>
     /// Chorus of Thunder / Discordant Thunder - Orange spread AoE on players or on Conduits.
     /// </summary>
-    private static void AddThunderAoE(SingleActor actor, ParsedEvtcLog log, CombatReplay replay, AgentItem decorationOn)
+    private static void AddThunderAoE(SingleActor actor, ParsedEvtcLog log, CombatReplay replay)
     {
         if (log.CombatData.TryGetEffectEventsByDstWithGUID(actor.AgentItem, EffectGUIDs.DecimaChorusOfThunderAoE, out var thunders))
         {
-            var connector = new AgentConnector(decorationOn);
+            var connector = new AgentConnector(actor);
             foreach (var effect in thunders)
             {
                 long duration = 5000;
@@ -859,18 +826,18 @@ internal class DecimaTheStormsinger : MountBalrior
         }
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return IsCMTriggerID ? LogData.LogMode.CMNoName : LogData.LogMode.Normal;
+        return GenericTriggerID == (int)TargetID.DecimaCM ? LogData.Mode.CMNoName : LogData.Mode.Normal;
     }
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success && encounterPhase.IsCM)
@@ -881,6 +848,61 @@ internal class DecimaTheStormsinger : MountBalrior
                     instanceBuffs.Add(new(log.Buffs.BuffsByIDs[AchievementEligibilityCalmBeforeTheStorm], 1, encounterPhase));
                 }
             }
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+        {
+            var thisBugCanDanceEligibilityEvents = new List<AchievementEligibilityEvent>();
+            var decimaCMPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            // Fulgent check
+            var fulgentCMs = log.CombatData.GetDamageData(FulgentFenceCM);
+            foreach (var evt in fulgentCMs)
+            {
+                if (evt.HasHit && evt.To.Is(p.AgentItem) && p.InAwareTimes(evt.Time))
+                {
+                    InsertAchievementEligibityEventAndRemovePhase(decimaCMPhases, thisBugCanDanceEligibilityEvents, evt.Time, Ach_ThisBugCanDance, p);
+                }
+            }
+            // Flux and Thunder checks
+            HashSet<long> fluxlanceIDs = [FluxlanceFusilladeCM, FluxlanceSalvoCM1, FluxlanceSalvoCM2, FluxlanceSalvoCM3, FluxlanceSalvoCM4, FluxlanceSalvoCM5];
+            HashSet<long> thunderIDs = [ChorusOfThunderCM, DiscordantThunderCM, HarmoniousThunder];
+            var exposeds = log.CombatData.GetBuffApplyDataByIDByDst(ExposedPlayer, p.AgentItem);
+            var damageData = p.GetDamageTakenEvents(null, log).Where(x => fluxlanceIDs.Contains(x.SkillID) || thunderIDs.Contains(x.SkillID)).ToList();
+            foreach (var evt in exposeds)
+            {
+                if (damageData.Any(x => Math.Abs(x.Time - evt.Time) < ServerDelayConstant))
+                {
+                    InsertAchievementEligibityEventAndRemovePhase(decimaCMPhases, thisBugCanDanceEligibilityEvents, evt.Time, Ach_ThisBugCanDance, p);
+                }
+            }
+            // Lost on death/dc
+            foreach (var decimaCMPhase in decimaCMPhases.ToList())
+            {
+                var deathEvent = log.CombatData.GetDeadEvents(p.AgentItem).FirstOrDefault(x => decimaCMPhase.InInterval(x.Time));
+                var dcEvent = log.CombatData.GetDespawnEvents(p.AgentItem).FirstOrDefault(x => decimaCMPhase.InInterval(x.Time));
+                if (deathEvent != null)
+                {
+                    decimaCMPhases.Remove(decimaCMPhase);
+                    thisBugCanDanceEligibilityEvents.Add(new AchievementEligibilityEvent(deathEvent.Time, Ach_ThisBugCanDance, p, true));
+                }
+                else if (dcEvent != null)
+                {
+                    decimaCMPhases.Remove(decimaCMPhase);
+                    thisBugCanDanceEligibilityEvents.Add(new AchievementEligibilityEvent(dcEvent.Time, Ach_ThisBugCanDance, p, true));
+                }
+                else if (p.IsDead(log, decimaCMPhase.Start, decimaCMPhase.End) || p.IsDC(log, decimaCMPhase.Start, decimaCMPhase.End))
+                {
+                    decimaCMPhases.Remove(decimaCMPhase);
+                    thisBugCanDanceEligibilityEvents.Add(new AchievementEligibilityEvent(decimaCMPhase.Start, Ach_ThisBugCanDance, p, true));
+                }
+            }
+            AddSuccessBasedAchievementEligibityEvents(decimaCMPhases, thisBugCanDanceEligibilityEvents, Ach_ThisBugCanDance, p);
+            achievementEligibilityEvents.AddRange(thisBugCanDanceEligibilityEvents);
         }
     }
 }

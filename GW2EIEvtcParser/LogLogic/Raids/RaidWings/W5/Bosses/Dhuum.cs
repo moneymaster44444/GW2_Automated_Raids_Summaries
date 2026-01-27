@@ -17,7 +17,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Dhuum : HallOfChains
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstHealthDamageHitMechanic(HatefulEphemera, new MechanicPlotlySetting(Symbols.Square,Colors.LightOrange), "Golem", "Hateful Ephemera (Golem AoE dmg)","Golem Dmg", 0),
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(ArcingAfflictionHit, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Red), "Bomb dmg", "Arcing Affliction (Bomb) hit","Bomb dmg", 0),
@@ -65,7 +65,7 @@ internal class Dhuum : HallOfChains
             new MechanicGroup([
                 new PlayerDstBuffApplyMechanic(EchosPickup, new MechanicPlotlySetting(Symbols.Square,Colors.Red), "Echo PU", "Picked up by Ender's Echo","Ender's Pick up", 3000),
                 new PlayerDstBuffRemoveMechanic(EchosPickup, new MechanicPlotlySetting(Symbols.Square,Colors.Blue), "F Echo","Freed from Ender's Echo", "Freed from Echo", 0)
-                    .UsingChecker( (br,log) => !log.CombatData.GetDeadEvents(br.To).Where(x => Math.Abs(x.Time - br.Time) <= 150).Any()),
+                    .UsingChecker((br,log) => !log.CombatData.GetDeadEvents(br.To).Any(x => Math.Abs(x.Time - br.Time) <= 150)),
             ]),
             new PlayerSrcBuffApplyMechanic(DhuumsMessengerFixationBuff, new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.Brown), "Mess Fix", "Fixated by Messenger", "Messenger Fixation", 10)
                 .UsingChecker((bae, log) =>
@@ -160,7 +160,7 @@ internal class Dhuum : HallOfChains
 
     private static List<PhaseData> GetInBetweenSoulSplits(ParsedEvtcLog log, SingleActor dhuum, IEnumerable<SingleActor> enforcers, long mainStart, long mainEnd, bool hasRitual, PhaseData parentPhase)
     {
-        var cls = dhuum.GetCastEvents(log);
+        var cls = dhuum.GetAnimatedCastEvents(log);
         var cataCycles = cls.Where(x => x.SkillID == CataclysmicCycle);
         var gDeathmarks = cls.Where(x => x.SkillID == GreaterDeathMark).ToList();
         if (gDeathmarks.Count < cataCycles.Count())
@@ -200,12 +200,12 @@ internal class Dhuum : HallOfChains
         {
             return [];
         }
-        bool hasPreEvent = encounterPhase.StartStatus == LogData.LogStartStatus.Normal;
+        bool hasPreEvent = encounterPhase.StartStatus == LogData.StartStatus.Normal;
         long end = encounterPhase.End;
         long start = encounterPhase.Start;
         var phases = new List<PhaseData>(6);
         var enforcers = targets.Where(x => x.IsSpecies(TargetID.Enforcer));
-        var castLogs = dhuum.GetCastEvents(log);
+        var castLogs = dhuum.GetAnimatedCastEvents(log);
         PhaseData? mainFight = null;
         // Sometimes the pre event is not in the evtc
         if (!hasPreEvent)
@@ -330,7 +330,7 @@ internal class Dhuum : HallOfChains
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (!agentData.TryGetFirstAgentItem(TargetID.Dhuum, out var dhuum))
         {
@@ -339,28 +339,25 @@ internal class Dhuum : HallOfChains
         // We expect pre event in all logs
         if (combatData.GetAnimatedCastData(dhuum).Any(x => (x.SkillID != WeaponStow && x.SkillID != WeaponDraw) && x.Time >= 0 && x.Time <= 40000))
         {
-            return LogData.LogStartStatus.NoPreEvent;
+            return LogData.StartStatus.NoPreEvent;
         }
-        else
-        {
-            return base.GetLogStartStatus(combatData, agentData, logData);
-        }
+        return base.GetLogStartStatus(combatData, agentData, logData);
     }
 
-    private static readonly List<(Vector3 Position, int Index)> ReapersToGreen = new()
-    {
-        { (new(16897, 1225, -6215), 0) },
-        { (new(16853, 65, -6215), 1) },
-        { (new(15935, -614, -6215), 2) },
-        { (new(14830, -294, -6215), 3) },
-        { (new(14408, 764, -6215), 4) },
-        { (new(14929, 1762, -6215), 5) },
-        { (new(16062, 1991, -6215), 6) },
-    };
+    private static readonly List<(Vector3 Position, int Index)> ReapersToGreen =
+    [
+        (new(16897, 1225, -6215), 0),
+        (new(16853, 65, -6215), 1),
+        (new(15935, -614, -6215), 2),
+        (new(14830, -294, -6215), 3),
+        (new(14408, 764, -6215), 4),
+        (new(14929, 1762, -6215), 5),
+        (new(16062, 1991, -6215), 6),
+    ];
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -617,7 +614,7 @@ internal class Dhuum : HallOfChains
                 } 
                 else
                 {
-                    BuffEvent? greenTaken = log.CombatData.GetBuffData(FracturedSpirit).Where(x => x is BuffApplyEvent).FirstOrDefault();
+                    BuffEvent? greenTaken = log.CombatData.GetBuffData(FracturedSpirit).FirstOrDefault(x => x is BuffApplyEvent);
                     if (greenTaken != null)
                     {
                         var greenStart = (int)greenTaken.Time - 5000;
@@ -687,7 +684,7 @@ internal class Dhuum : HallOfChains
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -749,7 +746,7 @@ internal class Dhuum : HallOfChains
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -880,16 +877,23 @@ internal class Dhuum : HallOfChains
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
     }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+    }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Dhuum)) ?? throw new MissingKeyActorsException("Dhuum not found");
-        return (target.GetHealth(combatData) > 35e6) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return (target.GetHealth(combatData) > 35e6) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     /// <summary>

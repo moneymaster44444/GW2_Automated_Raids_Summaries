@@ -18,9 +18,7 @@ internal static class MesmerHelper
     internal static readonly List<InstantCastFinder> InstantCastFinder =
     [
         new BuffLossCastFinder(SignetOfMidnightSkill, SignetOfMidnightBuff)
-            .UsingChecker((brae, combatData, agentData, skillData) => {
-                 return combatData.HasGainedBuff(HideInShadows, brae.To, brae.Time, 2000, brae.To);
-            })
+            .UsingChecker((brae, combatData, agentData, skillData) => combatData.HasGainedBuff(HideInShadows, brae.To, brae.Time, 2000, brae.To))
             .UsingNotAccurate() // HideInShadows may not be applied if the Mesmer has a full stack of HideInShadows already
             .UsingDisableWithEffectData(),
         new EffectCastFinderByDst(SignetOfMidnightSkill, EffectGUIDs.MesmerSignetOfMidnight)
@@ -157,13 +155,13 @@ internal static class MesmerHelper
             .UsingChecker(IllusionsWithMesmerChecker)
             .WithBuilds(GW2Builds.February2020Balance2),
         // - Egotism
-        new DamageLogDamageModifier(Mod_Egotism, "Egotism", "10% if target hp% lower than self hp%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.TemporalEnchanter, SelfHigherHPChecker, DamageModifierMode.PvE)
+        new DamageLogDamageModifier(Mod_Egotism, "Egotism", "10% if target hp% lower than self hp%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.TemporalEnchanter, FromHigherThanToHPChecker, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.October2018Balance, GW2Builds.February2023Balance)
             .UsingApproximate(),
-        new DamageLogDamageModifier(Mod_Egotism, "Egotism", "5% if target hp% lower than self hp%", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.TemporalEnchanter, SelfHigherHPChecker, DamageModifierMode.sPvPWvW)
+        new DamageLogDamageModifier(Mod_Egotism, "Egotism", "5% if target hp% lower than self hp%", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.TemporalEnchanter, FromHigherThanToHPChecker, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.October2018Balance, GW2Builds.February2023Balance)
             .UsingApproximate(),
-        new DamageLogDamageModifier(Mod_Egotism, "Egotism", "10% if target hp% lower than self hp%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.TemporalEnchanter, SelfHigherHPChecker, DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_Egotism, "Egotism", "10% if target hp% lower than self hp%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Mesmer, TraitImages.TemporalEnchanter, FromHigherThanToHPChecker, DamageModifierMode.All)
             .WithBuilds(GW2Builds.February2023Balance)
             .UsingApproximate(),
         // - Fragility
@@ -216,7 +214,8 @@ internal static class MesmerHelper
     internal static readonly IReadOnlyList<DamageModifierDescriptor> IncomingDamageModifiers =
     [
         // Distortion
-        new CounterOnActorDamageModifier(Mod_Distortion, DistortionBuff, "Distortion", "Invulnerable", DamageSource.Incoming, DamageType.All, DamageType.All, Source.Mesmer, SkillImages.Distortion, DamageModifierMode.All)
+        new CounterOnActorDamageModifier(Mod_Distortion, DistortionBuff, "Distortion", "Invulnerable", DamageSource.Incoming, DamageType.All, DamageType.All, Source.Mesmer, SkillImages.Distortion, DamageModifierMode.All)   
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.OctoberVoERelease)
     ];
 
 
@@ -514,7 +513,7 @@ internal static class MesmerHelper
             foreach (EffectEvent effect in dimensionalApertures)
             {
                 // The buff can be quite delayed
-                var buffApply = applies.Where(x => x.Time >= effect.Time - ServerDelayConstant && x.Time <= effect.Time + 100).FirstOrDefault();
+                var buffApply = applies.FirstOrDefault(x => x.Time >= effect.Time - ServerDelayConstant && x.Time <= effect.Time + 100);
                 // Security
                 if (buffApply != null)
                 {
@@ -594,9 +593,9 @@ internal static class MesmerHelper
             var skillDamage = new SkillModeDescriptor(player, Spec.Mesmer, ChaosStorm);
             foreach (EffectEvent effect in chaosStorms)
             {
-                (long start, long end) lifespan = effect.ComputeLifespan(log, 5000);
-                (long start, long end) lifespanCC = (lifespan.start, lifespan.start + 1000);
-                (long start, long end) lifespanDamage = (lifespanCC.end, lifespan.end);
+                (long start, long end) = effect.ComputeLifespan(log, 5000);
+                (long start, long end) lifespanCC = (start, start + 1000);
+                (long start, long end) lifespanDamage = (lifespanCC.end, end);
                 AddCircleSkillDecoration(replay, effect, color, skillCC, lifespanCC, 240, EffectImages.EffectChaosStorm);
                 AddCircleSkillDecoration(replay, effect, color, skillDamage, lifespanDamage, 240, EffectImages.EffectChaosStorm);
             }

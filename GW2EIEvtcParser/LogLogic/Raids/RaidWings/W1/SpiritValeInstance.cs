@@ -54,15 +54,15 @@ internal class SpiritValeInstance : SpiritVale
         }
         return crMap;
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var chest = agentData.GetGadgetsByID(_sabetha.ChestID).FirstOrDefault();
         if (chest != null)
         {
-            logData.SetSuccess(true, chest.FirstAware);
+            successHandler.SetSuccess(true, chest.FirstAware);
             return;
         }
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
     }
 
     private List<EncounterPhaseData> ProcessSpiritRacePhases_SingleGadgetInstances(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
@@ -130,7 +130,7 @@ internal class SpiritValeInstance : SpiritVale
                     var firstOfPack = currentPack.First();
                     if (!(firstOfPack.FirstAware <= etherealBarrier.FirstAware && firstOfPack.LastAware >= etherealBarrier.FirstAware))
                     {
-                        currentPack = new List<SingleActor>();
+                        currentPack = [];
                         packedEtherealBarriers.Add(currentPack);
                     }
                     currentPack.Add(etherealBarrier);
@@ -328,6 +328,14 @@ internal class SpiritValeInstance : SpiritVale
         foreach (SpiritVale logic in _subLogics)
         {
             logic.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        foreach (var logic in _subLogics)
+        {
+            logic.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 

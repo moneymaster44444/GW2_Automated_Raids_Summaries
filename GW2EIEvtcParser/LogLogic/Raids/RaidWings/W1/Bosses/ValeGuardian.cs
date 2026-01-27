@@ -14,7 +14,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class ValeGuardian : SpiritVale
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(GreenGuardianUnstableMagicSpike, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Blue), "Split TP", "Unstable Magic Spike (Green Guard Teleport)","Green Guard TP",500),
                 new PlayerDstHealthDamageHitMechanic(UnstableMagicSpike, new MechanicPlotlySetting(Symbols.Circle,Colors.Blue), "Boss TP", "Unstable Magic Spike (Boss Teleport)","Boss TP", 500),
@@ -97,12 +97,12 @@ internal class ValeGuardian : SpiritVale
         };
     }
 
-    private static readonly List<TargetID> SplitGuardianIDs = new List<TargetID>
-    {
+    private static readonly List<TargetID> SplitGuardianIDs =
+    [
         TargetID.BlueGuardian,
         TargetID.GreenGuardian,
         TargetID.RedGuardian
-    };
+    ];
 
     internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor valeGuardian, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
@@ -150,7 +150,7 @@ internal class ValeGuardian : SpiritVale
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -183,7 +183,7 @@ internal class ValeGuardian : SpiritVale
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -244,7 +244,7 @@ internal class ValeGuardian : SpiritVale
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -255,7 +255,7 @@ internal class ValeGuardian : SpiritVale
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
@@ -278,6 +278,13 @@ internal class ValeGuardian : SpiritVale
             replay.Decorations.Add(new PieDecoration(arenaRadius, 120, lifespan, Colors.Green, 0.1, piePositionConnector).UsingGrowingEnd(lifespan.end).UsingRotationConnector(rotationConnector));
             replay.Decorations.Add(new PieDecoration(arenaRadius, 120, (lifespan.end, lifespan.end + impactDuration), Colors.Green, 0.3, piePositionConnector).UsingRotationConnector(rotationConnector));
             replay.Decorations.Add(new CircleDecoration(180, lifespan, Colors.Green, 0.2, circlePositionConnector));
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

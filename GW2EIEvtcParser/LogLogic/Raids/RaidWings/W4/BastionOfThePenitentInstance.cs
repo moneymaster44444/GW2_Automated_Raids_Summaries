@@ -46,15 +46,15 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
     {
         return "Bastion Of The Penitent";
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var chest = agentData.GetGadgetsByID(_deimos.ChestID).FirstOrDefault();
         if (chest != null)
         {
-            logData.SetSuccess(true, chest.FirstAware);
+            successHandler.SetSuccess(true, chest.FirstAware);
             return;
         }
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
     }
 
     private List<EncounterPhaseData> HandleCairnPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
@@ -67,7 +67,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
             foreach (var cairn in cairns)
             {
                 var enterCombat = log.CombatData.GetEnterCombatEvents(cairn.AgentItem).FirstOrDefault();
-                var spawnProtectLost = log.CombatData.GetBuffRemoveAllDataByIDByDst(SkillIDs.SpawnProtection, cairn.AgentItem).FirstOrDefault();
+                var spawnProtectLost = log.CombatData.GetBuffRemoveAllDataByIDByDst(SpawnProtection, cairn.AgentItem).FirstOrDefault();
                 bool hasEnteredCombat = enterCombat != null || spawnProtectLost != null;
                 if (!hasEnteredCombat && !log.CombatData.GetDamageTakenData(cairn.AgentItem).Any(x => x.HealthDamage > 0 && x.CreditedFrom.IsPlayer))
                 {
@@ -96,7 +96,9 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
                     end = chest.FirstAware;
                     success = true;
                 }
-                AddInstanceEncounterPhase(log, phases, encounterPhases, [cairn], [], [], mainPhase, "Cairn", start, end, success, _cairn, log.CombatData.GetBuffApplyData(SkillIDs.Countdown).Any(x => x.Time >= start && x.Time <= end) ? LogData.LogMode.CM : LogData.LogMode.Normal);
+                AddInstanceEncounterPhase(log, phases, encounterPhases, [cairn], [], [], 
+                    mainPhase, "Cairn", start, end, success, _cairn, 
+                    Cairn.HasActiveCountdownOnAllParticipatingPlayersOrPetrified(log.CombatData, log.AgentData, start, end) ? LogData.Mode.CM : LogData.Mode.Normal);
             }
         }
         NumericallyRenameEncounterPhases(encounterPhases);
@@ -115,7 +117,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
                 var chest = log.AgentData.GetGadgetsByID(_deimos.ChestID).FirstOrDefault();
                 var nonBlockingSubBosses = Targets.Where(x => x.IsAnySpecies([TargetID.Thief, TargetID.Gambler, TargetID.Drunkard]));
                 long encounterStartThreshold = 0;
-                var greenApplies = log.CombatData.GetBuffApplyData(SkillIDs.GreenTeleport);
+                var greenApplies = log.CombatData.GetBuffApplyData(GreenTeleport);
                 foreach (AbstractBuffApplyEvent buffApplyEvent in greenApplies)
                 {
                     if (buffApplyEvent.Time >= encounterStartThreshold)
@@ -197,7 +199,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
                             end = chest.FirstAware;
                             success = true;
                         }
-                        AddInstanceEncounterPhase(log, phases, encounterPhases, [target], demonicBonds, nonBlockingSubBosses, mainPhase, "Deimos", start, end, success, _deimos, target.GetHealth(log.CombatData) > 40e6 ? LogData.LogMode.CM : LogData.LogMode.Normal);
+                        AddInstanceEncounterPhase(log, phases, encounterPhases, [target], demonicBonds, nonBlockingSubBosses, mainPhase, "Deimos", start, end, success, _deimos, target.GetHealth(log.CombatData) > 40e6 ? LogData.Mode.CM : LogData.Mode.Normal);
                     }
                 }
             }
@@ -231,7 +233,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
                             end = chest.FirstAware;
                             success = true;
                         }
-                        AddInstanceEncounterPhase(log, phases, encounterPhases, [deimos], [], nonBlockingSubBosses, mainPhase, "Deimos", start, end, success, _deimos, deimos.GetHealth(log.CombatData) > 40e6 ? LogData.LogMode.CM : LogData.LogMode.Normal, LogData.LogStartStatus.NoPreEvent);
+                        AddInstanceEncounterPhase(log, phases, encounterPhases, [deimos], [], nonBlockingSubBosses, mainPhase, "Deimos", start, end, success, _deimos, deimos.GetHealth(log.CombatData) > 40e6 ? LogData.Mode.CM : LogData.Mode.Normal, LogData.StartStatus.NoPreEvent);
                     }
                 }
             }
@@ -246,7 +248,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
         var targetsByIDs = Targets.GroupBy(x => x.ID).ToDictionary(x => x.Key, x => x.ToList());
         HandleCairnPhases(targetsByIDs, log, phases);
         {
-            var moPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.MursaatOverseer, [], "Mursaat Overseer", _mursaatOverseer, (log, mursaat) => mursaat.GetHealth(log.CombatData) > 25e6 ? LogData.LogMode.CM : LogData.LogMode.Normal);
+            var moPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.MursaatOverseer, [], "Mursaat Overseer", _mursaatOverseer, (log, mursaat) => mursaat.GetHealth(log.CombatData) > 25e6 ? LogData.Mode.CM : LogData.Mode.Normal);
             foreach (var moPhase in moPhases)
             {
                 var mursaatOverseer = moPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.MursaatOverseer));
@@ -254,7 +256,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
             }
         }
         {
-            var samarogPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.Samarog, Targets.Where(x => x.IsAnySpecies([TargetID.Guldhem, TargetID.Rigom])), "Samarog", _samarog, (log, samarog) => samarog.GetHealth(log.CombatData) > 30e6 ? LogData.LogMode.CM : LogData.LogMode.Normal);
+            var samarogPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.Samarog, Targets.Where(x => x.IsAnySpecies([TargetID.Guldhem, TargetID.Rigom])), "Samarog", _samarog, (log, samarog) => samarog.GetHealth(log.CombatData) > 30e6 ? LogData.Mode.CM : LogData.Mode.Normal);
             foreach (var samarogPhase in samarogPhases)
             {
                 var samarog = samarogPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.Samarog));
@@ -410,6 +412,14 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
             logic.SetInstanceBuffs(log, instanceBuffs);
         }
     }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        foreach (var logic in _subLogics)
+        {
+            logic.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+    }
 
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()
     {
@@ -421,7 +431,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
         }
         return sortIDs;
     }
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
        foreach (var deimos in Targets.Where(x => x.IsSpecies(TargetID.Deimos)))
         {

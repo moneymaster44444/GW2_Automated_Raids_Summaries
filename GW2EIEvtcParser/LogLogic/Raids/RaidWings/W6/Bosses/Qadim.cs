@@ -13,12 +13,13 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 
 namespace GW2EIEvtcParser.LogLogic;
 
 internal class Qadim : MythwrightGambit
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new EnemyCastStartMechanic(QadimCC, new MechanicPlotlySetting(Symbols.StarDiamond,Colors.DarkTeal), "Q.CC", "Qadim CC","Qadim CC", 0),
                 new EnemyCastEndMechanic(QadimCC, new MechanicPlotlySetting(Symbols.StarDiamond,Colors.DarkGreen), "Q.CCed", "Qadim Breakbar broken","Qadim CCed", 0)
@@ -76,9 +77,12 @@ internal class Qadim : MythwrightGambit
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(SwapQadim, new MechanicPlotlySetting(Symbols.CircleCrossOpen,Colors.Magenta), "Port", "Swap (Ported from below Legendary Creature to Qadim)","Port to Qadim", 0),
                 new PlayerDstBuffApplyMechanic(PowerOfTheLamp, new MechanicPlotlySetting(Symbols.TriangleUp,Colors.LightPurple,10), "Lamp", "Power of the Lamp (Returned from the Lamp)","Lamp Return", 0),
-                new PlayerStatusMechanic<DeadEvent>(new MechanicPlotlySetting(Symbols.Bowtie, Colors.Black), "Taking Turns", "Achievement Eligibility: Taking Turns", "Taking Turns", 0, (log, a) => log.CombatData.GetDeadEvents(a))
-                    .UsingEnable((log) => CustomCheckTakingTurns(log))
-                    .UsingAchievementEligibility(),
+                new MechanicGroup([
+                    new AchievementEligibilityMechanic(Ach_TakingTurns, new MechanicPlotlySetting(Symbols.Bowtie, Colors.Black), "Taking Turns.N.G", "Achievement Eligibility: Taking Turns not Gained", "Taking Turns not Gained", 0)
+                        .UsingChecker((evt, log) => evt.Lost),
+                    new AchievementEligibilityMechanic(Ach_TakingTurns, new MechanicPlotlySetting(Symbols.Bowtie, Colors.Grey), "Taking Turns.G", "Achievement Eligibility: Taking Turns Gained", "Taking Turns Gained", 0)
+                        .UsingChecker((evt, log) => !evt.Lost)
+                ]),
                 new PlayerDstHealthDamageHitMechanic(Claw, new MechanicPlotlySetting(Symbols.TriangleLeftOpen,Colors.DarkTeal,10), "Claw", "Claw (Reaper of Flesh attack)","Reaper Claw", 0),
             ]),
             new MechanicGroup([
@@ -209,9 +213,9 @@ internal class Qadim : MythwrightGambit
         }
     }
 
-    private static readonly Vector2[] ProtectPyrePositions = new Vector2[] { new(-8947, 14728), new(-10834, 12477) };
-    private static readonly Vector2[] StabilityPyrePositions = new Vector2[] { new(-4356, 12076), new(-5889, 14723), new(-7851, 13550) };
-    private static readonly Vector2[] ResolutionRetaliationPyrePositions = new Vector2[] { new(-8951, 9429), new(-5716, 9325), new(-7846, 10612) };
+    private static readonly Vector2[] ProtectPyrePositions = [new(-8947, 14728), new(-10834, 12477)];
+    private static readonly Vector2[] StabilityPyrePositions = [new(-4356, 12076), new(-5889, 14723), new(-7851, 13550)];
+    private static readonly Vector2[] ResolutionRetaliationPyrePositions = [new(-8951, 9429), new(-5716, 9325), new(-7846, 10612)];
 
     internal static void FindPyres(ulong gw2Build, AgentData agentData, List<CombatItem> combatData)
     {
@@ -252,7 +256,7 @@ internal class Qadim : MythwrightGambit
         RenamePyres(Targets);
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (!agentData.TryGetFirstAgentItem(TargetID.Qadim, out var qadim))
         {
@@ -264,15 +268,15 @@ internal class Qadim : MythwrightGambit
             var positions = combatData.GetMovementData(qadim).Where(x => x is PositionEvent pe && pe.Time < qadim.FirstAware + MinimumInCombatDuration).Select(x => x.GetPoint3D());
             if (!positions.Any(x => (x - qadimInitialPosition).XY().Length() < 150))
             {
-                return LogData.LogStartStatus.Late;
+                return LogData.StartStatus.Late;
             }
         }
         if (TargetHPPercentUnderThreshold(TargetID.Qadim, logData.LogStart, combatData, Targets) ||
             (Targets.Any(x => x.IsSpecies(TargetID.AncientInvokedHydra)) && TargetHPPercentUnderThreshold((int)TargetID.AncientInvokedHydra, logData.LogStart, combatData, Targets)))
         {
-            return LogData.LogStartStatus.Late;
+            return LogData.StartStatus.Late;
         }
-        return LogData.LogStartStatus.Normal;
+        return LogData.StartStatus.Normal;
     }
 
     internal override List<InstantCastFinder> GetInstantCastFinders()
@@ -280,13 +284,13 @@ internal class Qadim : MythwrightGambit
         return [new DamageCastFinder(BurningCrucible, BurningCrucible)];
     }
 
-    private static readonly HashSet<TargetID> SecondaryTargetIDs = new HashSet<TargetID>
-    {
+    private static readonly HashSet<TargetID> SecondaryTargetIDs =
+    [
         TargetID.WyvernMatriarch,
         TargetID.WyvernPatriarch,
         TargetID.AncientInvokedHydra,
         TargetID.ApocalypseBringer,
-    };
+    ];
     internal override long GetLogOffset(EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData)
     {
         // Find target
@@ -456,13 +460,22 @@ internal class Qadim : MythwrightGambit
     }
     protected override HashSet<int> IgnoreForAutoNumericalRenaming()
     {
-        return [
+        return
+        [
             (int)TargetID.QadimPlatform
         ];
     }
+
+    internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(p, log, replay);
+        }
+    }
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -616,7 +629,7 @@ internal class Qadim : MythwrightGambit
             case "05":
             case "5":
                 bool doNormalPlat5 = true;
-                if (log.LogData.IsCM)
+                if (isCM)
                 {
                     doNormalPlat5 = false;
                     if (AddOpacityUsingVelocity(replay.Velocities, qadimStart, opacities, new(-8.0078125f, 0, 0), HiddenOpacity, velocityIndex, out velocityIndex, 0, 0, HiddenOpacity))
@@ -712,7 +725,7 @@ internal class Qadim : MythwrightGambit
                             }
                             if (doNormalPlat10)
                             {
-                                if (AddOpacityUsingVelocity(replay.Velocities, qadimStart, opacities, new(-51.3793945f, 110.473633f, -3.63769531f), log.LogData.IsCM ? NoOpacity : HiddenOpacity, velocityIndex, out velocityIndex, 0, 0, HiddenOpacity))
+                                if (AddOpacityUsingVelocity(replay.Velocities, qadimStart, opacities, new(-51.3793945f, 110.473633f, -3.63769531f), isCM ? NoOpacity : HiddenOpacity, velocityIndex, out velocityIndex, 0, 0, HiddenOpacity))
                                 {
                                     AddOpacityUsingVelocity(replay.Velocities, qadimStart, opacities, new(0f, 0f, 0f), VisibleOpacity, velocityIndex, out velocityIndex, 0, finalPhasePlatformSwapTime, HiddenOpacity);
                                 }
@@ -736,11 +749,10 @@ internal class Qadim : MythwrightGambit
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
-        var cls = target.GetCastEvents(log);
 
         long castDuration;
         (long start, long end) lifespan;
@@ -1069,10 +1081,10 @@ internal class Qadim : MythwrightGambit
         return false;
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Qadim)) ?? throw new MissingKeyActorsException("Qadim not found");
-        return (target.GetHealth(combatData) > 21e6) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return (target.GetHealth(combatData) > 21e6) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     private static void ManuallyAnimatePlateforms(SingleActor? qadim, ParsedEvtcLog log, CombatReplayDecorationContainer decorations)
@@ -1091,7 +1103,7 @@ internal class Qadim : MythwrightGambit
         const string platformImageUrl = ParserIcons.QadimPlatform;
         const float hiddenOpacity = 0.1f;
 
-        bool isCM = log.LogData.IsCM;
+        bool isCM = qadim.GetHealth(log.CombatData) > 21e6;
 
         const float xLeft = -7975;
         const float xLeftLeft = -8537;
@@ -1205,8 +1217,7 @@ internal class Qadim : MythwrightGambit
             (
                 // Initial position, all platforms tightly packed
 
-                startOffset, 0, new[]
-                {
+                startOffset, 0, [
                     (xLeftLeftLeft, yMid, zDefault, 0, 1f),
                     (xLeftLeft, yUpUp, zDefault, MathF.PI, 1f),
                     (xRightRight, yUpUp, zDefault, 0, 1f),
@@ -1219,12 +1230,11 @@ internal class Qadim : MythwrightGambit
                     (xRightRight, yMid, zDefault, 0, 1f),
                     (xRight, yDown, zDefault, MathF.PI, 1f),
                     (xLeft, yDown, zDefault, 0, 1f),
-                }
+                ]
             ),
             (
                 // Hydra phase, all platforms have a small gap between them
-                startOffset, 12000, new[]
-                {
+                startOffset, 12000, [
                     (xGapsLeftLeftLeft, yMid, zDefault, 0, 1f),
                     (xGapsLeftLeft, yGapsUpUp, zDefault, MathF.PI, 1f),
                     (xGapsRightRight, yGapsUpUp, zDefault, 0, 1f),
@@ -1237,12 +1247,11 @@ internal class Qadim : MythwrightGambit
                     (xGapsRightRight, yMid, zDefault, 0, 1f),
                     (xGapsRight, yGapsDown, zDefault, MathF.PI, 1f),
                     (xGapsLeft, yGapsDown, zDefault, 0, 1f),
-                }
+                ]
             ),
             (
                 // First Qadim phase, packed together except for pyre platforms
-                qadimPhase1Time, 10000, new[]
-                {
+                qadimPhase1Time, 10000, [
                     (xLeftLeftLeft, yMid, zDefault, 0, 1f),
                     (protectionPyre1.X, protectionPyre1.Y, zDefault, MathF.PI, 1f),
                     (xRightRight, yUpUp, zDefault, 0, 1f),
@@ -1255,12 +1264,11 @@ internal class Qadim : MythwrightGambit
                     (xRightRight, yMid, zDefault, 0, 1f),
                     (xRight, yDown, zDefault, MathF.PI, 1f),
                     (xLeft, yDown, zDefault, 0, 1f),
-                }
+                ]
             ),
             (
                 // Destroyer phase, packed together, bigger vertical gap in the middle, 4 platforms hidden
-                destroyerPhaseTime, 15000, new[]
-                {
+                destroyerPhaseTime, 15000, [
                     (xDestroyerLeftLeftLeft, yMid, zDefault, 0, 1f),
                     (xGapsLeftLeft, yGapsUpUp, zDefault, MathF.PI, hiddenOpacity),
                     (xGapsRightRight, yGapsUpUp, zDefault, 0, hiddenOpacity),
@@ -1273,12 +1281,11 @@ internal class Qadim : MythwrightGambit
                     (xDestroyerRightRight, yMid, zDefault, 0, 1f),
                     (xDestroyerRight, yDown, zDefault, MathF.PI, 1f),
                     (xDestroyerLeft, yDown, zDefault, 0, 1f),
-                }
+                ]
             ),
             (
                 // Second Qadim phase
-                qadimPhase2Time, 10000, new[]
-                {
+                qadimPhase2Time, 10000, [
                     (protectionPyre2.X, protectionPyre2.Y, zDefault, 0, 1f),
                     (-8540, 14222, zDefault, MathF.PI, 1f),
                     (stabilityPyre2.X, stabilityPyre2.Y, zDefault, 0, 1f),
@@ -1291,13 +1298,12 @@ internal class Qadim : MythwrightGambit
                     (-6284, yMid, zDefault, 0, 1f),
                     (retaliationPyre2.X - 1931 / 2, retaliationPyre2.Y + 1672, zDefault, MathF.PI, 1f),
                     (-7807, 10613, zDefault, 0, 1f),
-                }
+                ]
             ),
             (
                 // TODO: Heights are not correct, they differ here, currently not important for the replay
                 // Wyvern phase
-                wyvernPhaseTime, 11000, new[]
-                {
+                wyvernPhaseTime, 11000, [
                     (protectionPyre2.X, protectionPyre2.Y, zDefault, 0f, hiddenOpacity),
                     (-9704, 15323, zDefault, MathF.PI, 1f),
                     (-7425, 15312, zDefault, 0, 1f),
@@ -1310,12 +1316,11 @@ internal class Qadim : MythwrightGambit
                     (-7106, 12619, zDefault, wyvernPhaseMiddleRotation, 1f),
                     (-5729, 9821, zDefault, MathF.PI, 1f),
                     (-6854, 9821, zDefault, 0, 1f),
-                }
+                ]
             ),
             (
                 // Jumping puzzle preparation, platforms hide
-                jumpingPuzzleTime - 500, 0, new[]
-                {
+                jumpingPuzzleTime - 500, 0, [
                     (protectionPyre2.X, protectionPyre2.Y, zDefault, 0, hiddenOpacity),
                     (-9704f, 15323f, zDefault, MathF.PI, hiddenOpacity),
                     (-7425, 15312, zDefault, 0, hiddenOpacity),
@@ -1328,12 +1333,11 @@ internal class Qadim : MythwrightGambit
                     (-7106, 12619, zDefault, wyvernPhaseMiddleRotation, hiddenOpacity),
                     (-5729, 9821, zDefault, MathF.PI, 1f),
                     (-6854, 9821, zDefault, 0, hiddenOpacity),
-                }
+                ]
             ),
             (
                 // Jumping puzzle, platforms move
-                jumpingPuzzleTime, jumpingPuzzleShuffleDuration - 1, new[]
-                {
+                jumpingPuzzleTime, jumpingPuzzleShuffleDuration - 1, [
                     (xJumpingPuzzleQadim, yMid, zFinalPlatforms, 0, hiddenOpacity),
                     (xJumpingPuzzleFirstRotating, yMid, zDefault, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleRotatingPrePyres, yMid + yJumpingPuzzleOffset3, zJumpingPuzzlePyres, 0, hiddenOpacity),
@@ -1346,12 +1350,11 @@ internal class Qadim : MythwrightGambit
                     (xJumpingPuzzlePyres, yMid, zJumpingPuzzlePyres, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleFirstPlatform, yMid - yJumpingPuzzleOffset1, zJumpingPuzzleFirstPlatform, MathF.PI, 1f),
                     (xJumpingPuzzlePrePyres, yMid - yJumpingPuzzleOffset2, zJumpingPuzzlePrePyres, MathF.PI, hiddenOpacity),
-                }
+                ]
             ),
             (
                 // Jumping puzzle, platforms appear
-                jumpingPuzzleTime + jumpingPuzzleShuffleDuration - 1, 1, new[]
-                {
+                jumpingPuzzleTime + jumpingPuzzleShuffleDuration - 1, 1, [
                     (xJumpingPuzzleQadim, yMid, zFinalPlatforms, 0, 1f),
                     (xJumpingPuzzleFirstRotating, yMid, zDefault, MathF.PI, 1f),
                     (xJumpingPuzzleRotatingPrePyres, yMid + yJumpingPuzzleOffset3, zJumpingPuzzlePyres, 0, 1f),
@@ -1364,13 +1367,12 @@ internal class Qadim : MythwrightGambit
                     (xJumpingPuzzlePyres, yMid, zJumpingPuzzlePyres, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleFirstPlatform, yMid - yJumpingPuzzleOffset1, zJumpingPuzzleFirstPlatform, MathF.PI, 1f),
                     (xJumpingPuzzlePrePyres, yMid - yJumpingPuzzleOffset2, zJumpingPuzzlePrePyres, MathF.PI, 1f),
-                }
+                ]
             ),
             (
                 // Jumping puzzle appears, platforms rotate...
                 // Jumping puzzle platform breaks are not shown for now because their timing is rather tricky.
-                jumpingPuzzleTime + jumpingPuzzleShuffleDuration, jumpingPuzzleDuration, new[]
-                {
+                jumpingPuzzleTime + jumpingPuzzleShuffleDuration, jumpingPuzzleDuration, [
                     (xJumpingPuzzleQadim, yMid, zFinalPlatforms, 0f, 1f),
                     (xJumpingPuzzleFirstRotating, yMid, zDefault, MathF.PI + jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, 1f),
                     (xJumpingPuzzleRotatingPrePyres, yMid + yJumpingPuzzleOffset3, zJumpingPuzzlePyres, -jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, 1f),
@@ -1383,12 +1385,11 @@ internal class Qadim : MythwrightGambit
                     (xJumpingPuzzlePyres, yMid, zJumpingPuzzlePyres, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleFirstPlatform, yMid - yJumpingPuzzleOffset1, zJumpingPuzzleFirstPlatform, MathF.PI, 1f),
                     (xJumpingPuzzlePrePyres, yMid - yJumpingPuzzleOffset2, zJumpingPuzzlePrePyres, MathF.PI, 1f),
-                }
+                ]
             ),
             (
                 // Final phase preparation.
-                finalPhaseTime - lastPhasePreparationDuration, lastPhasePreparationDuration, new[]
-                {
+                finalPhaseTime - lastPhasePreparationDuration, lastPhasePreparationDuration, [
                     (xJumpingPuzzleQadim, yMid, zFinalPlatforms, 0, 1f),
                     (xJumpingPuzzleFirstRotating, yMid, zDefault, MathF.PI + jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, hiddenOpacity),
                     (xJumpingPuzzleRotatingPrePyres, yMid + yJumpingPuzzleOffset3, zJumpingPuzzlePyres, -jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, hiddenOpacity),
@@ -1401,12 +1402,11 @@ internal class Qadim : MythwrightGambit
                     (xJumpingPuzzlePyres, yMid, zJumpingPuzzlePyres, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleFirstPlatform, yMid - yJumpingPuzzleOffset1, zJumpingPuzzleFirstPlatform, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzlePrePyres, yMid - yJumpingPuzzleOffset2, zJumpingPuzzlePrePyres, MathF.PI, hiddenOpacity),
-                }
+                ]
             ),
             (
                 // Final phase.
-                finalPhaseTime, 0, new[]
-                {
+                finalPhaseTime, 0, [
                     (xJumpingPuzzleQadim, yMid, zFinalPlatforms, 0, 1f),
                     (xJumpingPuzzleFirstRotating, yMid, zDefault, MathF.PI + jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, hiddenOpacity),
                     (xJumpingPuzzleRotatingPrePyres, yMid + yJumpingPuzzleOffset3, zJumpingPuzzlePyres, -jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, hiddenOpacity),
@@ -1419,12 +1419,11 @@ internal class Qadim : MythwrightGambit
                     (xJumpingPuzzlePyres, yMid, zJumpingPuzzlePyres, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleFirstPlatform, yMid - yJumpingPuzzleOffset1, zJumpingPuzzleFirstPlatform, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzlePrePyres, yMid - yJumpingPuzzleOffset2, zJumpingPuzzlePrePyres, MathF.PI, hiddenOpacity),
-                }
+                ]
             ),
             (
                 // Second to last platform is destroyed
-                finalPhaseTime, 7000, new[]
-                {
+                finalPhaseTime, 7000, [
                     (xJumpingPuzzleQadim, yMid, zFinalPlatforms, 0, hiddenOpacity),
                     (xJumpingPuzzleFirstRotating, yMid, zDefault, MathF.PI + jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, hiddenOpacity),
                     (xJumpingPuzzleRotatingPrePyres, yMid + yJumpingPuzzleOffset3, zJumpingPuzzlePyres, -jumpingPuzzleDuration / 1000f * jumpingPuzzleRotationRate, hiddenOpacity),
@@ -1437,7 +1436,7 @@ internal class Qadim : MythwrightGambit
                     (xJumpingPuzzlePyres, yMid, zJumpingPuzzlePyres, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzleFirstPlatform, yMid - yJumpingPuzzleOffset1, zJumpingPuzzleFirstPlatform, MathF.PI, hiddenOpacity),
                     (xJumpingPuzzlePrePyres, yMid - yJumpingPuzzleOffset2, zJumpingPuzzlePrePyres, MathF.PI, hiddenOpacity),
-                }
+                ]
             ),
         ];
 
@@ -1477,12 +1476,12 @@ internal class Qadim : MythwrightGambit
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success)
@@ -1503,43 +1502,46 @@ internal class Qadim : MythwrightGambit
     /// Check the player positions for the achievement eligiblity.<br></br>
     /// </summary>
     /// <returns><see langword="true"/> if eligible, otherwise <see langword="false"/>.</returns>
-    private static bool CustomCheckTakingTurns(ParsedEvtcLog log)
+    private static bool CustomCheckTakingTurns(ParsedEvtcLog log, EncounterPhaseData qadimEncounter)
     {
         // Z coordinates info:
         // The player in the lamp is roughly at -81
         // The death zone from falling off the platform is roughly at -2950
         // The main fight platform is at roughly at -4700
 
-        var lamps = log.AgentData.GetNPCsByID(TargetID.QadimLamp).ToList();
+        var lamps = log.AgentData.GetNPCsByID(TargetID.QadimLamp).Where(x => x.InAwareTimes(qadimEncounter.Start, qadimEncounter.End)).ToList();
         int lampLabyrinthZ = -250; // Height Threshold
 
         foreach (Player p in log.PlayerList)
         {
-            IReadOnlyList<ParametricPoint3D> positions = p.GetCombatReplayPolledPositions(log);
-            var exitBuffs = log.CombatData.GetBuffApplyDataByIDByDst(PowerOfTheLamp, p.AgentItem).OfType<BuffApplyEvent>();
-
-            // Count the times the player has entered and exited the lamp.
-            // A player that has entered the lamp but never exites and remains alive is elible for the achievement.
-
-            int entered = 0;
-            int exited = 0;
-
-            for (int i = 0; i < lamps.Count; i++)
+            if (qadimEncounter.IntersectsWindow(p.FirstAware, p.LastAware))
             {
-                if (positions.Any(x => x.XYZ.Z > lampLabyrinthZ && x.Time >= lamps[i].FirstAware && x.Time <= lamps[i].LastAware) && entered == exited)
+                IReadOnlyList<ParametricPoint3D> positions = p.GetCombatReplayPolledPositions(log);
+                var exitBuffs = log.CombatData.GetBuffApplyDataByIDByDst(PowerOfTheLamp, p.AgentItem).Where(x => qadimEncounter.InInterval(x.Time)).OfType<BuffApplyEvent>();
+
+                // Count the times the player has entered and exited the lamp.
+                // A player that has entered the lamp but never exites and remains alive is elible for the achievement.
+
+                int entered = 0;
+                int exited = 0;
+
+                for (int i = 0; i < lamps.Count; i++)
                 {
-                    entered++;
+                    if (positions.Any(x => x.XYZ.Z > lampLabyrinthZ && x.Time >= lamps[i].FirstAware && x.Time <= lamps[i].LastAware) && entered == exited)
+                    {
+                        entered++;
+                    }
+
+                    var end = i < lamps.Count - 1 ? lamps[i + 1].FirstAware : log.LogData.LogEnd;
+                    var segment = new Segment(lamps[i].LastAware, end, 1);
+
+                    if (exitBuffs.Any(x => segment.ContainsPoint(x.Time)))
+                    {
+                        exited++;
+                    }
+
+                    if (entered > 1) { return false; } // Failed achievement
                 }
-
-                var end = i < lamps.Count - 1 ? lamps[i + 1].FirstAware : log.LogData.LogEnd;
-                var segment = new Segment(lamps[i].LastAware, end, 1);
-
-                if (exitBuffs.Any(x => segment.ContainsPoint(x.Time)))
-                {
-                    exited++;
-                }
-
-                if (entered > 1) { return false; } // Failed achievement
             }
         }
 
@@ -1600,5 +1602,39 @@ internal class Qadim : MythwrightGambit
 
         // Never went under 2000 range
         return false;
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+        {
+            var takingTurnsEligibilityEvents = new List<AchievementEligibilityEvent>();
+            var qadimPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var deaths = log.CombatData.GetDeadEvents(p.AgentItem);
+            foreach (var death in deaths)
+            {
+                InsertAchievementEligibityEventAndRemovePhase(qadimPhases, takingTurnsEligibilityEvents, death.Time, Ach_TakingTurns, p);
+            }
+            foreach (var qadimPhase in qadimPhases.ToList())
+            {
+                if (p.IsDead(log, qadimPhase.Start, qadimPhase.End))
+                {
+                    takingTurnsEligibilityEvents.Add(new AchievementEligibilityEvent(qadimPhase.End, Ach_TakingTurns, p, true));
+                    qadimPhases.Remove(qadimPhase);
+                }
+            }
+            foreach (var qadimPhase in qadimPhases.ToList())
+            {
+                if (!CustomCheckTakingTurns(log, qadimPhase))
+                {
+                    takingTurnsEligibilityEvents.Add(new AchievementEligibilityEvent(qadimPhase.End, Ach_TakingTurns, p, true));
+                    qadimPhases.Remove(qadimPhase);
+                }
+            }
+            AddSuccessBasedAchievementEligibityEvents(qadimPhases, takingTurnsEligibilityEvents, Ach_TakingTurns, p);
+            achievementEligibilityEvents.AddRange(takingTurnsEligibilityEvents);
+        }
     }
 }

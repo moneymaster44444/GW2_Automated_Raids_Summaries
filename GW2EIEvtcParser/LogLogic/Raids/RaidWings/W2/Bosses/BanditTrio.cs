@@ -18,7 +18,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class BanditTrio : SalvationPass
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstBuffApplyMechanic(ShellShocked, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.DarkGreen), "Launched", "Shell-Shocked (Launched from pad)", "Shell-Shocked", 0),
             new PlayerDstBuffApplyMechanic(SlowBurn, new MechanicPlotlySetting(Symbols.StarTriangleDown, Colors.LightPurple), "SlowBurn.A", "Received Slow Burn", "Slow Burn Application", 0),
             new PlayerSrcBuffApplyMechanic(SapperBombDamageBuff, new MechanicPlotlySetting(Symbols.CircleCross, Colors.Green), "Hit Cage", "Hit Cage with Sapper Bomb", "Hit Cage (Sapper Bomb)", 0).UsingChecker((bae, log) => bae.To.IsSpecies(TargetID.Cage)),
@@ -65,7 +65,7 @@ internal class BanditTrio : SalvationPass
         ];
     }
 
-    internal override IReadOnlyList<TargetID>  GetTargetsIDs()
+    internal override IReadOnlyList<TargetID> GetTargetsIDs()
     {
         return
         [
@@ -75,7 +75,7 @@ internal class BanditTrio : SalvationPass
         ];
     }
 
-    internal override IReadOnlyList<TargetID>  GetFriendlyNPCIDs()
+    internal override IReadOnlyList<TargetID> GetFriendlyNPCIDs()
     {
         return [ TargetID.Cage ];
     }
@@ -117,8 +117,8 @@ internal class BanditTrio : SalvationPass
             // Thrash mob start check
             var boxStart = new Vector2(-2200, -11300);
             var boxEnd = new Vector2(1000, -7200);
-            var trashMobsToCheck = new HashSet<TargetID>()
-            {
+            HashSet<TargetID> trashMobsToCheck =
+            [
                 TargetID.BanditAssassin,
                 TargetID.BanditAssassin2,
                 TargetID.BanditSapperTrio,
@@ -132,7 +132,7 @@ internal class BanditTrio : SalvationPass
                 TargetID.BanditCleric2,
                 TargetID.BanditBombardier,
                 TargetID.BanditSniper,
-            };
+            ];
             var banditPositions = combatData.Where(x => x.IsStateChange == StateChange.Position && agentData.GetAgent(x.SrcAgent, x.Time).IsAnySpecies(trashMobsToCheck))
                 .Select(x => new PositionEvent(x, agentData));
             var banditsInBox = banditPositions.Where(x => x.Time < startToUse + 10000 && x.GetPointXY().IsInBoundingBox(boxStart, boxEnd))
@@ -170,26 +170,21 @@ internal class BanditTrio : SalvationPass
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (TargetHPPercentUnderThreshold(TargetID.Berg, logData.LogStart, combatData, Targets))
         {
-            return LogData.LogStartStatus.Late;
+            return LogData.StartStatus.Late;
         }
         if (agentData.TryGetFirstAgentItem(TargetID.Berg, out var berg) && combatData.GetLogNPCUpdateEvents().Count > 0)
         {
-            var movements = combatData.GetMovementData(berg).Where(x => x.Time > berg.FirstAware + MinimumInCombatDuration);
-            if (movements.Any())
+            var firstMovement = combatData.GetMovementData(berg).First(x => x.Time > berg.FirstAware + MinimumInCombatDuration);
+            if (firstMovement != null && firstMovement.Time < 120000)
             {
-                MovementEvent firstMove = movements.First();
-                // two minutes
-                if (firstMove.Time < 120000)
-                {
-                    return LogData.LogStartStatus.Late;
-                }
+                return LogData.StartStatus.Late;
             }
         }
-        return LogData.LogStartStatus.Normal;
+        return LogData.StartStatus.Normal;
     }
 
     private static void SetPhasePerTarget(SingleActor target, List<PhaseData> phases, PhaseData encounterPhase, ParsedEvtcLog log)
@@ -278,7 +273,7 @@ internal class BanditTrio : SalvationPass
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -333,7 +328,7 @@ internal class BanditTrio : SalvationPass
                             break;
                     }
                 }
-            break;
+                break;
             case (int)TargetID.Narella:
                 break;
             default:
@@ -343,7 +338,7 @@ internal class BanditTrio : SalvationPass
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -358,20 +353,20 @@ internal class BanditTrio : SalvationPass
     }
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
         if (log.CombatData.GetBuffData(EnvironmentallyFriendly).Any())
         {
-            var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)
@@ -379,6 +374,13 @@ internal class BanditTrio : SalvationPass
                     instanceBuffs.MaybeAdd(GetOnPlayerCustomInstanceBuff(log, encounterPhase, EnvironmentallyFriendly));
                 }
             }
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

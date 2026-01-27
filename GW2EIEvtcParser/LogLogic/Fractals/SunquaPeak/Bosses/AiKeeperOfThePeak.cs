@@ -18,7 +18,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
 {
     internal const long Determined895DurationCheckForSuccess = int.MaxValue / 4;
 
-    internal readonly MechanicGroup Mechanics = new MechanicGroup(
+    internal readonly MechanicGroup Mechanics = new(
         [
             // General
             new PlayerDstHealthDamageHitMechanic(ElementalWhirl, new MechanicPlotlySetting(Symbols.Square,Colors.LightRed), "Ele.Whrl.", "Elemental Whirl","Elemental Whirl", 0),
@@ -252,7 +252,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
         // first cast or fallback to regular offset (combat enter) for dark ai
         // old elemental ai will always end up with fallback due to idle time
         var start = base.GetLogOffset(evtcVersion, logData, agentData, combatData);
-        var firstCast = combatData.Where(x => x.StartCasting() && x.SrcMatchesAgent(ai)).FirstOrDefault();
+        var firstCast = combatData.FirstOrDefault(x => x.StartCasting() && x.SrcMatchesAgent(ai));
         if (firstCast != null)
         {
             return Math.Min(start, firstCast.Time);
@@ -260,28 +260,28 @@ internal class AiKeeperOfThePeak : SunquaPeak
         return start;
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (HasElementalMode(agentData))
         {
             if (TargetHPPercentUnderThreshold(TargetID.AiKeeperOfThePeak, logData.LogStart, combatData, Targets))
             {
-                return LogData.LogStartStatus.Late;
+                return LogData.StartStatus.Late;
             }
         }
         else if (HasDarkMode(agentData))
         {
             if (TargetHPPercentUnderThreshold(TargetID.DarkAiKeeperOfThePeak, logData.LogStart, combatData, Targets))
             {
-                return LogData.LogStartStatus.Late;
+                return LogData.StartStatus.Late;
             }
         }
-        return LogData.LogStartStatus.Normal;
+        return LogData.StartStatus.Normal;
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return LogData.LogMode.CMNoName;
+        return LogData.Mode.CMNoName;
     }
 
     internal static List<PhaseData> ComputeElementalPhases(ParsedEvtcLog log, SingleActor elementalAi, PhaseData elementalPhase, bool requirePhases)
@@ -365,10 +365,10 @@ internal class AiKeeperOfThePeak : SunquaPeak
 
     internal static PhaseData GetFightPhase(ParsedEvtcLog log, SingleActor ai, PhaseData parentPhase, string name)
     {
-        BuffApplyEvent? invul895Gain = log.CombatData.GetBuffApplyDataByIDByDst(Determined895, ai.AgentItem)
+        BuffApplyEvent? invul895Gain = log.CombatData
+            .GetBuffApplyDataByIDByDst(Determined895, ai.AgentItem)
             .OfType<BuffApplyEvent>()
-            .Where(x => x.AppliedDuration > Determined895DurationCheckForSuccess)
-            .FirstOrDefault();
+            .FirstOrDefault(x => x.AppliedDuration > Determined895DurationCheckForSuccess);
         long start = Math.Max(ai.FirstAware, parentPhase.Start);
         long end = invul895Gain != null ? Math.Min(invul895Gain.Time + ServerDelayConstant, parentPhase.End) : parentPhase.End;
         var fightPhase = new SubPhasePhaseData(start, end, name);
@@ -427,7 +427,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
         return [TargetID.AiKeeperOfThePeak, TargetID.DarkAiKeeperOfThePeak];
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         int status = 0;
         if (HasElementalMode(agentData))
@@ -443,26 +443,26 @@ internal class AiKeeperOfThePeak : SunquaPeak
             case 1:
             case 2:
                 var ai = Targets[0];
-                BuffApplyEvent? invul895Gain = combatData.GetBuffApplyDataByIDByDst(Determined895, ai.AgentItem).OfType<BuffApplyEvent>().Where(x => x.AppliedDuration > Determined895DurationCheckForSuccess).FirstOrDefault();
+                BuffApplyEvent? invul895Gain = combatData.GetBuffApplyDataByIDByDst(Determined895, ai.AgentItem).OfType<BuffApplyEvent>().FirstOrDefault(x => x.AppliedDuration > Determined895DurationCheckForSuccess);
                 if (invul895Gain != null)
                 {
-                    logData.SetSuccess(true, invul895Gain.Time);
+                    successHandler.SetSuccess(true, invul895Gain.Time);
                 }
                 else
                 {
-                    logData.SetSuccess(false, ai.LastAware);
+                    successHandler.SetSuccess(false, ai.LastAware);
                 }
                 break;
             case 3:
                 var darkAi = Targets.First(y => y.IsSpecies(TargetID.DarkAiKeeperOfThePeak));
-                BuffApplyEvent? darkInvul895Gain = combatData.GetBuffApplyDataByIDByDst(Determined895, darkAi.AgentItem).OfType<BuffApplyEvent>().Where(x => x.AppliedDuration > Determined895DurationCheckForSuccess).FirstOrDefault();
+                BuffApplyEvent? darkInvul895Gain = combatData.GetBuffApplyDataByIDByDst(Determined895, darkAi.AgentItem).OfType<BuffApplyEvent>().FirstOrDefault(x => x.AppliedDuration > Determined895DurationCheckForSuccess);
                 if (darkInvul895Gain != null)
                 {
-                    logData.SetSuccess(true, darkInvul895Gain.Time);
+                    successHandler.SetSuccess(true, darkInvul895Gain.Time);
                 } 
                 else
                 {
-                    logData.SetSuccess(false, darkAi.LastAware);
+                    successHandler.SetSuccess(false, darkAi.LastAware);
                 }
                 break;
             case 0:
@@ -473,12 +473,12 @@ internal class AiKeeperOfThePeak : SunquaPeak
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
         var mainPhase = log.LogData.GetMainPhase(log);
-        var encountersWithDarkAi = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.Targets.Keys.Any(y => y.IsSpecies(TargetID.DarkAiKeeperOfThePeak)));
+        var encountersWithDarkAi = log.LogData.GetEncounterPhases(log).Where(x => x.Targets.Keys.Any(y => y.IsSpecies(TargetID.DarkAiKeeperOfThePeak)));
         var finalEncounter = encountersWithDarkAi.LastOrDefault();
         if (finalEncounter != null && finalEncounter.Success)
         {
@@ -526,7 +526,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -542,7 +542,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -605,7 +605,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -842,7 +842,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
             foreach (EffectEvent effect in groundIndicators)
             {
                 (long, long) lifespan = (effect.Time, effect.Time + 6000);
-                GeographicalConnector position = effect.IsAroundDst ? new AgentConnector(effect.Dst) : (GeographicalConnector)new PositionConnector(effect.Position);
+                GeographicalConnector position = effect.IsAroundDst ? new AgentConnector(effect.Dst) : new PositionConnector(effect.Position);
                 AddMeteorIndicatorDecoration(lifespan, position, Colors.Orange, environmentDecorations);
                 environmentDecorations.Add(new CircleDecoration(MeteorFullRadius, lifespan, Colors.Orange, 0.15, position).UsingGrowingEnd(lifespan.Item2));
             }
@@ -866,6 +866,13 @@ internal class AiKeeperOfThePeak : SunquaPeak
         {
             uint radius = MeteorInnerSize + i * MeteorCircleDist;
             environmentDecorations.Add(new CircleDecoration(radius, lifespan, color, 0.3, connector).UsingFilled(false));
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

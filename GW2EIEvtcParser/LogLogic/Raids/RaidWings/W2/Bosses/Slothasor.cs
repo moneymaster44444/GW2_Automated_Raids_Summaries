@@ -17,7 +17,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Slothasor : SalvationPass
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstHealthDamageHitMechanic(TantrumDamage, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Yellow), "Tantrum", "Tantrum (Triple Circles after Ground slamming)","Tantrum", 5000),
             new MechanicGroup([
                 new PlayerDstBuffApplyMechanic(VolatilePoisonBuff, new MechanicPlotlySetting(Symbols.Circle,Colors.Red), "Poison", "Volatile Poison Application (Special Action Key)","Poison (Action Key)", 0),
@@ -63,7 +63,7 @@ internal class Slothasor : SalvationPass
     internal override void UpdatePlayersSpecAndGroup(IReadOnlyList<Player> players, CombatData combatData, LogData logData)
     {
         base.UpdatePlayersSpecAndGroup(players, combatData, logData);
-        var slubTransformApplyAtStart = combatData.GetBuffApplyData(MagicTransformation).Where(x => x.Time <= logData.LogStart + 5000).FirstOrDefault();
+        var slubTransformApplyAtStart = combatData.GetBuffApplyData(MagicTransformation).FirstOrDefault(x => x.Time <= logData.LogStart + 5000);
         if (slubTransformApplyAtStart != null)
         {
             var transformedPlayer = players.FirstOrDefault(x => x.AgentItem.Is(slubTransformApplyAtStart.To));
@@ -85,13 +85,13 @@ internal class Slothasor : SalvationPass
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
         if (log.CombatData.GetBuffData(SlipperySlubling).Any())
         {
-            var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)
@@ -145,7 +145,7 @@ internal class Slothasor : SalvationPass
         var phases = new List<PhaseData>(5);
         long encounterStart = encounterPhase.Start;
         long encounterEnd = encounterPhase.End;
-        var sleepy = slothasor.GetCastEvents(log, encounterStart, encounterEnd).Where(x => x.SkillID == NarcolepsySkill);
+        var sleepy = slothasor.GetAnimatedCastEvents(log, encounterStart, encounterEnd).Where(x => x.SkillID == NarcolepsySkill);
         long start = encounterStart;
         int i = 1;
         foreach (CastEvent c in sleepy)
@@ -252,7 +252,7 @@ internal class Slothasor : SalvationPass
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -336,7 +336,7 @@ internal class Slothasor : SalvationPass
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -371,7 +371,7 @@ internal class Slothasor : SalvationPass
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -396,6 +396,13 @@ internal class Slothasor : SalvationPass
                 }
                 
             }       
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

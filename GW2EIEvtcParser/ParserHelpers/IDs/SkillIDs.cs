@@ -70,6 +70,9 @@ public static class SkillIDs
     public const long SandShadeBuff = -51;
     public const long SandSavantSandShadeBuff = -52;
     public const long TsunaniSlamClaw = -53; // TODO find if there is an actual ID for this
+    public const long SymbolOfBladesOrLesser = -54;
+    public const long SymbolOfProtectionOrLesser = -55;
+    public const long SymbolOfResolutionOrLesser = -56;
     #endregion
     #region ArcDPS Hardcoded
     internal const long ArcDPSDodge = 65001;
@@ -140,6 +143,7 @@ public static class SkillIDs
     public const long Determined895 = 895;
     public const long PortalInteractCooldown = 901;
     public const long RighteousIndignation = 903;
+    public const long AuraOfRestoration = 909; // signet of restoration with written in stone
     public const long Poisoned = 910;
     public const long NourishmentGuildBanquetTable = 937;
     public const long SkaleVenomConsumable = 972;
@@ -259,6 +263,10 @@ public static class SkillIDs
     public const long RenewalOfFire = 5764;
     public const long ConeOfColdHealing = 5767;
     public const long Hurl = 5780;
+    public const long SignetOfAirBuff_WrittenInStone = 5796;
+    public const long SignetOfEarthBuff_WrittenInStone = 5797;
+    public const long SignetOfFireBuff_WrittenInStone = 5798;
+    public const long SignetOfWaterBuff_WrittenInStone = 5799;
     public const long MedKitSkill = 5802;
     public const long BombKit = 5812;
     public const long RifleTurretCast = 5818;
@@ -999,6 +1007,7 @@ public static class SkillIDs
     public const long MedicalDispersionFieldHeal = 13515;
     public const long SelflessDaring = 13594;
     public const long GlacialHeartHeal = 13629;
+    public const long LesserSymbolOfResolution = 13677;
     public const long LesserSymbolOfProtection = 13684;
     public const long RestorativeMantras = 13721;
     public const long PowerBlockDamage = 13752;
@@ -1179,6 +1188,7 @@ public static class SkillIDs
     public const long ProtectionUnstrippable = 16537; // Used for Greer
     public const long PortalUses = 16553;
     public const long GravelShot3 = 16711;
+    public const long Dread = 16947;
     public const long VirtueOfResolveBattlePresence = 17046;
     public const long VirtueOfResolveBattlePresenceAbsoluteResolve = 17047;
     public const long DeployGuildArrowCart = 17676;
@@ -1691,7 +1701,7 @@ public static class SkillIDs
     public const long BiteSmokescale = 31312;
     public const long PylonAttunementBlue = 31317;
     public const long WingBuffetWyvern = 31321;
-    public const long TimeBombDamage = 31324; // First Bomb
+    public const long TimeBombDamage_Encounter = 31324; // First Bomb
     public const long Firestorm = 31332;
     public const long Rebound = 31337;
     public const long DistributedMagicBlue = 31340;
@@ -1723,7 +1733,7 @@ public static class SkillIDs
     public const long GhastlyRampageBegin = 31466;
     public const long SapperBombBuff = 31473;
     public const long HauntingAura = 31483;
-    public const long TimeBomb = 31485;
+    public const long TimeBomb_Encounter = 31485;
     public const long StaticCharge = 31487;
     public const long SapperBombSkill = 31488;
     public const long SublimeConversion = 31496;
@@ -1954,7 +1964,7 @@ public static class SkillIDs
     public const long ShellShocked = 34108;
     public const long SpawnProtection = 34113;
     public const long SoothingBastion = 34136;
-    public const long TimeBombDamage2 = 34152; // Second Bomb, below 50% Sabetha HP
+    public const long TimeBombDamage2_Encounter = 34152; // Second Bomb, below 50% Sabetha HP
     public const long CallOfTheMists = 34164;
     public const long PeppermintOil = 34187;
     public const long PeppermintOmnomberryBar = 34188;
@@ -2275,11 +2285,11 @@ public static class SkillIDs
     public const long SpatialManipulation1 = 37611;
     public const long MindCrush = 37613;
     public const long EmpoweredMO = 37626;
-    public const long SpatialManipulation2 = 37629;
+    public const long SpatialManipulationInitial = 37629;
     public const long OrbitalSweep = 37631;
-    public const long SpatialManipulation3 = 37642;
+    public const long SpatialManipulation2 = 37642;
     public const long CrystallineHeart = 37657;
-    public const long SpatialManipulation4 = 37673;
+    public const long SpatialManipulation3 = 37673;
     public const long EnragedCairn = 37675;
     public const long JadeSoldierAura = 37677;
     public const long FixatedRigom = 37693;
@@ -2325,7 +2335,7 @@ public static class SkillIDs
     public const long DemonicShockWaveLeft = 38046;
     public const long SharedAgony = 38049;
     public const long EnergySurge = 38060;
-    public const long SpatialManipulation5 = 38074;
+    public const long SpatialManipulation4 = 38074;
     public const long SpectralAgony = 38077;
     public const long Countdown = 38098;
     public const long CairnImpact = 38102;
@@ -2353,12 +2363,13 @@ public static class SkillIDs
     public const long FanaticalResilience = 38226;
     public const long ImpalingStab = 38231;
     public const long ClaimSAK = 38234;
+    public const long CairnPetrifed = 38235;
     public const long InevitableBetrayalSmall = 38247;
     public const long BrutalAura = 38258;
     public const long InevitableBetrayalFailSmall = 38260;
     public const long UnseenBurdenDeimos = 38266;
     public const long BoonThief = 38272;
-    public const long SpatialManipulation6 = 38302;
+    public const long SpatialManipulationFastTrigger = 38302;
     public const long Bludgeon = 38305;
     public const long MeteorSwarm = 38313;
     public const long AnguishedBolt = 38314;
@@ -4323,7 +4334,7 @@ public static class SkillIDs
     public const long RelicOfTheNightmare = 69849;
     public const long RelicOfFireworks = 69855;
     public const long InsatiableHungerBigOrbEmpoweredNMCM1 = 69861;
-    public const long RelicOfCerusBuff = 69867;
+    public const long POV_RelicOfCerusBuff = 69867;
     public const long RelicOfPeithaTargetBuff = 69882;
     public const long CruelDetonation2 = 69928;
     public const long ChargingConstellationDamage = 69950;
@@ -4483,6 +4494,7 @@ public static class SkillIDs
     public const long NaturesStrength = 71976;
     public const long TappedOut = 71979;
     public const long EnervationBlade = 71986;
+    public const long SymbolOfIgnition = 71987;
     public const long DetonateJurisdiction = 71989;
     public const long Flourish = 71999;
     public const long ValiantLeap = 72002;
@@ -5388,6 +5400,7 @@ public static class SkillIDs
     public const long SharpeningGolem = 77466;
     public const long CookingGolem = 77572;
     public const long QuickplayBoost = 77676;
+    public const long SnowDiamondOrnament = 77727;
     public const long BagOfPoppedCandyCorn = 77728;
     public const long ExaltedHammerSkill2 = 77746;
     public const long ForgedSurferDashBuff = 77749;
@@ -5448,5 +5461,13 @@ public static class SkillIDs
     public const long POV_ElementalBalance = 79230; // Trait buff?
     public const long SummonSpiritsAnguishSkill2 = 79246;
     public const long RelicOfTheScoundrel = 79279;
+    public const long LesserSymbolOfBlades = 79336;
+    public const long KineticBattery = 79338;
+    public const long TimeBombBuff = 79339;
+    public const long LesserSicEm = 79348;
+    public const long BountifulPowerCharge = 79349;
+    public const long DangerTime = 79353;
+    public const long TimeBombDamage = 79359;
+    public const long BountifulPower = 79363;
     #endregion
 }

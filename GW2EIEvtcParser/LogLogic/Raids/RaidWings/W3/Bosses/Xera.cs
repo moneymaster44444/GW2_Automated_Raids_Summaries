@@ -19,7 +19,7 @@ namespace GW2EIEvtcParser.LogLogic;
 internal class Xera : StrongholdOfTheFaithful
 {
 
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(TemporalShredOrb, new MechanicPlotlySetting(Symbols.Circle,Colors.Red), "Orb", "Temporal Shred (Hit by Red Orb)","Red Orb", 0),
                 new PlayerDstHealthDamageHitMechanic(TemporalShredAoE, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Red), "Orb Aoe", "Temporal Shred (Stood in Orb Aoe)","Orb AoE", 0),
@@ -101,7 +101,7 @@ internal class Xera : StrongholdOfTheFaithful
         return xera.Merges.FirstOrNull((in AgentItem.MergedAgentItem x) => x.Merged.IsSpecies(TargetID.Xera2))?.Merged;
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var xera = GetMainTarget().AgentItem;
         var mergedXera2 = GetXera2Merge(xera);
@@ -110,14 +110,14 @@ internal class Xera : StrongholdOfTheFaithful
             BuffEvent? invulXera = GetInvulXeraEvent(combatData, xera);
             if (invulXera == null)
             {
-                logData.SetSuccess(false, xera.LastAware);
+                successHandler.SetSuccess(false, xera.LastAware);
             }
             return;
         }
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
-        if (logData.Success && logData.LogEnd < mergedXera2.FirstAware)
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
+        if (successHandler.Success && logData.LogEnd < mergedXera2.FirstAware)
         {
-            logData.SetSuccess(false, mergedXera2.LastAware);
+            successHandler.SetSuccess(false, mergedXera2.LastAware);
         }
     }
 
@@ -145,7 +145,7 @@ internal class Xera : StrongholdOfTheFaithful
         long encounterEnd = encounterPhase.End;
         var phases = new List<PhaseData>(5);
         PhaseData phase100to0 = encounterPhase;
-        if (log.CombatData.GetLogNPCUpdateEvents().Count > 0 && encounterPhase.StartStatus == LogData.LogStartStatus.Normal)
+        if (log.CombatData.GetLogNPCUpdateEvents().Count > 0 && encounterPhase.StartStatus == LogData.StartStatus.Normal)
         {
             long xeraFightStart = GetMainXeraFightStart(log, xera.AgentItem, encounterStart);
             var phasePreEvent = new SubPhasePhaseData(encounterPhase.Start, xeraFightStart, "Pre Event");
@@ -362,22 +362,20 @@ internal class Xera : StrongholdOfTheFaithful
         SetManualHPForXera(GetMainTarget());
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         // We expect pre event with logs with LogStartNPCUpdate events
         if (!agentData.TryGetFirstAgentItem(TargetID.FakeXera, out _) && combatData.GetLogNPCUpdateEvents().Any())
         {
-            return LogData.LogStartStatus.NoPreEvent;
+            return LogData.StartStatus.NoPreEvent;
         }
-        else
-        {
-            return LogData.LogStartStatus.Normal;
-        }
+        return LogData.StartStatus.Normal;
     }
 
     internal override IReadOnlyList<TargetID>  GetTargetsIDs()
     {
-        return [
+        return
+        [
             TargetID.Xera,
             TargetID.DummyTarget,
             TargetID.BloodstoneShardMainFight,
@@ -405,7 +403,7 @@ internal class Xera : StrongholdOfTheFaithful
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -463,7 +461,7 @@ internal class Xera : StrongholdOfTheFaithful
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -488,7 +486,7 @@ internal class Xera : StrongholdOfTheFaithful
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -561,7 +559,7 @@ internal class Xera : StrongholdOfTheFaithful
                 // Float happens after 7000 ms, extra 500ms to display the hit
                 float angle = 0;
                 (long start, long end) lifespan = (halfGravityWell.Time, halfGravityWell.Time + 7500);
-                (long start, long end) lifespanIndicator = (halfGravityWell.Time, halfGravityWell.Time + 7000);
+                (long start, long end) = (halfGravityWell.Time, halfGravityWell.Time + 7000);
                 bool hasFired = true;
                 var activeXera = log.AgentData.GetNPCsByID(TargetID.Xera).FirstOrDefault(x => x.FirstAware <= halfGravityWell.Time && x.LastAware >= halfGravityWell.Time);
                 if (activeXera == null)
@@ -573,7 +571,7 @@ internal class Xera : StrongholdOfTheFaithful
                 {
                     var timeLimit = splitEvent != null ? splitEvent.Time : activeXera.LastAware;
                     angle = -30 + (cur++) * 90;
-                    if (lifespanIndicator.end > timeLimit)
+                    if (end > timeLimit)
                     {
                         hasFired = false;
                     }
@@ -588,7 +586,7 @@ internal class Xera : StrongholdOfTheFaithful
                     }
                     var timeLimit = activeXera.LastAware;
                     angle = -210 - (cur++) * 90;
-                    if (lifespanIndicator.end > timeLimit)
+                    if (end > timeLimit)
                     {
                         hasFired = false;
                     }
@@ -599,11 +597,11 @@ internal class Xera : StrongholdOfTheFaithful
                         (PieDecoration)new PieDecoration(1150, 180, lifespan, Colors.Purple, 0.15, pos)
                             .UsingRotationConnector(angleConnector),
                         true,
-                        lifespanIndicator.end
+                        end
                 );
                 if (hasFired)
                 {
-                    environmentDecorations.Add((PieDecoration)new PieDecoration(1150, 180, (lifespanIndicator.end, lifespanIndicator.end + 500), Colors.Purple, 0.2, pos)
+                    environmentDecorations.Add((PieDecoration)new PieDecoration(1150, 180, (end, end + 500), Colors.Purple, 0.2, pos)
                             .UsingRotationConnector(angleConnector));
                 }
             }
@@ -625,9 +623,16 @@ internal class Xera : StrongholdOfTheFaithful
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

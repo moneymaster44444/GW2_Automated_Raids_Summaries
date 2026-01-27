@@ -11,17 +11,22 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 
 namespace GW2EIEvtcParser.LogLogic;
 
 internal class SoullessHorror : HallOfChains
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(InnerVortexSlash, new MechanicPlotlySetting(Symbols.Circle,Colors.LightOrange), "Donut In", "Vortex Slash (Inner Donut hit)","Inner Donut", 0),
                 new PlayerDstHealthDamageHitMechanic(OuterVortexSlash, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.LightOrange), "Donut Out", "Vortex Slash (Outer Donut hit)","Outer Donut", 0),
-                new PlayerDstHealthDamageHitMechanic([ InnerVortexSlash, OuterVortexSlash ], new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.LightOrange), "NecDancer.Achiv", "Achievement Eligibility: Necro Dancer", "Necro Dancer", 0)
-                    .UsingAchievementEligibility(),
+                new MechanicGroup([
+                    new AchievementEligibilityMechanic(Ach_NecroDancer, new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.Orange), "NecDancer.Achiv.L", "Achievement Eligibility: Necro Dancer Lost", "Necro Dancer Lost", 0)
+                        .UsingChecker((evt, log) => evt.Lost),
+                    new AchievementEligibilityMechanic(Ach_NecroDancer, new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.LightOrange), "NecDancer.Achiv.K", "Achievement Eligibility: Necro Dancer Kept", "Necro Dancer Kept", 0)
+                        .UsingChecker((evt, log) => !evt.Lost)
+                ]),
             ]),
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(QuadSlashFirstSet, new MechanicPlotlySetting(Symbols.StarDiamondOpen,Colors.LightOrange), "Slice1", "Quad Slash (4 Slices, First hit)","4 Slices 1", 0),
@@ -101,18 +106,18 @@ internal class SoullessHorror : HallOfChains
             .Concat(GetConfusionDamageMissingMessage(evtcVersion).ToEnumerable());
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
-        if (!logData.Success)
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
+        if (!successHandler.Success)
         {
             SingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.SoullessHorror)) ?? throw new MissingKeyActorsException("Soulless Horror not found");
-            BuffEvent? buffOnDeath = combatData.GetBuffDataByIDByDst(Determined895, mainTarget.AgentItem).Where(x => x is BuffApplyEvent).LastOrDefault();
+            BuffEvent? buffOnDeath = combatData.GetBuffDataByIDByDst(Determined895, mainTarget.AgentItem).LastOrDefault(x => x is BuffApplyEvent);
             if (buffOnDeath != null)
             {
                 if (agentData.GetNPCsByID(TargetID.Desmina).Any(x => x.FirstAware <= buffOnDeath.Time + ServerDelayConstant && x.LastAware >= buffOnDeath.Time))
                 {
-                    logData.SetSuccess(true, buffOnDeath.Time);
+                    successHandler.SetSuccess(true, buffOnDeath.Time);
                 }
             }
         }
@@ -125,7 +130,7 @@ internal class SoullessHorror : HallOfChains
         {
             foreach (var combatEvent in combatData.Where(x => x.IsStateChange == StateChange.HealthUpdate && x.SrcMatchesAgent(soullessHorror.AgentItem) && x.Time >= determined895Apply.Time))
             {
-                combatEvent.OverrideSrcAgent(ParserHelper._unknownAgent);
+                combatEvent.OverrideSrcAgent(_unknownAgent);
             }
         }
     }
@@ -145,7 +150,7 @@ internal class SoullessHorror : HallOfChains
         long end = encounterPhase.End;
         var phases = new List<PhaseData>(6);
         var tormentedDeads = targets.Where(x => x.IsSpecies(TargetID.TormentedDead));
-        var howling = soullessHorror.GetCastEvents(log, encounterPhase.Start, end).Where(x => x.SkillID == HowlingDeath);
+        var howling = soullessHorror.GetAnimatedCastEvents(log, encounterPhase.Start, end).Where(x => x.SkillID == HowlingDeath);
         long phaseStart = encounterPhase.Start;
         int i = 1;
         foreach (CastEvent c in howling)
@@ -185,7 +190,7 @@ internal class SoullessHorror : HallOfChains
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -195,40 +200,45 @@ internal class SoullessHorror : HallOfChains
         switch (target.ID)
         {
             case (int)TargetID.SoullessHorror:
-                var cls = target.GetCastEvents(log);
                 // arena reduction
-                var center = new Vector3(-10581, 825, -817);
-                List<(double, uint, uint)> destroyedRings;
-                if (log.LogData.IsCM)
+                var encounterPhase = log.LogData.GetEncounterPhases(log).FirstOrDefault(x => x.Targets.ContainsKey(target));     
+                if (encounterPhase != null)
                 {
-                    destroyedRings =
-                        [
-                            (100, 1330, 1550),
-                            (90, 1120, 1330),
-                            (66, 910, 1120),
-                            (33, 720, 910)
-                        ];
-                }
-                else
-                {
-                    destroyedRings =
-                        [
-                            (90, 1330, 1550),
-                            (66, 1120, 1330),
-                            (33, 910, 1120),
-                        ];
-                }
-                foreach ((double hpVal, uint innerRadius, uint outerRadius) in destroyedRings)
-                {
-                    Segment? hpUpdate = target.GetHealthUpdates(log).FirstOrNull((in Segment x) => x.Value <= hpVal);
-                    if (hpUpdate != null)
+                    var center = new Vector3(-10581, 825, -817);
+                    List<(double, uint, uint)> destroyedRings;
+                    if (encounterPhase.IsCM)
                     {
-                        var doughnut = new DoughnutDecoration(innerRadius, outerRadius, (hpUpdate.Value.Start, target.LastAware), Colors.Orange, 0.3, new PositionConnector(center));
-                        replay.Decorations.AddWithGrowing(doughnut, hpUpdate.Value.Start + 3000);
+                        destroyedRings =
+                            [
+                                (100, 1330, 1550),
+                                (90, 1120, 1330),
+                                (66, 910, 1120),
+                                (33, 720, 910)
+                            ];
                     }
                     else
                     {
-                        break;
+                        destroyedRings =
+                            [
+                                (90, 1330, 1550),
+                                (66, 1120, 1330),
+                                (33, 910, 1120),
+                            ];
+                    }
+                    foreach ((double hpVal, uint innerRadius, uint outerRadius) in destroyedRings)
+                    {
+                        long end = Math.Min(encounterPhase.End, target.LastAware);
+                        Segment? hpUpdate = target.GetHealthUpdates(log).FirstOrNull((in Segment x) => x.Value <= hpVal);
+                        if (hpUpdate != null)
+                        {
+                            long ringStart = Math.Max(hpUpdate.Value.Start, encounterPhase.Start);
+                            var doughnut = new DoughnutDecoration(innerRadius, outerRadius, (ringStart, end), Colors.Orange, 0.3, new PositionConnector(center));
+                            replay.Decorations.AddWithGrowing(doughnut, ringStart + 3000);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -329,12 +339,10 @@ internal class SoullessHorror : HallOfChains
                 if (firstPos.X < -12000 || firstPos.X > -9250)
                 {
                     replay.Decorations.Add(new RectangleDecoration(240, 660, lifespan, Colors.Orange, 0.5, new AgentConnector(target)));
-                    break;
                 }
                 else if (firstPos.Y < -525 || firstPos.Y > 2275)
                 {
                     replay.Decorations.Add(new RectangleDecoration(645, 238, lifespan, Colors.Orange, 0.5, new AgentConnector(target)));
-                    break;
                 }
                 break;
 
@@ -349,7 +357,7 @@ internal class SoullessHorror : HallOfChains
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -359,7 +367,7 @@ internal class SoullessHorror : HallOfChains
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -378,7 +386,7 @@ internal class SoullessHorror : HallOfChains
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
@@ -425,8 +433,34 @@ internal class SoullessHorror : HallOfChains
         return minDiff < 11000;
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {       
-        return HasFastNecrosis(combatData, logData.LogStart, logData.LogEnd) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return HasFastNecrosis(combatData, logData.LogStart, logData.LogEnd) ? LogData.Mode.CM : LogData.Mode.Normal;
+    }
+
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+        {
+            var necroDancerEligibilityEvents = new List<AchievementEligibilityEvent>();
+            var shPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            List<HealthDamageEvent> damageData = [
+                ..log.CombatData.GetDamageData(InnerVortexSlash),
+                ..log.CombatData.GetDamageData(OuterVortexSlash)
+            ];
+            damageData.SortByTime();
+            foreach (var evt in damageData)
+            {
+                if (evt.HasHit && evt.To.Is(p.AgentItem) && p.InAwareTimes(evt.Time))
+                {
+                    InsertAchievementEligibityEventAndRemovePhase(shPhases, necroDancerEligibilityEvents, evt.Time, Ach_NecroDancer, p);
+                }
+            }
+            AddSuccessBasedAchievementEligibityEvents(shPhases, necroDancerEligibilityEvents, Ach_NecroDancer, p);
+            achievementEligibilityEvents.AddRange(necroDancerEligibilityEvents);
+        }
     }
 }

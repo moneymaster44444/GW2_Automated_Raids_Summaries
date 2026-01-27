@@ -12,6 +12,7 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -79,40 +80,13 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
                 new EnemyCastStartMechanic(PetrifySkill, new MechanicPlotlySetting(Symbols.Pentagon, Colors.Yellow), "Pet.C", "Casted Petrify", "Petrify breakbar start", 0),
                 new EnemySrcHealthDamageHitMechanic(PetrifyDamage, new MechanicPlotlySetting(Symbols.Pentagon, Colors.DarkTeal), "Pet.F", "Petrify hit players and healed Cerus", "Petrify breakbar fail", 100),
             ]),
-            new NonSpecializedCombatEventListMechanic<TimeCombatEvent>(new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.RedSkin), "UnbOpt.Achiv", "Achievement Eligibility: Unbounded Optimism", "Unbounded Optimism", 0, false, (log, agentItem) =>
-                {
-                    SingleActor? actor = log.FindActor(agentItem);
-                    var eligibilityRemovedEvents = new List<TimeCombatEvent>();
-                    if (actor == null)
-                    {
-                        return eligibilityRemovedEvents;
-                    }
-                    eligibilityRemovedEvents.AddRange(actor.GetDamageTakenEvents(null, log).Where(x => UnboundOptimismSkillIDs.Contains(x.SkillID) && x.HasHit));
-                    IReadOnlyList<DeadEvent> deads = log.CombatData.GetDeadEvents(agentItem);
-                    // In case player is dead but death event did not happen during encounter
-                    if (agentItem.IsDead(log, log.LogData.LogEnd) && !deads.Any(x => x.Time >= log.LogData.LogStart && x.Time <= log.LogData.LogEnd))
-                    {
-                        eligibilityRemovedEvents.Add(new PlaceHolderTimeCombatEvent(log.LogData.LogEnd - 1));
-                    }
-                    else
-                    {
-                        eligibilityRemovedEvents.AddRange(deads);
-                    }
-                    IReadOnlyList<DespawnEvent> despawns = log.CombatData.GetDespawnEvents(agentItem);
-                    // In case player is DC but DC event did not happen during encounter
-                    if (agentItem.IsDC(log, log.LogData.LogEnd) && !despawns.Any(x => x.Time >= log.LogData.LogStart && x.Time <= log.LogData.LogEnd))
-                    {
-                        eligibilityRemovedEvents.Add(new PlaceHolderTimeCombatEvent(log.LogData.LogEnd - 1));
-                    }
-                    else
-                    {
-                        eligibilityRemovedEvents.AddRange(despawns);
-                    }
-                    eligibilityRemovedEvents.SortByTime();
-                    return eligibilityRemovedEvents;
-                })
-                .UsingEnable(x => x.LogData.IsCM || x.LogData.IsLegendaryCM)
-                .UsingAchievementEligibility(),
+
+            new MechanicGroup([
+                new AchievementEligibilityMechanic(Ach_UnboundedOptimism, new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.DarkRedSkin), "UnbOpt.Achiv.L", "Achievement Eligibility: Unbounded Optimism Lost", "Unbounded Optimism Lost", 0)
+                        .UsingChecker((evt, log) => evt.Lost),
+                new AchievementEligibilityMechanic(Ach_UnboundedOptimism, new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.RedSkin), "UnbOpt.Achiv.K", "Achievement Eligibility: Unbounded Optimism Kept", "Unbounded Optimism Kept", 0)
+                        .UsingChecker((evt, log) => !evt.Lost)
+            ]),
             new MechanicGroup([
                 new EnemyDstBuffApplyMechanic(EmpoweredCerus, new MechanicPlotlySetting(Symbols.Square, Colors.Red), "Emp.A", "Gained Empowered", "Empowered Application", 0),
                 new EnemyDstBuffApplyMechanic(EmpoweredDespairCerus, new MechanicPlotlySetting(Symbols.Square, Colors.Black), "EmpDesp.A", "Gained Empowered Despair", "Empowered Despair Application", 0),
@@ -190,7 +164,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
 
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()
     {
-        return new Dictionary<TargetID, int>()
+        return new Dictionary<TargetID, int>
         {
             { TargetID.Cerus, 0 },
             { TargetID.EmbodimentOfDespair, 1 },
@@ -215,15 +189,15 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
         List<PhaseData> phases = GetInitialPhase(log);
         SingleActor cerus = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Cerus)) ?? throw new MissingKeyActorsException("Cerus not found");
         phases[0].AddTarget(cerus, log);
-        var embodimentIDs = new List<TargetID>
-        {
+        List<TargetID> embodimentIDs =
+        [
             TargetID.EmbodimentOfDespair,
             TargetID.EmbodimentOfEnvy,
             TargetID.EmbodimentOfGluttony,
             TargetID.EmbodimentOfMalice,
             TargetID.EmbodimentOfRage,
             TargetID.EmbodimentOfRegret,
-        };
+        ];
         var embodiments = Targets.Where(target => target.IsAnySpecies(embodimentIDs));
         var embodimentsKilled = embodiments.Where(target => log.CombatData.GetBuffDataByIDByDst(Invulnerability757, target.AgentItem).Any());
         phases[0].AddTargets(embodimentsKilled, log, PhaseData.TargetPriority.Blocking);
@@ -257,7 +231,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
             }
         }
         // Enraged Smash phase - After 10% bar is broken
-        CastEvent? enragedSmash = cerus.GetCastEvents(log).Where(x => x.SkillID == EnragedSmashNM || x.SkillID == EnragedSmashCM).FirstOrDefault();
+        CastEvent? enragedSmash = cerus.GetAnimatedCastEvents(log).FirstOrDefault(x => x.SkillID == EnragedSmashNM || x.SkillID == EnragedSmashCM);
         if (enragedSmash != null)
         {
             var finalPhase = phases[^1];
@@ -286,7 +260,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
         {
             var enterCombatTime = GetEnterCombatTime(logData, agentData, combatData, logStartNPCUpdate.Time, GenericTriggerID, logStartNPCUpdate.DstAgent);
             AgentItem cerus = GetCerusItem(agentData);
-            var spawnEvent = combatData.Where(x => x.IsStateChange == StateChange.Spawn && x.SrcMatchesAgent(cerus)).FirstOrDefault();
+            var spawnEvent = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.Spawn && x.SrcMatchesAgent(cerus));
             if (spawnEvent != null && enterCombatTime >= spawnEvent.Time)
             {
                 return spawnEvent.Time;
@@ -298,15 +272,15 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
-        var embodimentIDs = new List<TargetID>()
-        {
+        List<TargetID> embodimentIDs =
+        [
             TargetID.EmbodimentOfDespair,
             TargetID.EmbodimentOfEnvy,
             TargetID.EmbodimentOfGluttony,
             TargetID.EmbodimentOfMalice,
             TargetID.EmbodimentOfRage,
             TargetID.EmbodimentOfRegret,
-        };
+        ];
         AgentItem cerus = GetCerusItem(agentData);
         foreach (TargetID embodimentID in embodimentIDs)
         {
@@ -342,7 +316,6 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
             }
         }
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
-        int[] curEmbodiments = [1, 1, 1, 1, 1, 1];
         foreach (SingleActor target in Targets)
         {
             switch (target.ID)
@@ -403,15 +376,15 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
         }
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor cerus = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Cerus)) ?? throw new MissingKeyActorsException("Cerus not found");
         var cerusHP = cerus.GetHealth(combatData);
         if (cerusHP > 130e6)
         {
-            return LogData.LogMode.LegendaryCM;
+            return LogData.Mode.LegendaryCM;
         }
-        return (cerusHP > 100e6) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return (cerusHP > 100e6) ? LogData.Mode.CM : LogData.Mode.Normal;
 
     }
 
@@ -590,11 +563,12 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
         }
 
         // Pool of Despair - Spread AoE on ground
+        var tofPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && (x.IsCM || x.IsLegendaryCM)).ToList();
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.TempleOfFebePoolOfDespair, out var poolOfDespair))
         {
             foreach (EffectEvent effect in poolOfDespair)
             {
-                int duration = log.LogData.IsCM || log.LogData.IsLegendaryCM ? 120000 : 60000;
+                int duration = tofPhases.Any(x => x.InInterval(effect.Time)) ? 120000 : 60000;
                 (long start, long end) lifespan = effect.ComputeDynamicLifespan(log, duration);
                 var circle = new CircleDecoration(120, lifespan, Colors.RedSkin, 0.2, new PositionConnector(effect.Position));
                 environmentDecorations.Add(circle);
@@ -831,6 +805,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
                         // Fallback for security
                         var oppositeAgentConnector = (AgentConnector)new AgentConnector(target).WithOffset(new(-(width / 2), 0, 0), true);
                         var rectangle3 = (RectangleDecoration)new RectangleDecoration(width, 100, lifespanDamageOppositeCancelled, Colors.Red, 0.2, oppositeAgentConnector).UsingRotationConnector(rotation3);
+                        replay.Decorations.Add(rectangle3);
                     }
                 }
             }
@@ -890,7 +865,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
             // If Cerus is casting a mechanic, cancel it when he begins casting Petrify
             if (target.IsSpecies(TargetID.Cerus))
             {
-                var casts = cerus.GetCastEvents(log).Where(x => x.SkillID == PetrifySkill);
+                var casts = cerus.GetAnimatedCastEvents(log).Where(x => x.SkillID == PetrifySkill);
                 foreach (CastEvent cast in casts)
                 {
                     if (lifespan.start <= cast.Time && lifespan.end > cast.Time)
@@ -932,7 +907,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
     {
         base.SetInstanceBuffs(log, instanceBuffs);
 
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         var empoweredBuffs = new List<long>()
         {
             EmpoweredDespairCerus,
@@ -961,5 +936,38 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
     private static AgentItem GetCerusItem(AgentData agentData)
     {
         return agentData.GetNPCsByID(TargetID.Cerus).FirstOrDefault()! ?? throw new MissingKeyActorsException("Cerus not found");
+    }
+
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+        {
+            var unboundedOptimismEligibilityEvents = new List<AchievementEligibilityEvent>();
+            var tofPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && (x.IsCM || x.IsLegendaryCM) && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            List<TimeCombatEvent> lostEvents = [
+                ..p.GetDamageTakenEvents(null, log).Where(x => UnboundOptimismSkillIDs.Contains(x.SkillID) && x.HasHit),
+                ..log.CombatData.GetDeadEvents(p.AgentItem),
+                ..log.CombatData.GetDespawnEvents(p.AgentItem)
+            ];
+            lostEvents.SortByTime();
+            foreach (var evt in lostEvents)
+            {
+                InsertAchievementEligibityEventAndRemovePhase(tofPhases, unboundedOptimismEligibilityEvents, evt.Time, Ach_UnboundedOptimism, p);
+            }
+            foreach (var remainingToFPhase in tofPhases.ToList())
+            {
+                // Dead or DC during fight but did not die or dc during fight
+                if (p.IsDead(log, remainingToFPhase.Start, remainingToFPhase.End) || p.IsDC(log, remainingToFPhase.Start, remainingToFPhase.End))
+                {
+                    unboundedOptimismEligibilityEvents.Add(new AchievementEligibilityEvent(remainingToFPhase.Start, Ach_UnboundedOptimism, p, true));
+                    tofPhases.Remove(remainingToFPhase);
+                }
+            }
+            AddSuccessBasedAchievementEligibityEvents(tofPhases, unboundedOptimismEligibilityEvents, Ach_UnboundedOptimism, p);
+            achievementEligibilityEvents.AddRange(unboundedOptimismEligibilityEvents);
+        }
     }
 }

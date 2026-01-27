@@ -69,7 +69,7 @@ internal static class RevenantHelper
         new EffectCastFinder(ProtectiveSolaceSkill, EffectGUIDs.RevenantProtectiveSolace)
             .UsingSrcBaseSpecChecker(Spec.Revenant)
             .UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.IsSpecies(MinionID.VentariTablet)),
-        new EffectCastFinder(BlitzMinesDrop, EffectGUIDs.RevenantSpearBlitzMines1)
+        new EffectCastFinder(BlitzMinesDrop, EffectGUIDs.RevenantSpearAbyssalBlitz1)
             .UsingSrcBaseSpecChecker(Spec.Revenant),
         new EffectCastFinder(BlitzMines, EffectGUIDs.RevenantSpearBlitzMinesDetonation1)
             .UsingSecondaryEffectSameSrcChecker(EffectGUIDs.RevenantSpearBlitzMinesDetonation2)
@@ -106,7 +106,7 @@ internal static class RevenantHelper
             .WithBuilds(GW2Builds.August2022Balance),
         new DamageLogDamageModifier(Mod_RisingTide, "Rising Tide", "10% if hp >=90%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.RisingTide, (x, log) => x.IsOverNinety, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.August2022Balance, GW2Builds.November2022Balance),
-        new DamageLogDamageModifier(Mod_RisingTide, "Rising Tide", "10% if hp >=75%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.RisingTide, (x, log) => x.From.GetCurrentHealthPercent(log, x.Time) >= 75.0, DamageModifierMode.PvE)
+        new DamageLogDamageModifier(Mod_RisingTide, "Rising Tide", "10% if hp >=75%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.RisingTide, FromHPChecker(75), DamageModifierMode.PvE)
             .UsingApproximate()
             .WithBuilds(GW2Builds.November2022Balance),
         
@@ -117,13 +117,13 @@ internal static class RevenantHelper
         new BuffOnActorDamageModifier(Mod_ViciousLacerations, ViciousLacerations, "Vicious Lacerations", "2% per Stack", DamageSource.NoPets, 2.0, DamageType.Strike, DamageType.All, Source.Revenant, ByStack, TraitImages.ViciousLacerations, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.October2018Balance),
         // - Unsuspecting Strikes
-        new DamageLogDamageModifier(Mod_UnsuspectingStrikes, "Unsuspecting Strikes", "25% if target hp > 80%", DamageSource.NoPets, 25.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.ViciousLacerations, (x,log) => x.To.GetCurrentHealthPercent(log, x.Time) > 80, DamageModifierMode.PvE )
+        new DamageLogDamageModifier(Mod_UnsuspectingStrikes, "Unsuspecting Strikes", "25% if target hp >= 80%", DamageSource.NoPets, 25.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.ViciousLacerations, ToHPChecker(80), DamageModifierMode.PvE )
             .UsingApproximate()
             .WithBuilds(GW2Builds.February2020Balance, GW2Builds.May2021BalanceHotFix),
-        new DamageLogDamageModifier(Mod_UnsuspectingStrikes, "Unsuspecting Strikes", "20% if target hp > 80%", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.ViciousLacerations, (x,log) => x.To.GetCurrentHealthPercent(log, x.Time) > 80, DamageModifierMode.PvE )
+        new DamageLogDamageModifier(Mod_UnsuspectingStrikes, "Unsuspecting Strikes", "20% if target hp >= 80%", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.ViciousLacerations, ToHPChecker(80), DamageModifierMode.PvE )
             .UsingApproximate()
             .WithBuilds(GW2Builds.May2021BalanceHotFix),
-        new DamageLogDamageModifier(Mod_UnsuspectingStrikes, "Unsuspecting Strikes", "10% if target hp > 80%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.ViciousLacerations, (x,log) => x.To.GetCurrentHealthPercent(log, x.Time) > 80, DamageModifierMode.sPvPWvW )
+        new DamageLogDamageModifier(Mod_UnsuspectingStrikes, "Unsuspecting Strikes", "10% if target hp >= 80%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.ViciousLacerations, ToHPChecker(80), DamageModifierMode.sPvPWvW )
             .UsingApproximate()
             .WithBuilds(GW2Builds.February2020Balance),
         // - Targeted Destruction
@@ -404,9 +404,9 @@ internal static class RevenantHelper
             var skillDamage= new SkillModeDescriptor(player, Spec.Revenant, AbyssalBlot);
             foreach (EffectEvent effect in abyssalBlots)
             {
-                (long start, long end) lifespan = effect.ComputeLifespan(log, 3000);
-                (long start, long end) lifespanCC = (lifespan.start, lifespan.start + 500);
-                (long start, long end) lifespanDamage = (lifespanCC.end, lifespan.end);
+                (long start, long end) = effect.ComputeLifespan(log, 3000);
+                (long start, long end) lifespanCC = (start, start + 500);
+                (long start, long end) lifespanDamage = (lifespanCC.end, end);
                 // CC on first pulse
                 AddCircleSkillDecoration(replay, effect, color, skillCC, lifespanCC, 240, EffectImages.EffectAbyssalBlot);
                 AddCircleSkillDecoration(replay, effect, color, skillDamage, lifespanDamage, 240, EffectImages.EffectAbyssalBlot);
