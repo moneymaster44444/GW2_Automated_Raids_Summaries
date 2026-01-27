@@ -17,6 +17,7 @@
 
 import argparse
 import configparser
+import ctypes
 import sys
 import os
 import datetime
@@ -27,6 +28,43 @@ import config_output
 from parser_functions import *
 from output_functions import *
 
+CURRENT_VERSION = "1.4.13"  
+REPO = "Drevarr/GW2_EI_log_combiner"
+
+def get_latest_github_version(repo: str) -> str | None:
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        return data.get("tag_name") or data.get("name")
+    except Exception as e:
+        print(f"⚠️ Could not check for updates: {e}")
+        return None
+
+def check_for_update(show_popup=False):
+    latest = get_latest_github_version(REPO)
+    if latest is None:
+        return
+
+    if latest.strip().lstrip("v") != CURRENT_VERSION.strip().lstrip("v"):
+        if show_popup:
+            show_update_popup(latest, CURRENT_VERSION, REPO)		
+
+def show_update_popup(latest_version: str, current_version: str, repo: str):
+    message = (
+        f"A newer version of GW2 EI Log Combiner is available.\n\n"
+        f"Current version: {current_version}\n"
+        f"Latest version: {latest_version}\n\n"
+        f"Download it from:\nhttps://github.com/{repo}/releases/latest"
+    )
+
+    ctypes.windll.user32.MessageBoxW(
+        0,
+        message,
+        "Update Available",
+        0x40 | 0x0  # MB_ICONINFORMATION | MB_OK
+    )
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(
@@ -125,7 +163,8 @@ if __name__ == '__main__':
 	enable_hide_columns = config_ini.getboolean('TopStatsCfg', 'hide_columns', fallback=False)
 
 	webhook_url = config_ini.get('DiscordCfg', 'webhook_url', fallback=False)
-
+	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=None)
+	
 	# Ensure output directories exist
 	os.makedirs(db_path, exist_ok=True)
 	os.makedirs(excel_path, exist_ok=True)
@@ -345,6 +384,8 @@ if __name__ == '__main__':
 
 	build_minions_tid(minions, top_stats['player'], skill_data, "Minions", tid_date_time)
 
+	build_squad_healthpct_table(health_data, tid_date_time, tid_list)
+
 	build_top_damage_by_skill(top_stats['overall']['totalDamageTaken'], top_stats['overall']['targetDamageDist'], skill_data, buff_data, "Top Damage By Skill", tid_date_time)
 
 
@@ -396,7 +437,7 @@ if __name__ == '__main__':
 		build_commander_summary_menu(commander_summary_data, tid_date_time, tid_list)
 
 	if write_all_data_to_json:
-		output_top_stats_json(top_stats, buff_data, skill_data, damage_mod_data, high_scores, personal_damage_mod_data, personal_buff_data, fb_pages, mechanics, minions, mesmer_clone_usage, death_on_tag, DPSStats, commander_summary_data, enemy_avg_damage_per_skill, player_damage_mitigation, player_minion_damage_mitigation, stacking_uptime_Table, IOL_revive, fight_data, args.json_output_filename)
+		output_top_stats_json(top_stats, buff_data, skill_data, damage_mod_data, high_scores, personal_damage_mod_data, personal_buff_data, fb_pages, mechanics, minions, mesmer_clone_usage, death_on_tag, DPSStats, commander_summary_data, enemy_avg_damage_per_skill, player_damage_mitigation, player_minion_damage_mitigation, stacking_uptime_Table, IOL_revive, fight_data, health_data, stats_per_fight, args.json_output_filename)
 
 	if write_excel:
 		write_data_to_excel(top_stats, top_stats['overall']['last_fight'], excel_output_full_path)
@@ -429,8 +470,12 @@ if __name__ == '__main__':
 		for profession, support_data in boon_support_data.items():
 			print("Sending boon support data for " + profession)
 			send_profession_boon_support_embed(webhook_url, profession, profession_icons[profession], discord_colors[profession], tid_date_time, support_data)
+		if discord_additional_notes:
+			send_additional_data_embed(webhook_url, discord_additional_notes, tid_date_time)
 	else:
 		if not support_profs: 
 			print("No support professions found")
 		if not webhook_url:
 			print("No webhook URL found")
+
+	check_for_update(show_popup=True)
