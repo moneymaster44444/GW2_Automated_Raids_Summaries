@@ -74,12 +74,13 @@ If you are maintaining this repository and want to update either Elite Insights 
 - First, update the `3rd_party_repo_version.lock`
   - Find the latest release version tag names for both EI and EI Combiner projects.
   - Update the "ref" field with the version tag names.
+  - Commit to local so that your change list is clean before moving to the next step.
 - Run:
   ```bat
   get_latest_ei_and_ei_combiner.bat
   ```
   - This will pull the release versions of Elite Insights and EI Combiner into `\Resources\Elite Insights` and `\Resources\EI Combiner` respectively.
-  - Make sure your git repo does not have any changes when running this. If you get any error stating that your repo has changes, try running this in cmd at the root:
+  - Make sure your git repo does not have any changes when running this. If you get any error stating that your repo has changes even though it's clean (phantom changes), try running `git restore` in cmd at the root:
     - ```
       git restore -s@ -SW -- Resources/"EI Combiner"
 
