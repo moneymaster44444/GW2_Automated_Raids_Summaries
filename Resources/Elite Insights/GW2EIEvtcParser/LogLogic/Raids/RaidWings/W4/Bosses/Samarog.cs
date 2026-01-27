@@ -14,7 +14,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Samarog : BastionOfThePenitent
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstHealthDamageHitMechanic(SamarogShockwave, new MechanicPlotlySetting(Symbols.Circle,Colors.Blue), "Schk.Wv", "Shockwave from Spears","Shockwave", 0)
                 .UsingBuffChecker(Stability, false),
             new PlayerDstHealthDamageHitMechanic(PrisonerSweep, new MechanicPlotlySetting(Symbols.Hexagon,Colors.Blue), "Swp", "Prisoner Sweep (horizontal)","Sweep", 0)
@@ -112,11 +112,11 @@ internal class Samarog : BastionOfThePenitent
         return [];
     }
 
-    private static readonly List<TargetID> RigomAndGuldhemIDs = new List<TargetID>
-    {
+    private static readonly List<TargetID> RigomAndGuldhemIDs =
+    [
         TargetID.Rigom,
         TargetID.Guldhem
-    };
+    ];
     internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor samarog, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
@@ -185,7 +185,7 @@ internal class Samarog : BastionOfThePenitent
     }
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()
     {
-        return new Dictionary<TargetID, int>()
+        return new Dictionary<TargetID, int>
         {
             {TargetID.Samarog, 0 },
             {TargetID.Rigom, 1 },
@@ -195,7 +195,8 @@ internal class Samarog : BastionOfThePenitent
 
     internal override IReadOnlyList<TargetID> GetTrashMobsIDs()
     {
-        return [
+        return
+        [
             TargetID.SpearAggressionRevulsion
         ];
     }
@@ -203,7 +204,7 @@ internal class Samarog : BastionOfThePenitent
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -217,6 +218,8 @@ internal class Samarog : BastionOfThePenitent
                     replay.Decorations.Add(new OverheadProgressBarDecoration(ParserHelper.CombatReplayOverheadProgressBarMajorSizeInPixel, (seg.Start, seg.End), Colors.Red, 0.6, Colors.Black, 0.2, [(seg.Start, 0), (seg.Start + 15000, 100)], new AgentConnector(target))
                         .UsingRotationConnector(new AngleConnector(180)));
                 }
+                var spearMissiles = log.CombatData.GetMissileEventsBySkillID(SpearReturn);
+                replay.Decorations.AddNonHomingMissiles(log, spearMissiles, ParserIcons.TargetNPCIcons[TargetID.SpearAggressionRevulsion], 1.0f, 100);
                 break;
             case (int)TargetID.Rigom:
             case (int)TargetID.Guldhem:
@@ -240,7 +243,7 @@ internal class Samarog : BastionOfThePenitent
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -295,22 +298,29 @@ internal class Samarog : BastionOfThePenitent
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations (log, environmentDecorations);
         }
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
     }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+    }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Samarog)) ?? throw new MissingKeyActorsException("Samarog not found");
-        return (target.GetHealth(combatData) > 30e6) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return (target.GetHealth(combatData) > 30e6) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 }

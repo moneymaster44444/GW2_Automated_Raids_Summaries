@@ -14,7 +14,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Gorseval : SpiritVale
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstHealthDamageHitMechanic(SpectralImpact, new MechanicPlotlySetting(Symbols.Hexagram,Colors.Red), "Slam", "Spectral Impact (KB Slam)","Slam", 4000)
                 .UsingBuffChecker(Stability, false),
             new PlayerDstBuffApplyMechanic(GhastlyPrison, new MechanicPlotlySetting(Symbols.Circle,Colors.LightOrange), "Egg", "Ghastly Prison (Egged)","Egged", 500),
@@ -58,10 +58,10 @@ internal class Gorseval : SpiritVale
         ];
     }
 
-    private static readonly List<TargetID> ChargedSoulIDs = new List<TargetID>
-    {
-        TargetID.ChargedSoul
-    };
+    private static readonly List<TargetID> ChargedSoulIDs = 
+    [
+        TargetID.ChargedSoul,
+    ];
 
     internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor gorseval, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
@@ -158,7 +158,7 @@ internal class Gorseval : SpiritVale
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -176,7 +176,7 @@ internal class Gorseval : SpiritVale
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -355,7 +355,7 @@ internal class Gorseval : SpiritVale
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -421,9 +421,16 @@ internal class Gorseval : SpiritVale
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

@@ -40,7 +40,7 @@ internal static class LogLogicUtils
 
     internal static void AddArenaDecorationsPerEncounter(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations, long logID, string image, CombatReplayMap crMap)
     {
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == logID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == logID);
         foreach (var encounterPhase in encounterPhases)
         {
             arenaDecorations.Add(new ArenaDecoration((encounterPhase.Start - 5000, encounterPhase.End + 5000), image, crMap));
@@ -228,7 +228,7 @@ internal static class LogLogicUtils
             .ToDictionary(x => x.Key, x => x.ToList());
         var gadgetPositions = positionDict.Where(entry => {
 
-            if (entry.Key.Type != AgentItem.AgentType.Gadget || nonZeroGadgetVelocities.ContainsKey(entry.Key))
+            if (entry.Key.Type != AgentItem.AgentType.Gadget || entry.Key.Master != null || nonZeroGadgetVelocities.ContainsKey(entry.Key))
             {
                 return false;
             }
@@ -375,5 +375,25 @@ internal static class LogLogicUtils
             offset = pair.Value + inputOffset;
         }
         return offset;
+    }
+
+    internal static bool InsertAchievementEligibityEventAndRemovePhase(HashSet<EncounterPhaseData> encounterPhases, List<AchievementEligibilityEvent> achievementEligibilityEvents, long time, long achievementID, Player p)
+    {
+        var encounterPhase = encounterPhases.FirstOrDefault(x => x.InInterval(time));
+        if (encounterPhase != null)
+        {
+            encounterPhases.Remove(encounterPhase);
+            achievementEligibilityEvents.Add(new AchievementEligibilityEvent(time, achievementID, p, true));
+            return true;
+        }
+        return false;
+    }
+
+    internal static void AddSuccessBasedAchievementEligibityEvents(IEnumerable<EncounterPhaseData> encounterPhases, List<AchievementEligibilityEvent> achievementEligibilityEvents, long achievementID, Player p)
+    {
+        foreach (var encounterPhase in encounterPhases)
+        {
+            achievementEligibilityEvents.Add(new AchievementEligibilityEvent(encounterPhase.End, achievementID, p, !encounterPhase.Success));
+        }
     }
 }

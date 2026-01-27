@@ -16,7 +16,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Matthias : SalvationPass
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
 
 
             new PlayerDstHealthDamageHitMechanic([OppressiveGazeHuman, OppressiveGazeAbomination], new MechanicPlotlySetting(Symbols.Hexagram,Colors.Red), "Hadouken", "Oppressive Gaze (Hadouken projectile)","Hadouken", 0),
@@ -88,14 +88,14 @@ internal class Matthias : SalvationPass
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
         IReadOnlyList<BuffEvent> bloodstoneBisque = log.CombatData.GetBuffData(BloodstoneBisque);
         if (bloodstoneBisque.Any())
         {
-            var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)
@@ -164,7 +164,7 @@ internal class Matthias : SalvationPass
                 if (abo != null)
                 {
                     phases.Add(new SubPhasePhaseData(downPour.Time, abo.Time));
-                    BuffEvent? invulRemove = log.CombatData.GetBuffDataByIDByDst(Invulnerability757, matthias.AgentItem).FirstOrDefault(x => x.Time >= abo.Time && x.Time <= abo.Time + 10000 && !(x is BuffApplyEvent));
+                    BuffEvent? invulRemove = log.CombatData.GetBuffDataByIDByDst(Invulnerability757, matthias.AgentItem).FirstOrDefault(x => x.Time >= abo.Time && x.Time <= abo.Time + 10000 && x is not BuffApplyEvent);
                     if (invulRemove != null)
                     {
                         phases.Add(new SubPhasePhaseData(invulRemove.Time, encounterEnd));
@@ -284,7 +284,7 @@ internal class Matthias : SalvationPass
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -363,7 +363,7 @@ internal class Matthias : SalvationPass
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -458,7 +458,7 @@ internal class Matthias : SalvationPass
 
         // Sacrifice Selection
         var sacrificeSelection = p.GetBuffStatus(log, MatthiasSacrificeSelection).Where(x => x.Value > 0);
-        replay.Decorations.AddOverheadIcons(sacrificeSelection, p, ParserIcons.RedArrowOverhead);
+        replay.Decorations.AddOverheadIcons(sacrificeSelection, p, ParserIcons.RedArrowDownOverhead);
 
         // Sacrifice
         var sacrificeMatthias = p.GetBuffStatus(log, MatthiasSacrifice).Where(x => x.Value > 0);
@@ -483,7 +483,7 @@ internal class Matthias : SalvationPass
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -510,6 +510,13 @@ internal class Matthias : SalvationPass
                 var circle = new CircleDecoration(300, lifespan, Colors.Red, 0.4, new PositionConnector(effect.Position));
                 environmentDecorations.Add(circle);
             }
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 

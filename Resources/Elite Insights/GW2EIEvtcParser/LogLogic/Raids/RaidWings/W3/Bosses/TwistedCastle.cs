@@ -15,7 +15,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class TwistedCastle : StrongholdOfTheFaithful
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstBuffApplyMechanic(SpatialDistortion, new MechanicPlotlySetting(Symbols.Circle,Colors.Magenta), "Statue TP", "Teleported by Statue", "Statue Teleport", 500),
             new MechanicGroup([
                 new PlayerDstBuffApplyMechanic(StillWaters, new MechanicPlotlySetting(Symbols.DiamondTall,Colors.Magenta), "Still Waters (Immunity)", "Used a fountain for immunity", "Still Waters (Immunity)", 0)
@@ -46,12 +46,12 @@ internal class TwistedCastle : StrongholdOfTheFaithful
         return crMap;
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         RewardEvent? reward = GetOldRaidReward2Event(combatData, logData.LogStart, logData.EvtcLogEnd); ;
         if (reward != null)
         {
-            logData.SetSuccess(true, reward.Time);
+            successHandler.SetSuccess(true, reward.Time);
         }
     }
 
@@ -75,10 +75,10 @@ internal class TwistedCastle : StrongholdOfTheFaithful
         return GetGenericLogOffset(logData);
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         // To investigate
-        return LogData.LogStartStatus.Normal;
+        return LogData.StartStatus.Normal;
     }
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
@@ -98,7 +98,7 @@ internal class TwistedCastle : StrongholdOfTheFaithful
 
     internal override void ComputeNPCCombatReplayActors(NPC npc, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(npc, log, replay);
         }
@@ -120,7 +120,7 @@ internal class TwistedCastle : StrongholdOfTheFaithful
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -145,7 +145,7 @@ internal class TwistedCastle : StrongholdOfTheFaithful
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -162,12 +162,12 @@ internal class TwistedCastle : StrongholdOfTheFaithful
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success)
@@ -198,5 +198,12 @@ internal class TwistedCastle : StrongholdOfTheFaithful
             }
         }
         return true;
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
     }
 }

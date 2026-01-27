@@ -18,7 +18,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup(
+    internal readonly MechanicGroup Mechanics = new(
             [
                 // NOTE: Kaleidoscopic Chaos deals HP % damage - Normal Mode: 20% if hit once, 60% if hit twice - Challenge Mode: 33% if hit once, 200% if hit twice.
                 new MechanicGroup([
@@ -233,7 +233,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
                     if (last60HpUpdate != null && Math.Abs(bomb.FirstAware - last60HpUpdate.Value.Start) < threshold)
                     {
-                        EffectEvent? detonation = filteredDetonations.Where(x => Math.Abs(bomb.LastAware - x.Time) < threshold).FirstOrDefault();
+                        EffectEvent? detonation = filteredDetonations.FirstOrDefault(x => Math.Abs(bomb.LastAware - x.Time) < threshold);
                         if (detonation != null)
                         {
                             lifespanFirstCircle = (last60HpUpdate.Value.Start, Math.Min(bomb.LastAware, detonation.Time));
@@ -245,7 +245,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                     }
                     else if (last20HpUpdate != null)
                     {
-                        EffectEvent? detonation = filteredDetonations.Where(x => Math.Abs(bomb.LastAware - x.Time) < threshold).FirstOrDefault();
+                        EffectEvent? detonation = filteredDetonations.FirstOrDefault(x => Math.Abs(bomb.LastAware - x.Time) < threshold);
                         if (detonation != null)
                         {
                             lifespanFirstCircle = (last20HpUpdate.Value.Start, Math.Min(bomb.LastAware, detonation.Time));
@@ -260,14 +260,10 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                     (long start, long end) lifespanSecondCircle = (lifespanFirstCircle.start + duration * 1 / 3, lifespanFirstCircle.end);
                     (long start, long end) lifespanThirdCircle = (lifespanFirstCircle.start + duration * 2 / 3, lifespanFirstCircle.end);
 
-                    var firstCirclePoints = new List<ParametricPoint3D>();
-                    var secondCirclePoints = new List<ParametricPoint3D>();
-                    var thirdCirclePoints = new List<ParametricPoint3D>();
-
                     // Take the echo position as central point.
-                    // The 3 circles always spawn in the same location, north east
-                    // The second circle spawns when the first circle has complete a rotation of 240°
-                    // The third circle spawns when the second circle has complete a rotation of 240°
+                    // The 3 circles always spawn in the same location, north-east
+                    // The second circle spawns when the first circle has completed a rotation of 240°
+                    // The third circle spawns when the second circle has completed a rotation of 240°
                     if (target.TryGetCurrentPosition(log, lifespanFirstCircle.start, out var echoPosition))
                     {
                         var positionConnector = new PositionConnector(echoPosition).WithOffset(initialPoint - echoPosition, true, true);
@@ -278,7 +274,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                         var lifespans = new List<(long, long)> {
                                 lifespanFirstCircle,
                                 lifespanSecondCircle,
-                                lifespanThirdCircle
+                                lifespanThirdCircle,
                             };
 
                         var rotationConnectors = new List<RotationConnector>()
@@ -402,12 +398,13 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
             }
         }
 
+        var aetherPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM).ToList();
         // Ley Breach - Red Puddles
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.AetherbladeHideoutLeyBreachRedPuddle, out var leyBreachPuddle))
         {
             foreach (EffectEvent effect in leyBreachPuddle)
             {
-                long duration = log.LogData.IsCM ? 30000 : 15000;
+                long duration = aetherPhases.Any(x => x.InInterval(effect.Time)) ? 30000 : 15000;
                 (long start, long end) lifespan = effect.ComputeLifespan(log, duration);
                 var circle = new CircleDecoration(240, lifespan, Colors.Red, 0.3, new PositionConnector(effect.Position));
                 environmentDecorations.Add(circle);
@@ -419,7 +416,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         {
             foreach (EffectEvent effect in fissureOfTormentIndicators)
             {
-                // Effect lasts slightly too long, we use the damage effect as end time if it's fully casted.
+                // Effect lasts slightly too long, we use the damage effect as end time if it's fully cast.
                 // The effect doesn't have a Src, it will last the full 1300ms even if the Scarlet Phantom dies.
                 (long start, long end) lifespan = effect.ComputeLifespan(log, 1300);
                 (long start, long end) = effect.ComputeLifespanWithSecondaryEffectNoSrcCheck(log, EffectGUIDs.AetherbladeHideoutFissureOfTormentDamage);
@@ -473,25 +470,26 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                         var initialPoint = echoPosition + Vector3.Normalize(echoPosition - pointOnLine) * radiusFromCenter;
 
                         // The 3 circles always spawn in the same location
-                        // The second circle spawns when the first circle has complete a rotation of 120°
-                        // The third circle spawns when the first circle has complete a rotation of 240° and the second circle 120°
+                        // The second circle spawns when the first circle has completed a rotation of 120°
+                        // The third circle spawns when the first circle has completed a rotation of 240° and the second circle 120°
                         var positionConnector = new PositionConnector(echoPosition).WithOffset(initialPoint - echoPosition, true, true);
                         var firstRotationConnector = new SpinningConnector(0, 360);
                         var secondRotationConnector = new SpinningConnector(0, 240);
                         var thirdRotationConnector = new SpinningConnector(0, 120);
 
-                        var lifespans = new List<(long, long)> {
-                                lifespanFirstCircle,
-                                lifespanSecondCircle,
-                                lifespanThirdCircle
-                            };
+                        List<(long, long)> lifespans =
+                        [
+                            lifespanFirstCircle,
+                            lifespanSecondCircle,
+                            lifespanThirdCircle
+                        ];
 
-                        var rotationConnectors = new List<RotationConnector>()
-                            {
-                                firstRotationConnector,
-                                secondRotationConnector,
-                                thirdRotationConnector,
-                            };
+                        List<RotationConnector> rotationConnectors =
+                        [
+                            firstRotationConnector,
+                            secondRotationConnector,
+                            thirdRotationConnector
+                        ];
 
                         AddRotatingCirclesDecorations(environmentDecorations, rotationConnectors, lifespans, positionConnector, echoPosition, innerRadius, outerRadius);
                     }
@@ -524,11 +522,17 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         // Toxic Orb
         var toxicOrbs = log.CombatData.GetMissileEventsBySkillID(ToxicOrb);
         environmentDecorations.AddNonHomingMissiles(log, toxicOrbs, Colors.Red, 0.3, 50);
+
+        // Toxic Bullets
+        var toxicBullets = log.CombatData.GetMissileEventsBySkillID(ToxicBulletCM);
+        environmentDecorations.AddNonHomingMissiles(log, toxicBullets, Colors.DarkRed, 0.18, 30);
+        toxicBullets = log.CombatData.GetMissileEventsBySkillIDs([ToxicBulletNMCM1, ToxicBulletNMCM2]);
+        environmentDecorations.AddNonHomingMissiles(log, toxicBullets, Colors.DarkRed, 0.3, 40);
     }
 
-    private SingleActor? GetEchoOfScarletBriar(LogData logData)
+    private SingleActor? GetEchoOfScarletBriar(bool isCM)
     {
-        return Targets.FirstOrDefault(x => x.IsSpecies(logData.IsCM ? (int)TargetID.EchoOfScarletBriarCM : (int)TargetID.EchoOfScarletBriarNM));
+        return Targets.FirstOrDefault(x => x.IsSpecies(isCM ? (int)TargetID.EchoOfScarletBriarCM : (int)TargetID.EchoOfScarletBriarNM));
     }
 
     protected override IReadOnlyList<TargetID> GetSuccessCheckIDs()
@@ -536,23 +540,23 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         return [TargetID.MaiTrinRaid, TargetID.EchoOfScarletBriarCM, TargetID.EchoOfScarletBriarNM];
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
-        if (!logData.Success)
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
+        if (!successHandler.Success)
         {
-            SingleActor? echoOfScarlet = GetEchoOfScarletBriar(logData);
+            SingleActor? echoOfScarlet = GetEchoOfScarletBriar(GetLogMode(combatData, agentData, logData) == LogData.Mode.CM);
             if (echoOfScarlet != null)
             {
                 SingleActor maiTrin = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.MaiTrinRaid)) ?? throw new MissingKeyActorsException("Mai Trin not found");
                 BuffApplyEvent? buffApply = combatData.GetBuffApplyDataByIDByDst(Determined895, maiTrin.AgentItem).OfType<BuffApplyEvent>().LastOrDefault();
                 if (buffApply != null && buffApply.Time > echoOfScarlet.FirstAware)
                 {
-                    logData.SetSuccess(true, buffApply.Time);
+                    successHandler.SetSuccess(true, buffApply.Time);
                 } 
                 else
                 {
-                    logData.SetSuccess(false, echoOfScarlet.LastAware);
+                    successHandler.SetSuccess(false, echoOfScarlet.LastAware);
                 }
             }
         }
@@ -563,13 +567,14 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         List<PhaseData> phases = GetInitialPhase(log);
         SingleActor maiTrin = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.MaiTrinRaid)) ?? throw new MissingKeyActorsException("Mai Trin not found");
         phases[0].AddTarget(maiTrin, log);
-        SingleActor? echoOfScarlet = GetEchoOfScarletBriar(log.LogData);
+        var isCM = ((EncounterPhaseData)phases[0]).IsCM;
+        SingleActor? echoOfScarlet = GetEchoOfScarletBriar(isCM);
         if (echoOfScarlet != null)
         {
             phases[0].AddTarget(echoOfScarlet, log);
         }
-        var eliteScarletPhantoms = Targets.Where(x => x.IsAnySpecies([TargetID.ScarletPhantomHP, TargetID.ScarletPhantomHPCM, TargetID.ScarletPhantomBreakbar]));
-        var eliteScarletHPPhantoms = eliteScarletPhantoms.Where(x => x.IsAnySpecies([TargetID.ScarletPhantomHP, TargetID.ScarletPhantomHPCM]));
+        var eliteScarletPhantoms = Targets.Where(x => x.IsAnySpecies([TargetID.ScarletPhantomHP, TargetID.ScarletPhantomHPCM, TargetID.ScarletPhantomBreakbar])).ToList();
+        var eliteScarletHPPhantoms = eliteScarletPhantoms.Where(x => x.IsAnySpecies([TargetID.ScarletPhantomHP, TargetID.ScarletPhantomHPCM])).ToList();
         phases[0].AddTargets(eliteScarletHPPhantoms, log, PhaseData.TargetPriority.Blocking);
         if (!requirePhases)
         {
@@ -582,7 +587,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
             {
                 long maiTrinEnd = lastHPUpdate.Time;
                 long maiTrinStart = 0;
-                BuffRemoveAllEvent? buffRemove = log.CombatData.GetBuffDataByIDByDst(Determined895, maiTrin.AgentItem).OfType<BuffRemoveAllEvent>().Where(x => x.Time > maiTrinStart).FirstOrDefault();
+                BuffRemoveAllEvent? buffRemove = log.CombatData.GetBuffDataByIDByDst(Determined895, maiTrin.AgentItem).OfType<BuffRemoveAllEvent>().FirstOrDefault(x => x.Time > maiTrinStart);
                 if (buffRemove != null)
                 {
                     maiTrinStart = buffRemove.Time;
@@ -597,8 +602,8 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
                 // Candidate phases
                 List<PhaseData> maiPhases = GetPhasesByInvul(log, Untargetable, maiTrin, true, true, maiTrinStart, maiTrinEnd, false);
-                var candidateMainPhases = new List<PhaseData>();
-                var candidateSplitPhases = new List<PhaseData>();
+                List<PhaseData> candidateMainPhases = [];
+                List<PhaseData> candidateSplitPhases = [];
                 for (int i = 0; i < maiPhases.Count; i++)
                 {
                     PhaseData subPhase = maiPhases[i];
@@ -959,7 +964,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
             int index = 0;
             int previousIndex = 0;
 
-            var electricBlasts = target.GetCastEvents(log).Where(x =>
+            var electricBlasts = target.GetAnimatedCastEvents(log).Where(x =>
                 x.SkillID == ElectricBlastCastSkillLeftNM ||
                 x.SkillID == ElectricBlastCastSkillRightNM ||
                 x.SkillID == ElectricBlastCastSkillLeftCM ||
@@ -993,7 +998,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                         initialRadius = 100;
                         radiusIncrease = 2;
                         break;
-                    case ElectricBlastCastSkillRightNM: // Swipe from the right side of the Echo, counter clockwise.
+                    case ElectricBlastCastSkillRightNM: // Swipe from the right side of the Echo, counterclockwise.
                         initialRadius = 110;
                         radiusIncrease = 10;
                         break;
@@ -1001,7 +1006,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                         initialRadius = 100;
                         radiusIncrease = 2;
                         break;
-                    case ElectricBlastCastSkillSpiralsCM: // Swipe in a spiral pattern, counter clockwise.
+                    case ElectricBlastCastSkillSpiralsCM: // Swipe in a spiral pattern, counterclockwise.
                         initialRadius = 100;
                         radiusIncrease = 5;
                         break;
@@ -1053,17 +1058,17 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         decorations.Add(new CircleDecoration(innerRadius, lifespans[2], Colors.White, 0.5, positionConnector).UsingRotationConnector(rotationConnectors[2]));
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor maiTrin = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.MaiTrinRaid)) ?? throw new MissingKeyActorsException("Mai Trin not found");
-        return maiTrin.GetHealth(combatData) > 8e6 ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return maiTrin.GetHealth(combatData) > 8e6 ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
         base.SetInstanceBuffs(log, instanceBuffs);
 
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
 
         foreach (var encounterPhase in encounterPhases)
         {
@@ -1083,9 +1088,9 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
     private static bool CustomCheckTriangulationEligibility(ParsedEvtcLog log, EncounterPhaseData encounterPhaseData)
     {
-        IReadOnlyList<long> beamsBuffs = new List<long>() { MaiTrinCMBeamsTargetBlue, MaiTrinCMBeamsTargetGreen, MaiTrinCMBeamsTargetRed };
-        var beamsSegments = new List<Segment>();
-        var bombInvulnSegments = new List<Segment>();
+        List<long> beamsBuffs = [MaiTrinCMBeamsTargetBlue, MaiTrinCMBeamsTargetGreen, MaiTrinCMBeamsTargetRed];
+        List<Segment> beamsSegments = [];
+        List<Segment> bombInvulnSegments = [];
 
         foreach (var player in log.PlayerList)
         {
@@ -1105,7 +1110,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         int counter = 0;
 
         // For each segment where a bomb is invulnerable, check if it has started between the assignment and loss of a beam effect on a player (through buff)
-        // If the counter is == 8, it means every possible combination check has been met and it's eligible for the achievement.
+        // If the counter is == 8, it means every possible combination check has been met, and it's eligible for the achievement.
         // The combinations are 2 players buffs for each bomb invulnerability buff, so 2 x 4 total.
         foreach (Segment invuln in bombInvulnSegments)
         {

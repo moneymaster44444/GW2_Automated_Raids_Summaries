@@ -15,7 +15,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class PeerlessQadim : TheKeyOfAhdashim
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(EnergizedAffliction, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Green), "E.Aff", "Energized Affliction", "Energized Affliction", 0),
                 new PlayerDstHealthDamageHitMechanic(ForceOfRetaliation, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Black), "Pushed", "Pushed by Shockwave", "Shockwave Push", 1000)
@@ -103,7 +103,7 @@ internal class PeerlessQadim : TheKeyOfAhdashim
         ("(SE)", new(2941.51514f, 9321.848f)),
     ];
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         // Can be improved
         return base.GetLogStartStatus(combatData, agentData, logData);
@@ -243,7 +243,7 @@ internal class PeerlessQadim : TheKeyOfAhdashim
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -438,7 +438,7 @@ internal class PeerlessQadim : TheKeyOfAhdashim
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -493,10 +493,10 @@ internal class PeerlessQadim : TheKeyOfAhdashim
         AddTetherDecorations(log, p, replay, KineticAbundance, Colors.Green, 0.4);
 
         // Add custom arrow overhead for the player lifted up
-        var castsUnleash = p.GetCastEvents(log).Where(x => x.SkillID == UnleashSAK);
+        var castsUnleash = p.GetAnimatedCastEvents(log).Where(x => x.SkillID == UnleashSAK);
         var deadEvents = log.CombatData.GetDeadEvents(p.AgentItem);
 
-        var castsLiftUp = p.GetCastEvents(log).Where(x => x.SkillID == PlayerLiftUpQadimThePeerless);
+        var castsLiftUp = p.GetAnimatedCastEvents(log).Where(x => x.SkillID == PlayerLiftUpQadimThePeerless);
         foreach (CastEvent cast in castsLiftUp)
         {
             long liftUpEnd = log.LogData.EvtcLogEnd;
@@ -516,7 +516,7 @@ internal class PeerlessQadim : TheKeyOfAhdashim
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -693,9 +693,16 @@ internal class PeerlessQadim : TheKeyOfAhdashim
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
     private static void AddTetherDecorations(ParsedEvtcLog log, SingleActor actor, CombatReplay replay, long buffID, Color color, double opacity)
@@ -724,10 +731,10 @@ internal class PeerlessQadim : TheKeyOfAhdashim
         }
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.PeerlessQadim)) ?? throw new MissingKeyActorsException("Peerless Qadim not found");
-        return (target.GetHealth(combatData) > 48e6) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return (target.GetHealth(combatData) > 48e6) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
 }

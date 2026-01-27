@@ -31,7 +31,7 @@ public abstract class LogLogic
     }
 
 
-    private CombatReplayMap Map;
+    private CombatReplayMap? Map;
     protected readonly List<MechanicContainer> MechanicList;//Resurrects (start), Resurrect
     public ParseModeEnum ParseMode { get; protected set; } = ParseModeEnum.Unknown;
     public SkillModeEnum SkillMode { get; protected set; } = SkillModeEnum.PvE;
@@ -55,13 +55,13 @@ public abstract class LogLogic
 
     internal readonly Dictionary<string, _DecorationMetadata> DecorationCache = [];
 
-    private CombatReplayDecorationContainer EnvironmentDecorations;
+    private CombatReplayDecorationContainer? EnvironmentDecorations;
     private readonly CombatReplayDecorationContainer ArenaDecorations;
 
     public ChestID ChestID { get; protected set; } = ChestID.None;
 
 
-    public struct InstanceBuff
+    public readonly struct InstanceBuff
     {
         public readonly Buff Buff;
         public readonly int Stack;
@@ -132,7 +132,7 @@ public abstract class LogLogic
         {
             allMechs.AddRange(mechGroup.GetMechanics());
         }
-        return new MechanicData(allMechs, GenericTriggerID == (int)TargetID.Instance);
+        return new MechanicData(allMechs);
     }
 
     internal virtual CombatReplayMap GetCombatMapInternal(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations)
@@ -150,6 +150,11 @@ public abstract class LogLogic
         return Map;
     }
 
+    internal virtual void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+
+    }
+
     internal virtual void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
         var mainPhase = log.LogData.GetMainPhase(log);
@@ -160,7 +165,7 @@ public abstract class LogLogic
                 instanceBuffs.Add(new(fractalInstability, 1, mainPhase));
             }
         }
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>();
+        var encounterPhases = log.LogData.GetEncounterPhases(log);
         foreach (var encounterPhase in encounterPhases)
         {
             long end = encounterPhase.Success ? encounterPhase.End : (encounterPhase.End + encounterPhase.Start) / 2;
@@ -183,7 +188,7 @@ public abstract class LogLogic
             }
         }
         // Quickplay
-        var hasQuickplay = log.PlayerList.Where(x => x.HasBuff(log, SkillIDs.QuickplayBoost, log.LogData.LogStart, log.LogData.LogEnd)).Any();
+        var hasQuickplay = log.PlayerList.Any(x => x.HasBuff(log, SkillIDs.QuickplayBoost, log.LogData.LogStart, log.LogData.LogEnd));
         if (hasQuickplay)
         {
             instanceBuffs.Add(new(log.Buffs.BuffsByIDs[SkillIDs.QuickplayBoost], 1, mainPhase));
@@ -505,7 +510,7 @@ public abstract class LogLogic
 
     internal IReadOnlyList<DecorationRenderingDescription> GetCombatReplayArenaDecorationRenderableDescriptions(CombatReplayMap map, ParsedEvtcLog log)
     {
-        return ArenaDecorations.GetCombatReplayRenderableDescriptions(Map, log, [], []);
+        return ArenaDecorations.GetCombatReplayRenderableDescriptions(map, log, [], []);
     }
 
     internal IReadOnlyList<DecorationRenderingDescription> GetCombatReplayEnvironmentDecorationRenderableDescriptions(CombatReplayMap map, ParsedEvtcLog log, Dictionary<long, SkillItem> usedSkills, Dictionary<long, Buff> usedBuffs)
@@ -519,30 +524,30 @@ public abstract class LogLogic
         return EnvironmentDecorations.GetCombatReplayRenderableDescriptions(map, log, usedSkills, usedBuffs);
     }
 
-    internal virtual LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal virtual LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (IsInstance)
         {
-            return LogData.LogMode.NotApplicable;
+            return LogData.Mode.NotApplicable;
         }
-        return LogData.LogMode.Normal;
+        return LogData.Mode.Normal;
     }
 
-    internal virtual LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal virtual LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (IsInstance)
         {
             InstanceStartEvent? evt = combatData.GetInstanceStartEvent();
             if (evt == null)
             {
-                return LogData.LogStartStatus.Normal;
+                return LogData.StartStatus.Normal;
             }
             else
             {
-                return evt.TimeOffsetFromInstanceCreation > 10000 ? LogData.LogStartStatus.Late : LogData.LogStartStatus.Normal;
+                return evt.TimeOffsetFromInstanceCreation > 10000 ? LogData.StartStatus.Late : LogData.StartStatus.Normal;
             }
         }
-        return LogData.LogStartStatus.Normal;
+        return LogData.StartStatus.Normal;
     }
 
     protected virtual IReadOnlyList<TargetID> GetSuccessCheckIDs()
@@ -550,9 +555,9 @@ public abstract class LogLogic
         return [ GetTargetID(GenericTriggerID) ];
     }
 
-    internal virtual void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal virtual void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        NoBouncyChestGenericCheckSucess(combatData, agentData, logData, playerAgents);
+        NoBouncyChestGenericCheckSucess(combatData, agentData, logData, playerAgents, successHandler);
     }
 
     protected IEnumerable<SingleActor> GetSuccessCheckTargets()
@@ -560,26 +565,26 @@ public abstract class LogLogic
         return Targets.Where(x => x.IsAnySpecies(GetSuccessCheckIDs()));
     }
 
-    protected void NoBouncyChestGenericCheckSucess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    protected void NoBouncyChestGenericCheckSucess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        if (!logData.Success && ChestID != ChestID.None)
+        if (!successHandler.Success && ChestID != ChestID.None)
         {
-            SetSuccessByChestGadget(ChestID, agentData, logData);
+            SetSuccessByChestGadget(ChestID, agentData, logData, successHandler);
         }
-        if (!logData.Success && (GenericFallBackMethod & FallBackMethod.Death) > 0)
+        if (!successHandler.Success && (GenericFallBackMethod & FallBackMethod.Death) > 0)
         {
-            SetSuccessByDeath(GetSuccessCheckTargets(), combatData, logData, playerAgents, true);
+            SetSuccessByDeath(GetSuccessCheckTargets(), combatData, logData, playerAgents, successHandler, true);
         }
-        if (!logData.Success && (GenericFallBackMethod & FallBackMethod.CombatExit) > 0)
+        if (!successHandler.Success && (GenericFallBackMethod & FallBackMethod.CombatExit) > 0)
         {
-            SetSuccessByCombatExit(GetSuccessCheckTargets(), combatData, logData, playerAgents);
+            SetSuccessByCombatExit(GetSuccessCheckTargets(), combatData, logData, playerAgents, successHandler);
         }
-        if (!logData.Success)
+        if (!successHandler.Success)
         {
             var targets = GetSuccessCheckTargets();
             if (targets.Any())
             {
-                logData.SetSuccess(false, targets.Max(x => x.LastAware));
+                successHandler.SetSuccess(false, targets.Max(x => x.LastAware));
             }
         }
     }

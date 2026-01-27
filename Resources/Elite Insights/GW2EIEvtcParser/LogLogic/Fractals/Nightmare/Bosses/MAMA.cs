@@ -13,7 +13,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class MAMA : Nightmare
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup(
+    internal readonly MechanicGroup Mechanics = new(
         [
             new PlayerDstHealthDamageHitMechanic([Blastwave1, Blastwave2], new MechanicPlotlySetting(Symbols.Circle,Colors.Red), "KB", "Blastwave (Spinning Knockback)","KB Spin", 0),
             new PlayerDstHealthDamageHitMechanic(TantrumMAMA, new MechanicPlotlySetting(Symbols.StarDiamondOpen,Colors.Green), "Tantrum", "Tantrum (Double hit or Slams)","Dual Spin/Slams", 700),
@@ -47,9 +47,9 @@ internal class MAMA : Nightmare
         return crMap;
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return LogData.LogMode.CMNoName;
+        return LogData.Mode.CMNoName;
     }
 
     internal override long GetLogOffset(EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData)
@@ -136,7 +136,7 @@ internal class MAMA : Nightmare
     }
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()
     {
-        return new Dictionary<TargetID, int>()
+        return new Dictionary<TargetID, int>
         {
             {TargetID.MAMA, 0 },
             {TargetID.GreenKnight, 1 },
@@ -153,17 +153,16 @@ internal class MAMA : Nightmare
         return trashIDs;
     }
 
-    internal static readonly List<(TargetID, string)> KnightPhases = new()
-    {
-        // reverse order for phase name priority
+    internal static readonly List<(TargetID, string)> KnightPhases =
+    [
         (TargetID.BlueKnight, "Blue Knight"),
         (TargetID.GreenKnight, "Green Knight"),
         (TargetID.RedKnight, "Red Knight"),
-    };
+    ];
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -261,14 +260,14 @@ internal class MAMA : Nightmare
     }
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
     }
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -363,9 +362,16 @@ internal class MAMA : Nightmare
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

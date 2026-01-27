@@ -15,7 +15,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class KeepConstruct : StrongholdOfTheFaithful
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstBuffApplyMechanic([StatueFixated1, StatueFixated2], new MechanicPlotlySetting(Symbols.Star,Colors.Magenta), "Fixate", "Fixated by Statue","Fixated", 0),
             new PlayerDstHealthDamageHitMechanic(HailOfFury, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Red), "Debris", "Hail of Fury (Falling Debris)","Debris", 0),
             new EnemyDstBuffApplyMechanic(Compromised, new MechanicPlotlySetting(Symbols.Hexagon,Colors.Blue), "Rift#", "Compromised (Pushed Orb through Rifts)","Compromised", 0),
@@ -188,15 +188,16 @@ internal class KeepConstruct : StrongholdOfTheFaithful
         return phases;
     }
 
-    internal static readonly IReadOnlyList<TargetID> KCStatues = [
-            TargetID.Jessica,
-            TargetID.Olson,
-            TargetID.Engul,
-            TargetID.Faerla,
-            TargetID.Caulle,
-            TargetID.Henley,
-            TargetID.Galletta,
-            TargetID.Ianim
+    internal static readonly IReadOnlyList<TargetID> KCStatues = 
+    [
+        TargetID.Jessica,
+        TargetID.Olson,
+        TargetID.Engul,
+        TargetID.Faerla,
+        TargetID.Caulle,
+        TargetID.Henley,
+        TargetID.Galletta,
+        TargetID.Ianim,
     ];
     internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
     {
@@ -249,7 +250,7 @@ internal class KeepConstruct : StrongholdOfTheFaithful
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -397,14 +398,14 @@ internal class KeepConstruct : StrongholdOfTheFaithful
 
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return combatData.GetBuffApplyData(AchievementEligibilityDownDownDowned).Any(x => x.Time > -100) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return combatData.GetBuffApplyData(AchievementEligibilityDownDownDowned).Any(x => x.Time > -100) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -430,7 +431,7 @@ internal class KeepConstruct : StrongholdOfTheFaithful
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -455,12 +456,12 @@ internal class KeepConstruct : StrongholdOfTheFaithful
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success && encounterPhase.IsCM)
@@ -479,6 +480,13 @@ internal class KeepConstruct : StrongholdOfTheFaithful
                     instanceBuffs.Add(new(log.Buffs.BuffsByIDs[AchievementEligibilityDownDownDowned], 1, encounterPhase));
                 }
             }
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

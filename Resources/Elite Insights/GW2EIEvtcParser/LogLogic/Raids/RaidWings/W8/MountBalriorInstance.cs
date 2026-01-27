@@ -50,15 +50,15 @@ internal class MountBalriorInstance : MountBalrior
         }
         return crMap;
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var chest = agentData.GetGadgetsByID(_ura.ChestID).FirstOrDefault();
         if (chest != null)
         {
-            logData.SetSuccess(true, chest.FirstAware);
+            successHandler.SetSuccess(true, chest.FirstAware);
             return;
         }
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
     }
 
     private List<EncounterPhaseData> HandleGreerPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
@@ -93,7 +93,7 @@ internal class MountBalriorInstance : MountBalrior
                 var encounterName = (isCM ? "Godspoil Greer" : "Greer, the Blightbringer");
                 var name = encounterName + (greers.Count > 0 ? " " + (offset) : "");
                 greer.OverrideName(name);
-                AddInstanceEncounterPhase(log, phases, encounterPhases, [greer], [..greeAndRegs, ..protoGreelings], eregs, mainPhase, encounterName, start, end, success, _greer, isCM ? LogData.LogMode.CMNoName : LogData.LogMode.Normal);
+                AddInstanceEncounterPhase(log, phases, encounterPhases, [greer], [..greeAndRegs, ..protoGreelings], eregs, mainPhase, encounterName, start, end, success, _greer, isCM ? LogData.Mode.CMNoName : LogData.Mode.Normal);
             }
         }
         NumericallyRenameEncounterPhases(encounterPhases);
@@ -131,7 +131,7 @@ internal class MountBalriorInstance : MountBalrior
                 }
                 var isCM = decimaID == TargetID.DecimaCM;
                 var name = isCM ? "Godsqual Decima" : "Decima, the Stormsinger";
-                var mode = isCM ? LogData.LogMode.CMNoName : LogData.LogMode.Normal;
+                var mode = isCM ? LogData.Mode.CMNoName : LogData.Mode.Normal;
                 if (targetsByIDs.TryGetValue((int)TargetID.TranscendentBoulder, out var boulders))
                 {
                     AddInstanceEncounterPhase(log, phases, encounterPhases, [decima], boulders, [], mainPhase, name, start, end, success, _decima, mode);
@@ -196,7 +196,7 @@ internal class MountBalriorInstance : MountBalrior
                 var encounterName = (isCM ? "Godscream Ura" : "Ura, the Steamshrieker");
                 var name = encounterName  + (uras.Count > 0 ? " " + (offset) : "");
                 ura.OverrideName(name);
-                AddInstanceEncounterPhase(log, phases, encounterPhases, [ura], [], [], mainPhase, encounterName, start, end, success, _ura, isCM ? (maxHP > 100e6 ? LogData.LogMode.LegendaryCM : LogData.LogMode.CMNoName) : LogData.LogMode.Normal);
+                AddInstanceEncounterPhase(log, phases, encounterPhases, [ura], [], [], mainPhase, encounterName, start, end, success, _ura, isCM ? (maxHP > 100e6 ? LogData.Mode.LegendaryCM : LogData.Mode.CMNoName) : LogData.Mode.Normal);
             }
         }
         NumericallyRenameEncounterPhases(encounterPhases);
@@ -360,6 +360,14 @@ internal class MountBalriorInstance : MountBalrior
         foreach (var logic in _subLogics)
         {
             logic.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        foreach (var logic in _subLogics)
+        {
+            logic.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 

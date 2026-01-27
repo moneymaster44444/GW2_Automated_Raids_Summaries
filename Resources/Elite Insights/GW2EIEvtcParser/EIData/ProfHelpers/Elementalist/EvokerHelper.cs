@@ -4,6 +4,7 @@ using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.DamageModifierIDs;
 using static GW2EIEvtcParser.EIData.Buff;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
+using static GW2EIEvtcParser.EIData.ProfHelper;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
@@ -30,17 +31,19 @@ internal static class EvokerHelper
     internal static readonly IReadOnlyList<DamageModifierDescriptor> OutgoingDamageModifiers = 
     [
         // Elemental Balance
-        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing5_Incoming10, "Elemental balance (Outgoing)", "5% if hp < 50%", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, (x, log) => x.From.GetCurrentHealthPercent(log, x.Time) < 50.0, DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing5_Incoming10, "Elemental balance (Outgoing)", "5% if hp < 50%", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, FromHPChecker(0, 50), DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease)
             .UsingApproximate(),
-        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing10_Incoming5, "Elemental balance (Outgoing)", "10% if hp >= 50%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, (x, log) => x.From.GetCurrentHealthPercent(log, x.Time) >= 50.0, DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing10_Incoming5, "Elemental balance (Outgoing)", "10% if hp >= 50%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, FromHPChecker(50), DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease)
             .UsingApproximate(),
         // Familiar's Prowess (Fox)
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFox, FamiliarsProwessFox, "Familiar's Prowess (Fox)", "10% after familiar skill", DamageSource.NoPets, 10.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFox, FamiliarsProwessFox, "Familiar's Prowess (Fox)", "7% after familiar skill", DamageSource.NoPets, 7.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.OctoberVoERelease),
+            .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.December2025Balance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFox, FamiliarsProwessFox, "Familiar's Prowess (Fox)", "5% after familiar skill", DamageSource.NoPets, 5.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFox, FamiliarsProwessFox, "Familiar's Prowess (Fox)", "10% after familiar skill", DamageSource.NoPets, 10.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.OctoberVoERelease),
         // Familiar's Prowess + Familiar's Focus (Fox)
@@ -49,12 +52,18 @@ internal static class EvokerHelper
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.All)
-            .WithBuilds(GW2Builds.OctoberVoERelease),
+            .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.December2025Balance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.December2025Balance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "15% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 15.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.December2025Balance),
         // Familiar's Prowess (Hare)
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessHare, FamiliarsProwessHare, "Familiar's Prowess (Hare)", "10% after familiar skill", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessHare, FamiliarsProwessHare, "Familiar's Prowess (Hare)", "7% after familiar skill", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.OctoberVoERelease),
+            .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.December2025Balance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessHare, FamiliarsProwessHare, "Familiar's Prowess (Hare)", "5% after familiar skill", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessHare, FamiliarsProwessHare, "Familiar's Prowess (Hare)", "10% after familiar skill", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.November2025Balance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessHare, FamiliarsProwessHare, "Familiar's Prowess (Hare)", "10% after familiar skill", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.WvW)
@@ -69,9 +78,13 @@ internal static class EvokerHelper
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.All)
             .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.November2025Balance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvEWvW)
-            .WithBuilds(GW2Builds.November2025Balance),
+            .WithBuilds(GW2Builds.November2025Balance, GW2Builds.December2025Balance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.WvW)
+            .WithBuilds(GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "15% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvP)
-            .WithBuilds(GW2Builds.November2025Balance),
+            .WithBuilds(GW2Builds.November2025Balance, GW2Builds.December2025Balance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "15% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvEsPvP)
+            .WithBuilds(GW2Builds.December2025Balance),
         // Zap
         new BuffOnFoeDamageModifier(Mod_Zap, ZapBuffPlayerToTarget, "Zap", "7% crit damage", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, SkillImages.Zap, DamageModifierMode.PvE)
             .WithBuffOnFoeFromActor()
@@ -84,12 +97,19 @@ internal static class EvokerHelper
             .UsingEarlyExit((actor, log) => !actor.GetBuffStatus(log, ZapBuffTargetToPlayer).Any(x => x.Value > 0))
             .UsingChecker((hde, log) => hde.HasCrit)
             .UsingApproximate()
-            .WithBuilds(GW2Builds.OctoberVoERelease),
+            .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.December2025Balance),
+        new BuffOnFoeDamageModifier(Mod_Zap, ZapBuffPlayerToTarget, "Zap", "3% crit damage", DamageSource.NoPets, 3.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, SkillImages.Zap, DamageModifierMode.PvE)
+            .WithBuffOnFoeFromActor()
+            .UsingEarlyExit((actor, log) => !actor.GetBuffStatus(log, ZapBuffTargetToPlayer).Any(x => x.Value > 0))
+            .UsingChecker((hde, log) => hde.HasCrit)
+            .UsingApproximate()
+            .WithBuilds(GW2Builds.December2025Balance),
         new BuffOnFoeDamageModifier(Mod_Zap, ZapBuffPlayerToTarget, "Zap", "5% crit damage", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, SkillImages.Zap, DamageModifierMode.sPvPWvW)
             .WithBuffOnFoeFromActor()
             .UsingEarlyExit((actor, log) => !actor.GetBuffStatus(log, ZapBuffTargetToPlayer).Any(x => x.Value > 0))
             .UsingChecker((hde, log) => hde.HasCrit)
-            .UsingApproximate(),
+            .UsingApproximate()
+            .WithBuilds(GW2Builds.August2025VoEBeta),
         // Adept
         new BuffOnFoeDamageModifier(Mod_FieryMight, Burning, "Fiery Might", "5% against burning foes", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FieryMight, DamageModifierMode.All),
 
@@ -98,10 +118,10 @@ internal static class EvokerHelper
     internal static readonly IReadOnlyList<DamageModifierDescriptor> IncomingDamageModifiers = 
     [
         // Elemental Balance
-        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing10_Incoming5, "Elemental balance (Incoming)", "-5% if hp > 50%", DamageSource.Incoming, -5.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, (x, log) => x.From.GetCurrentHealthPercent(log, x.Time) > 50.0, DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing10_Incoming5, "Elemental balance (Incoming)", "-5% if hp >= 50%", DamageSource.Incoming, -5.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, ToHPChecker(50), DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease)
             .UsingApproximate(),
-        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing5_Incoming10, "Elemental balance (Incoming)", "-10% if hp <= 50%", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, (x, log) => x.From.GetCurrentHealthPercent(log, x.Time) <= 50.0, DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_ElementalBalanceOutgoing5_Incoming10, "Elemental balance (Incoming)", "-10% if hp < 50%", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Evoker, TraitImages.ElementalBalance, ToHPChecker(0, 50), DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease)
             .UsingApproximate(),
         // Familiar's Prowess (Toad)

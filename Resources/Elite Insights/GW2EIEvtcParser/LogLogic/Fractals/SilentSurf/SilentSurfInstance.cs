@@ -40,7 +40,7 @@ internal class SilentSurfInstance : SilentSurf
         _kanaxai.GetCombatMapInternal(log, arenaDecorations);
         return crMap;
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var lastKanaxai = agentData.GetNPCsByID(TargetID.KanaxaiScytheOfHouseAurkusCM).LastOrDefault(x => combatData.GetEnterCombatEvents(x).Any());
         if (lastKanaxai != null)
@@ -50,7 +50,7 @@ internal class SilentSurfInstance : SilentSurf
             var determinedApply = determinedBuffs.FirstOrDefault(x => x is BuffApplyEvent && x.Time > enterCombat.Time);
             if (determinedApply != null && !combatData.GetDespawnEvents(lastKanaxai).Any(x => Math.Abs(x.Time - determinedApply.Time) < ServerDelayConstant))
             {
-                logData.SetSuccess(true, determinedApply.Time);
+                successHandler.SetSuccess(true, determinedApply.Time);
             }
         }
     }
@@ -84,7 +84,7 @@ internal class SilentSurfInstance : SilentSurf
                     end = determinedApply.Time;
                 }
                 var name = "Kanaxai";
-                var mode = LogData.LogMode.CMNoName;
+                var mode = LogData.Mode.CMNoName;
                 AddInstanceEncounterPhase(log, phases, encounterPhases, [kanaxai], [], [], mainPhase, name, start, end, success, _kanaxai, mode);
             }
         }
@@ -180,6 +180,11 @@ internal class SilentSurfInstance : SilentSurf
     {
         base.SetInstanceBuffs(log, instanceBuffs);
         _kanaxai.SetInstanceBuffs(log, instanceBuffs);
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        _kanaxai.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
     }
 
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()

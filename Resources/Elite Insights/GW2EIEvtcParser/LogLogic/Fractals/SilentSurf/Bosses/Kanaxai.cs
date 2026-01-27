@@ -16,7 +16,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Kanaxai : SilentSurf
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup(
+    internal readonly MechanicGroup Mechanics = new(
         [
             new MechanicGroup(
                 [
@@ -101,17 +101,18 @@ internal class Kanaxai : SilentSurf
         ];
     }
 
-    internal static readonly IReadOnlyList<TargetID> Aspects = [
-            TargetID.AspectOfTorment,
-            TargetID.AspectOfLethargy,
-            TargetID.AspectOfExposure,
-            TargetID.AspectOfDeath,
-            TargetID.AspectOfFear,
+    internal static readonly IReadOnlyList<TargetID> Aspects = 
+    [
+        TargetID.AspectOfTorment,
+        TargetID.AspectOfLethargy,
+        TargetID.AspectOfExposure,
+        TargetID.AspectOfDeath,
+        TargetID.AspectOfFear,
     ];
 
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()
     {
-        return new Dictionary<TargetID, int>()
+        return new Dictionary<TargetID, int>
         {
             {TargetID.KanaxaiScytheOfHouseAurkusCM, 0 },
             {TargetID.AspectOfTorment, 1 },
@@ -122,9 +123,9 @@ internal class Kanaxai : SilentSurf
         };
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return LogData.LogMode.CMNoName;
+        return LogData.Mode.CMNoName;
     }
 
     internal override long GetLogOffset(EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData)
@@ -253,23 +254,23 @@ internal class Kanaxai : SilentSurf
         return phases;
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         SingleActor kanaxai = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KanaxaiScytheOfHouseAurkusCM)) ?? throw new MissingKeyActorsException("Kanaxai not found");
         BuffApplyEvent? invul762Gain = combatData.GetBuffApplyDataByIDByDst(Determined762, kanaxai.AgentItem).OfType<BuffApplyEvent>().FirstOrDefault(x => x.Time > 0);
         if (invul762Gain != null && !combatData.GetDespawnEvents(kanaxai.AgentItem).Any(x => Math.Abs(x.Time - invul762Gain.Time) < ServerDelayConstant))
         {
-            logData.SetSuccess(true, invul762Gain.Time);
+            successHandler.SetSuccess(true, invul762Gain.Time);
         }
         else
         {
-            logData.SetSuccess(false, kanaxai.LastAware);
+            successHandler.SetSuccess(false, kanaxai.LastAware);
         }
     }
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -319,7 +320,7 @@ internal class Kanaxai : SilentSurf
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -436,7 +437,7 @@ internal class Kanaxai : SilentSurf
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -501,9 +502,16 @@ internal class Kanaxai : SilentSurf
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 

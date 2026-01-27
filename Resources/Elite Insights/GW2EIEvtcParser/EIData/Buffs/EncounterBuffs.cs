@@ -141,7 +141,7 @@ internal static class EncounterBuffs
             new Buff("Shell-Shocked", ShellShocked, Source.EncounterSpecific, BuffClassification.Other, BuffImages.ShellShocked),
             new Buff("Sapper Bomb", SapperBombBuff, Source.EncounterSpecific, BuffClassification.Other, BuffImages.SapperBomb),
             new Buff("Sapper Bomb Damage", SapperBombDamageBuff, Source.EncounterSpecific, BuffClassification.Other, BuffImages.SapperBomb),
-            new Buff("Time Bomb", TimeBomb, Source.EncounterSpecific, BuffClassification.Other, BuffImages.TimeBomb),
+            new Buff("Time Bomb (Encounter)", TimeBomb_Encounter, Source.EncounterSpecific, BuffClassification.Other, BuffImages.TimeBomb),
             //////////////////////////////////////////////
             // Slothasor
             new Buff("Narcolepsy", NarcolepsyBuff, Source.EncounterSpecific, BuffClassification.Other, BuffImages.Determined),
@@ -232,6 +232,7 @@ internal static class EncounterBuffs
             new Buff("Countdown", Countdown, Source.EncounterSpecific, BuffStackType.Stacking, 10, BuffClassification.Other, BuffImages.Countdown),
             new Buff("Gaze Avoidance", GazeAvoidance, Source.EncounterSpecific, BuffClassification.Other, BuffImages.GazeAvoidance),
             new Buff("Celestial Dash", CelestialDashBuff, Source.EncounterSpecific, BuffClassification.Other, SkillImages.CelestialDash),
+            new Buff("Petrified (Cairn)", CairnPetrifed, Source.EncounterSpecific, BuffClassification.Other, SkillImages.MonsterSkill),
             // Mursaat Overseer
             new Buff("Empowered (MO)", EmpoweredMO, Source.EncounterSpecific, BuffStackType.Stacking, 4, BuffClassification.Other, BuffImages.EmpoweredMursaarOverseer),
             new Buff("Mursaat Overseer's Shield", MursaatOverseersShield, Source.EncounterSpecific, BuffClassification.Other, BuffImages.Dispel),

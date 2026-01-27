@@ -73,6 +73,7 @@ public sealed class ProgramHelper : IDisposable
     public static readonly GW2APIController APIController = new(SkillAPICacheLocation, SpecAPICacheLocation, TraitAPICacheLocation, MapAPICacheLocation);
 
     private CancellationTokenSource? RunningMemoryCheck = null;
+    private bool GCExecuted = false;
 
     public void Dispose()
     {
@@ -100,16 +101,23 @@ public sealed class ProgramHelper : IDisposable
     }
     public void ExecuteMemoryCheckTask()
     {
-        if (Settings.MemoryLimit == 0 && RunningMemoryCheck != null)
+        if (Settings.MemoryLimit < 0 && RunningMemoryCheck != null)
         {
             RunningMemoryCheck.Cancel();
             RunningMemoryCheck.Dispose();
+            GCExecuted = false;
             RunningMemoryCheck = null;
         }
 
-        if (Settings.MemoryLimit == 0 || RunningMemoryCheck != null)
+        if (Settings.MemoryLimit < 0 || RunningMemoryCheck != null)
         {
             return;
+        }
+
+        double memoryLimit = Settings.MemoryLimit;
+        if (memoryLimit == 0)
+        {
+            memoryLimit = (int)(GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024L * 1024L)) * 0.9;
         }
 
         RunningMemoryCheck = new CancellationTokenSource();// Prepare task
@@ -122,9 +130,22 @@ public sealed class ProgramHelper : IDisposable
                 await Task.Delay(500).ConfigureAwait(false);
                 //NOTE(Rennorb): cannot wait for GC here because this is just a task (not a thread) and we would potentially be blocking other things from happening.
                 proc.Refresh();
-                if (proc.PrivateMemorySize64 > Math.Max(Settings.MemoryLimit, 100) * 1024L * 1024L)
+                if (proc.PrivateMemorySize64 > Math.Max(memoryLimit, 100) * 1024L * 1024L)
                 {
-                    Environment.Exit(2);
+                    if (!GCExecuted)
+                    {
+                        // First try a garbage collection, if we fall here again in 500ms, kill
+                        GCExecuted = true;
+                        GC.Collect();
+                    } 
+                    else
+                    {
+                        Environment.Exit(2);
+                    }
+                } 
+                else
+                {
+                    GCExecuted = false;
                 }
             }
 
@@ -172,7 +193,7 @@ public sealed class ProgramHelper : IDisposable
             SingleActor povActor = log.FindActor(pov);
             builder.WithFooter(povActor.Account + " - " + povActor.Spec.ToString() + "\n" + log.LogMetadata.DateStartStd + " / " + log.LogMetadata.DateEndStd, povActor.GetIcon(true));
         }
-        builder.WithColor(log.LogData.Success ? Discord.Color.Green : Discord.Color.Red);
+        builder.WithColor(log.LogData.GetMainPhase(log).Success ? Discord.Color.Green : Discord.Color.Red);
         if (dpsReportPermalink.Length > 0)
         {
             builder.WithUrl(dpsReportPermalink);
@@ -228,6 +249,7 @@ public sealed class ProgramHelper : IDisposable
                                                         true,
                                                         true,
                                                         Settings.CustomTooShort,
+                                                        Settings.CustomTooBig,
                                                         Settings.DetailledWvW);
                         ParsedEvtcLog logToUse = originalLog;
                         if (originalLog.ParserSettings.ComputeDamageModifiers != expectedSettings.ComputeDamageModifiers ||
@@ -270,7 +292,7 @@ public sealed class ProgramHelper : IDisposable
 
                         originalController.UpdateProgressWithCancellationCheck("Wingman: Preparing upload");
 
-                        string result = logToUse.LogData.Success ? "kill" : "fail";
+                        string result = logToUse.LogData.GetMainPhase(logToUse).Success ? "kill" : "fail";
                         WingmanController.UploadProcessed(fInfo, accName, jsonFile, htmlFile, $"_{logToUse.LogData.Logic.Extension}_{result}", str => originalController.UpdateProgress("Wingman: " + str), ParserVersion);
                     }
                     catch (Exception e)
@@ -307,6 +329,7 @@ public sealed class ProgramHelper : IDisposable
                                             Settings.ParseCombatReplay,
                                             Settings.ComputeDamageModifiers,
                                             Settings.CustomTooShort,
+                                            Settings.CustomTooBig,
                                             Settings.DetailledWvW),
                                         APIController);
 
@@ -428,7 +451,7 @@ public sealed class ProgramHelper : IDisposable
 
         string resultStr;
         string resultSuffix;
-        if (log.LogData.Success)
+        if (log.LogData.GetMainPhase(log).Success)
         {
             if (log.LogData.IsInstance)
             {

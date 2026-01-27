@@ -3,6 +3,7 @@ using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIGW2API;
 using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.LogLogic.LogLogic;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicUtils;
@@ -39,7 +40,7 @@ internal class KinfallInstance : Kinfall
         _whisperingShadow.GetCombatMapInternal(log, arenaDecorations);
         return crMap;
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var lastWhisperingShadow = agentData.GetNPCsByID(TargetID.WhisperingShadow).LastOrDefault();
         if (lastWhisperingShadow != null)
@@ -47,7 +48,7 @@ internal class KinfallInstance : Kinfall
             var death = combatData.GetDeadEvents(lastWhisperingShadow).FirstOrDefault();
             if (death != null)
             {
-                logData.SetSuccess(true, death.Time);
+                successHandler.SetSuccess(true, death.Time);
             }
         }
     }
@@ -59,7 +60,7 @@ internal class KinfallInstance : Kinfall
         {
             var whisperingShadowPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.WhisperingShadow, [], "Whispering Shadow", _whisperingShadow, (log, whisperingShadow) =>
             {
-                return log.CombatData.GetBuffApplyData(SkillIDs.LifeFireCircleCM).Any(x => whisperingShadow.InAwareTimes(x.Time)) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+                return log.CombatData.GetBuffApplyData(SkillIDs.LifeFireCircleCM).Any(x => whisperingShadow.InAwareTimes(x.Time)) ? LogData.Mode.CM : LogData.Mode.Normal;
             });
             foreach (var whisperingShadowPhase in whisperingShadowPhases)
             {
@@ -148,5 +149,11 @@ internal class KinfallInstance : Kinfall
     {
         base.SetInstanceBuffs(log, instanceBuffs);
         _whisperingShadow.SetInstanceBuffs(log, instanceBuffs);
+    }
+
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        _whisperingShadow.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
     }
 }

@@ -42,7 +42,7 @@ internal class SunquaPeakInstance : SunquaPeak
         AddArenaDecorationsPerEncounter(log, arenaDecorations, _aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.DarkAiMask, CombatReplayAi, subCrMap);
         return crMap;
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var lastDarkAi = agentData.GetNPCsByID(TargetID.DarkAiKeeperOfThePeak).LastOrDefault();
         if (lastDarkAi != null)
@@ -51,7 +51,7 @@ internal class SunquaPeakInstance : SunquaPeak
             var determinedApply = determinedBuffs.FirstOrDefault(x => x is BuffApplyEvent bae && bae.AppliedDuration > AiKeeperOfThePeak.Determined895DurationCheckForSuccess);
             if (determinedApply != null)
             {
-                logData.SetSuccess(true, determinedApply.Time);
+                successHandler.SetSuccess(true, determinedApply.Time);
             }
         }
     }
@@ -87,7 +87,7 @@ internal class SunquaPeakInstance : SunquaPeak
         var encounterName = dark ? "Dark Ai, Keeper of the Peak" : "Elemental Ai, Keeper of the Peak";
         var encounterIcon = dark ? EncounterIconAiDark : EncounterIconAiElemental;
         var encounterID = dark ? (_aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.DarkAiMask) : (_aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.ElementalAiMask);
-        var mode = LogData.LogMode.CMNoName;
+        var mode = LogData.Mode.CMNoName;
         ai.OverrideName(encounterName + (ais.Count > 1 ? " " + offset : ""));
         AddInstanceEncounterPhase(log, phases, encounterPhases, [ai], [], [], mainPhase, encounterName, start, end, success, encounterIcon, encounterID, mode);
         return offset;
@@ -122,7 +122,7 @@ internal class SunquaPeakInstance : SunquaPeak
         var encounterName = "Ai, Keeper of the Peak";
         var encounterIcon = EncounterIconAi;
         var encounterID = (_aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.FullAiMask);
-        var mode = LogData.LogMode.CMNoName;
+        var mode = LogData.Mode.CMNoName;
         elementalAi.OverrideName("Elemental Ai, Keeper of the Peak" + (ais.Count > 1 ? " " + offset : "") + " Full");
         darkAi.OverrideName("Dark Ai, Keeper of the Peak" + (ais.Count > 1 ? " " + offset : "") + " Full");
         AddInstanceEncounterPhase(log, phases, encounterPhases, [elementalAi, darkAi], [], [], mainPhase, encounterName, start, end, success, encounterIcon, encounterID, mode);
@@ -299,6 +299,11 @@ internal class SunquaPeakInstance : SunquaPeak
     {
         base.SetInstanceBuffs(log, instanceBuffs);
         _aiKeeperOfThePeak.SetInstanceBuffs(log, instanceBuffs);
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        _aiKeeperOfThePeak.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
     }
 
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()

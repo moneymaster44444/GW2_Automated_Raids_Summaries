@@ -53,15 +53,15 @@ internal class SalvationPassInstance : SalvationPass
         return crMap;
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var chest = agentData.GetGadgetsByID(_matthias.ChestID).FirstOrDefault();
         if (chest != null)
         {
-            logData.SetSuccess(true, chest.FirstAware);
+            successHandler.SetSuccess(true, chest.FirstAware);
             return;
         }
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
     }
 
     private List<EncounterPhaseData> HandleTrioPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
@@ -99,8 +99,8 @@ internal class SalvationPassInstance : SalvationPass
         var boxStart = new Vector2(-2200, -11300);
         var boxEnd = new Vector2(1000, -7200);
         TargetID[] trashMobsToCheck =
-        {
-                TargetID.BanditAssassin,
+        [
+            TargetID.BanditAssassin,
                 TargetID.BanditAssassin2,
                 TargetID.BanditSapperTrio,
                 TargetID.BanditDeathsayer,
@@ -113,7 +113,7 @@ internal class SalvationPassInstance : SalvationPass
                 TargetID.BanditCleric2,
                 TargetID.BanditBombardier,
                 TargetID.BanditSniper,
-        };
+        ];
         var bandits = log.AgentData.GetNPCsByIDs(trashMobsToCheck);
         var banditPositions = new List<PositionEvent>();
         foreach (var bandit in bandits)
@@ -307,6 +307,14 @@ internal class SalvationPassInstance : SalvationPass
         foreach (SalvationPass logic in _subLogics)
         {
             logic.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        foreach (var logic in _subLogics)
+        {
+            logic.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 

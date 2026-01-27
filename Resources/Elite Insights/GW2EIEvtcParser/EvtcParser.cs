@@ -89,11 +89,19 @@ public class EvtcParser
                 using Stream data = arch.Entries[0].Open();
                 using var ms = new MemoryStream();
                 data.CopyTo(ms);
+                if (ms.Length / (1024L * 1024L) > _parserSettings.TooBigLimit)
+                {
+                    throw new TooBigException(ms.Length / (1024L * 1024L), _parserSettings.TooBigLimit);
+                }
                 ms.Position = 0;
                 evtcLog = ParseLog(operation, ms, out parsingFailureReason, multiThreadAcceleration);
             }
             else
             {
+                if (evtc.Length / (1024L * 1024L) > _parserSettings.TooBigLimit)
+                {
+                    throw new TooBigException(evtc.Length / (1024L * 1024L), _parserSettings.TooBigLimit);
+                }
                 evtcLog = ParseLog(operation, fs, out parsingFailureReason, multiThreadAcceleration);
             }
             return evtcLog;
@@ -1232,7 +1240,7 @@ public class EvtcParser
         }
 
         _logData = new LogData(_id, _agentData, _combatItems, _parserSettings, _logStartOffset, _logEndTime, _evtcVersion);
-        bool splitByEnterCombatEvents = _logData.Logic.IsInstance || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.WvW || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.OpenWorld;
+        bool splitByEnterCombatEvents = _logData.IsInstance || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.WvW || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.OpenWorld;
         if (splitByEnterCombatEvents || _agentData.GetAgentByType(AgentItem.AgentType.Player).Any(x => x.Regrouped.Count > 0))
         {
             var enterAndExitCombatEvents = _combatItems.Where(x => x.IsStateChange == StateChange.EnterCombat || x.IsStateChange == StateChange.ExitCombat);
@@ -1332,8 +1340,10 @@ public class EvtcParser
     /// <param name="nullTerminated">if set the array will become truncated at the first null byte</param>
     private static ArrayPoolReturner<byte> GetByteArrayPooled(BinaryReader reader, int length, bool nullTerminated = true)
     {
-        var buffer = new ArrayPoolReturner<byte>(length); // TODO use own reader for direct access 
-        buffer.Length = 0; // reuse the length, don't need to remember the original
+        var buffer = new ArrayPoolReturner<byte>(length)
+        {
+            Length = 0 // reuse the length, don't need to remember the original
+        }; // TODO use own reader for direct access 
         while (length-- > 0)
         {
             var b = buffer.Array[buffer.Length] = reader.ReadByte();
@@ -1361,8 +1371,10 @@ public class EvtcParser
     /// <param name="nullTerminated">if set the array will become truncated at the first null byte</param>
     private static ArrayPoolReturner<char> GetCharArrayPooled(BinaryReader reader, int length, bool nullTerminated = true)
     {
-        var buffer = new ArrayPoolReturner<char>(length); // TODO use own reader for direct access 
-        buffer.Length = 0; // reuse the length, don't need to remember the original
+        var buffer = new ArrayPoolReturner<char>(length)
+        {
+            Length = 0 // reuse the length, don't need to remember the original
+        }; // TODO use own reader for direct access 
         while (length-- > 0)
         {
             var b = reader.ReadByte();

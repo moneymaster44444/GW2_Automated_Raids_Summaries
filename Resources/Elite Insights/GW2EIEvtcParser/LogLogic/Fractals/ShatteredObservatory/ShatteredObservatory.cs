@@ -39,7 +39,7 @@ internal abstract class ShatteredObservatory : FractalLogic
     /// <summary>
     /// Returns true if the buff count was not reached so that another method can be called, if necessary
     /// </summary>
-    protected static bool SetSuccessByBuffCount(CombatData combatData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, SingleActor target, long buffID, int count)
+    protected static bool SetSuccessByBuffCount(CombatData combatData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler, SingleActor target, long buffID, int count)
     {
         if (target == null)
         {
@@ -49,9 +49,9 @@ internal abstract class ShatteredObservatory : FractalLogic
         if (invulsTarget.Count() == count)
         {
             BuffEvent last = invulsTarget.Last();
-            if (!(last is BuffApplyEvent))
+            if (last is not BuffApplyEvent)
             {
-                SetSuccessByCombatExit(new List<SingleActor> { target }, combatData, logData, playerAgents);
+                SetSuccessByCombatExit(new List<SingleActor> { target }, combatData, logData, playerAgents, successHandler);
                 return false;
             }
         }

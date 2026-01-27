@@ -14,7 +14,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Sabetha : SpiritVale
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
        
             // NOTE: Time Bomb damage is registered only for the user that has the bomb, damage to others is not logged.
             new PlayerDstBuffApplyMechanic(ShellShocked, new MechanicPlotlySetting(Symbols.CircleOpen,Colors.DarkGreen), "Launched", "Shell-Shocked (launched up to cannons)","Shell-Shocked", 0),
@@ -22,10 +22,10 @@ internal class Sabetha : SpiritVale
             new PlayerDstHealthDamageMechanic(Firestorm, new MechanicPlotlySetting(Symbols.Square,Colors.Red), "Flamewall", "Firestorm (killed by Flamewall)","Flamewall", 0)
                 .UsingChecker((de, log) => de.HasKilled),
             new MechanicGroup([
-                new PlayerDstBuffApplyMechanic(TimeBomb, new MechanicPlotlySetting(Symbols.Circle,Colors.LightOrange), "Timed Bomb", "Got a Timed Bomb (Expanding circle)","Timed Bomb", 0),
-                new PlayerDstHealthDamageMechanic([TimeBombDamage, TimeBombDamage2], new MechanicPlotlySetting(Symbols.Hexagram, Colors.DarkMagenta), "TimeB Down", "Downed by Time Bomb", "Time Bomb Down", 0)
+                new PlayerDstBuffApplyMechanic(TimeBomb_Encounter, new MechanicPlotlySetting(Symbols.Circle,Colors.LightOrange), "Timed Bomb", "Got a Timed Bomb (Expanding circle)","Timed Bomb", 0),
+                new PlayerDstHealthDamageMechanic([TimeBombDamage_Encounter, TimeBombDamage2_Encounter], new MechanicPlotlySetting(Symbols.Hexagram, Colors.DarkMagenta), "TimeB Down", "Downed by Time Bomb", "Time Bomb Down", 0)
                     .UsingChecker((hde, log) => hde.HasDowned),
-                new PlayerDstHealthDamageMechanic([TimeBombDamage, TimeBombDamage2], new MechanicPlotlySetting(Symbols.HexagramOpen, Colors.DarkMagenta), "TimeB Kill", "Killed by Time Bomb", "Time Bomb Kill", 0)
+                new PlayerDstHealthDamageMechanic([TimeBombDamage_Encounter, TimeBombDamage2_Encounter], new MechanicPlotlySetting(Symbols.HexagramOpen, Colors.DarkMagenta), "TimeB Kill", "Killed by Time Bomb", "Time Bomb Kill", 0)
                     .UsingChecker((hde, log) => hde.HasKilled),
             ]),
             new PlayerDstHealthDamageHitMechanic(FlakShot, new MechanicPlotlySetting(Symbols.HexagramOpen,Colors.LightOrange), "Flak", "Flak Shot (Fire Patches)","Flak Shot", 0),
@@ -87,12 +87,12 @@ internal class Sabetha : SpiritVale
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
     }
 
-    private static readonly List<TargetID> BanditBossIDs = new List<TargetID>
-    {
+    private static readonly List<TargetID> BanditBossIDs =
+    [
         TargetID.Karde, // reverse order for mini boss phase detection
         TargetID.Knuckles,
         TargetID.Kernan,
-    };
+    ];
 
     internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor sabetha, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
@@ -108,7 +108,6 @@ internal class Sabetha : SpiritVale
             phase.AddParentPhase(encounterPhase);
             if (index % 2 == 0)
             {
-                int phaseID = index / 2;
                 phase.Name = "Unknown";
                 foreach (var miniBossID in BanditBossIDs)
                 {
@@ -123,15 +122,15 @@ internal class Sabetha : SpiritVale
                         break; // we found our main target
                     }
                 }
-                AddTargetsToPhase(phase, targets, BanditBossIDs, log, PhaseData.TargetPriority.NonBlocking);
             }
             else
             {
                 int phaseID = (index + 1) / 2;
                 phase.Name = "Phase " + phaseID;
                 phase.AddTarget(sabetha, log);
-                AddTargetsToPhase(phase, targets, BanditBossIDs, log, PhaseData.TargetPriority.NonBlocking);
             }
+
+            AddTargetsToPhase(phase, targets, BanditBossIDs, log, PhaseData.TargetPriority.NonBlocking);
         }
         return phases;
     }
@@ -171,7 +170,7 @@ internal class Sabetha : SpiritVale
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -298,13 +297,13 @@ internal class Sabetha : SpiritVale
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
 
         // Timed bombs
-        var timedBombs = p.GetBuffStatus(log, TimeBomb).Where(x => x.Value > 0);
+        var timedBombs = p.GetBuffStatus(log, TimeBomb_Encounter).Where(x => x.Value > 0);
         foreach (var seg in timedBombs)
         {
             // Buff lasts 4000ms, damage event happens at 3000ms.
@@ -324,7 +323,7 @@ internal class Sabetha : SpiritVale
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -375,7 +374,7 @@ internal class Sabetha : SpiritVale
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
@@ -385,5 +384,13 @@ internal class Sabetha : SpiritVale
         { (int)TargetID.Kernan, "Kernan" },
         { (int)TargetID.Karde, "Karde" },
         { (int)TargetID.Knuckles, "Knuckles" }
-    };
+    }; 
+    
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
+    }
 }

@@ -14,17 +14,17 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Cairn : BastionOfThePenitent
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
 
             new PlayerDstHealthDamageHitMechanic(CairnDisplacement, new MechanicPlotlySetting(Symbols.Circle,Colors.LightOrange), "Port", "Orange Teleport Field","Orange TP", 0),
             new MechanicGroup([
-                new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulation5, SpatialManipulation6], new MechanicPlotlySetting(Symbols.Circle,Colors.DarkGreen), "Std.Green", "Stood in Green Spatial Manipulation Field","Green", 0)
+                new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulationInitial, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulationFastTrigger], new MechanicPlotlySetting(Symbols.Circle,Colors.DarkGreen), "Std.Green", "Stood in Green Spatial Manipulation Field","Green", 0)
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulation5, SpatialManipulation6], new MechanicPlotlySetting(Symbols.Circle,Colors.Green), "Green", "Green Spatial Manipulation Field (lift)","Green (lift)", 0),
+                        new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulationInitial, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulationFastTrigger], new MechanicPlotlySetting(Symbols.Circle,Colors.Green), "Green", "Green Spatial Manipulation Field (lift)","Green (lift)", 0),
                         false
                     )
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulation5, SpatialManipulation6], new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Green), "Stab.Green", "Green Spatial Manipulation Field while affected by stability","Stabilized Green", 0),
+                        new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulationInitial, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulationFastTrigger], new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Green), "Stab.Green", "Green Spatial Manipulation Field while affected by stability","Stabilized Green", 0),
                         true
                     )
                     .UsingIgnored()
@@ -110,9 +110,90 @@ internal class Cairn : BastionOfThePenitent
         return phases;
     }
 
+    private static readonly Dictionary<long, long> SpatialManipulationTriggerTime = new() // from skill def
+    {
+        {SpatialManipulation1, 6300},
+        {SpatialManipulation2, 6300},
+        {SpatialManipulation3, 6300},
+        {SpatialManipulation4, 6300},
+        {SpatialManipulationFastTrigger, 3300},
+        {SpatialManipulationInitial, 3300},
+    };
+
+    private static void AddGreenDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations, Span<GUID> greenGUIDs)
+    {
+        if (log.CombatData.TryGetEffectEventsByGUIDs(greenGUIDs, out var greenEffects))
+        {
+            List<AnimatedCastEvent> spatialManipulations = [];
+            foreach (var castSkillID in SpatialManipulationTriggerTime.Keys)
+            {
+                spatialManipulations.AddRange(log.CombatData.GetAnimatedCastData(castSkillID));
+            }
+            var cairns = log.AgentData.GetNPCsByID(TargetID.Cairn);
+            spatialManipulations.SortByTime();
+            foreach (EffectEvent greenEffect in greenEffects)
+            {
+                long greenStart = greenEffect.Time;
+                var activeCairn = cairns.FirstOrDefault(x => x.InAwareTimes(greenStart));
+                if (activeCairn == null)
+                {
+                    continue;
+                }
+                long greenEnd = activeCairn.LastAware;
+                bool triggered = false;
+                CastEvent? endEvent = spatialManipulations.FirstOrDefault(x => x.EndTime >= greenStart);
+                if (endEvent != null)
+                {
+                    triggered = true;
+                    greenEnd = Math.Min(greenEnd, endEvent.Time + SpatialManipulationTriggerTime[endEvent.SkillID]);
+                }
+                // Initial green and dash radius
+                uint radius = 120;
+                var guid = greenEffect.GUIDEvent.ContentGUID;
+                if (guid == EffectGUIDs.CairnGreen4PlayersOrBigNoCount)
+                {
+                    radius = 180;
+                }
+                else if (guid == EffectGUIDs.CairnGreen2Players)
+                {
+                    radius = 80;
+                }
+                else if (guid == EffectGUIDs.CairnGreen1Player)
+                {
+                    radius = 60;
+                }
+                GeographicalConnector positionConnector;
+                if (greenEffect.IsAroundDst)
+                {
+                    if (greenEffect.Dst.TryGetCurrentPosition(log, greenEffect.Time, out var position))
+                    {
+                        positionConnector = new PositionConnector(position);
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    positionConnector = new PositionConnector(greenEffect.Position);
+                }
+                if (triggered)
+                {
+                    environmentDecorations.AddWithGrowing(new CircleDecoration(radius, (greenStart, greenEnd), Colors.DarkGreen, 0.3, positionConnector), greenEnd);
+                    environmentDecorations.Add(new CircleDecoration(radius, (greenEnd - 200, greenEnd), Colors.DarkGreen, 0.4, positionConnector));
+                } 
+                else
+                {
+                    environmentDecorations.Add(new CircleDecoration(radius, (greenStart, greenEnd), Colors.DarkGreen, 0.3, positionConnector));
+                }
+            }
+        }
+    }
+
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -127,23 +208,7 @@ internal class Cairn : BastionOfThePenitent
                 environmentDecorations.Add(circle.Copy().UsingGrowingEnd(displacement.Time + expectedDisplacementDuration));
             }
         }
-
-        if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.CairnDashGreen, out var dashGreenEffects))
-        {
-            var spatialManipulations = log.CombatData.GetAnimatedCastData(SpatialManipulation6);
-            foreach (EffectEvent dashGreen in dashGreenEffects)
-            {
-                long dashGreenStart = dashGreen.Time;
-                long dashGreenEnd = log.LogData.LogEnd;
-                CastEvent? endEvent = spatialManipulations.FirstOrDefault(x => x.EndTime >= dashGreenStart);
-                if (endEvent != null)
-                {
-                    dashGreenEnd = Math.Min(dashGreenEnd, endEvent.Time + 3300); // from skill def
-                }
-                environmentDecorations.Add(new CircleDecoration(110, (dashGreenStart, dashGreenEnd), Colors.DarkGreen, 0.4, new PositionConnector(dashGreen.Position)));
-                environmentDecorations.Add(new CircleDecoration(110, (dashGreenEnd - 200, dashGreenEnd), Colors.DarkGreen, 0.4, new PositionConnector(dashGreen.Position)));
-            }
-        }
+        AddGreenDecorations(log, environmentDecorations, [EffectGUIDs.CairnDashGreenNoCount, EffectGUIDs.CairnInitialGreen, EffectGUIDs.CairnGreen1Player, EffectGUIDs.CairnGreen2Players, EffectGUIDs.CairnGreen4PlayersOrBigNoCount]);
 
         // Meteor Swarm
         var meteorSwarm = log.CombatData.GetMissileEventsBySkillID(MeteorSwarm);
@@ -152,7 +217,7 @@ internal class Cairn : BastionOfThePenitent
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -259,7 +324,7 @@ internal class Cairn : BastionOfThePenitent
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -269,24 +334,53 @@ internal class Cairn : BastionOfThePenitent
         {
             long agonyStart = c.Time;
             long agonyEnd = agonyStart + 62000;
-            replay.Decorations.Add(new CircleDecoration(220, (agonyStart, agonyEnd), Colors.Red, 0.5, new AgentConnector(p)).UsingFilled(false));
+            replay.Decorations.Add(new CircleDecoration(200, (agonyStart, agonyEnd), Colors.Red, 0.5, new AgentConnector(p)).UsingFilled(false));
         }
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal static bool HasActiveCountdownOnAllParticipatingPlayersOrPetrified(CombatData combatData, AgentData agentData, long start, long end)
     {
-        return combatData.GetBuffApplyData(Countdown).Any(x => x.Time > 0) ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        if (combatData.GetBuffApplyData(CairnPetrifed).Any(x => x.Time >= start && x.Time <= end))
+        {
+            return true;
+        }
+        var countdowns = combatData.GetBuffApplyData(Countdown).Where(x => x.Time >= start && x.Time <= end).ToList();
+        if (countdowns.Count > 0)
+        {
+            var players = agentData.GetAgentByType(AgentItem.AgentType.Player).Where(x => x.InAwareTimes(start, end) && x.IsActive(combatData, start, end, 5000));
+            foreach (var player in players)
+            {
+                if (!countdowns.Any(x => x.To.Is(player)))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    {
+        return HasActiveCountdownOnAllParticipatingPlayersOrPetrified(combatData, agentData, logData.LogStart, logData.LogEnd) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
     {
         return "Cairn";
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
     }
 }

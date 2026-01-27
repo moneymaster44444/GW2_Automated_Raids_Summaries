@@ -69,7 +69,7 @@ internal class Eparch : LonelyTower
         LogID |= 0x000002;
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         ulong build = combatData.GetGW2BuildEvent().Build;
         int healthCMRelease = build >= GW2Builds.June2024Balance ? 22_833_236 : 32_618_906;
@@ -77,12 +77,9 @@ internal class Eparch : LonelyTower
         SingleActor eparch = GetEparchActor();
         if (build >= GW2Builds.June2024LonelyTowerCMRelease && eparch.GetHealth(combatData) >= healthThreshold)
         {
-            return LogData.LogMode.CM;
+            return LogData.Mode.CM;
         }
-        else
-        {
-            return LogData.LogMode.Normal;
-        }
+        return LogData.Mode.Normal;
     }
 
     internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
@@ -121,22 +118,22 @@ internal class Eparch : LonelyTower
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         SingleActor eparch = GetEparchActor();
         var determinedApplies = combatData.GetBuffApplyDataByIDByDst(Determined762, eparch.AgentItem).OfType<BuffApplyEvent>().ToList();
-        var cmCheck = logData.IsCM || IsFakeCM(agentData);
+        var cmCheck = GetLogMode(combatData, agentData, logData) == LogData.Mode.CM || IsFakeCM(agentData);
         if (cmCheck && determinedApplies.Count >= 3)
         {
-            logData.SetSuccess(true, determinedApplies[2].Time);
+            successHandler.SetSuccess(true, determinedApplies[2].Time);
         }
         else if (!cmCheck && determinedApplies.Count >= 1)
         {
-            logData.SetSuccess(true, determinedApplies[0].Time);
+            successHandler.SetSuccess(true, determinedApplies[0].Time);
         } 
         else
         {
-            logData.SetSuccess(false, eparch.LastAware);
+            successHandler.SetSuccess(false, eparch.LastAware);
         }
     }
 
@@ -149,9 +146,10 @@ internal class Eparch : LonelyTower
     {
         List<PhaseData> phases = GetInitialPhase(log);
         SingleActor eparch = GetEparchActor();
+        var encounterPhase = (EncounterPhaseData)phases[0];
         phases[0].AddTarget(eparch, log);
         phases[0].AddTargets(Targets.Where(x => x.IsAnySpecies([TargetID.IncarnationOfCruelty, TargetID.IncarnationOfJudgement])), log, PhaseData.TargetPriority.Blocking);
-        if (!requirePhases || (!log.LogData.IsCM && !IsFakeCM(log.AgentData)))
+        if (!requirePhases || (!encounterPhase.IsCM && !IsFakeCM(log.AgentData)))
         {
             return phases;
         }
@@ -163,12 +161,12 @@ internal class Eparch : LonelyTower
             if (i % 2 == 0)
             {
                 phase.Name = "Split " + i / 2;
-                var ids = new List<TargetID>
-                {
+                List<TargetID> ids =
+                [
                     TargetID.IncarnationOfCruelty,
                     TargetID.IncarnationOfJudgement,
                     TargetID.KryptisRift,
-                };
+                ];
                 AddTargetsToPhase(phase, ids, log);
             }
             else
@@ -194,7 +192,7 @@ internal class Eparch : LonelyTower
 
     internal override Dictionary<TargetID, int> GetTargetsSortIDs()
     {
-        return new Dictionary<TargetID, int>()
+        return new Dictionary<TargetID, int>
         {
             {TargetID.EparchLonelyTower, 0},
             {TargetID.KryptisRift, 1},
@@ -221,7 +219,7 @@ internal class Eparch : LonelyTower
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(player, log, replay);
         }
@@ -235,7 +233,7 @@ internal class Eparch : LonelyTower
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -318,7 +316,7 @@ internal class Eparch : LonelyTower
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -442,7 +440,8 @@ internal class Eparch : LonelyTower
         IReadOnlyList<AnimatedCastEvent> eparchCasts = log.CombatData.GetAnimatedCastData(eparch.AgentItem);
 
         // globule gadgets as decorations
-        var globuleColors = new Dictionary<long, Color> {
+        var globuleColors = new Dictionary<long, Color>
+        {
             { RainOfDespair, Colors.Blue },
             { WaveOfEnvy, Colors.Green },
             { Inhale, Colors.Orange },
@@ -474,6 +473,21 @@ internal class Eparch : LonelyTower
                     }
                 }
             }
+        }
+    }
+
+    internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

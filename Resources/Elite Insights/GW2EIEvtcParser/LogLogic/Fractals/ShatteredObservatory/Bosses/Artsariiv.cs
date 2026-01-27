@@ -16,7 +16,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Artsariiv : ShatteredObservatory
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup(
+    internal readonly MechanicGroup Mechanics = new(
         [
             new PlayerDstHealthDamageHitMechanic(VaultArtsariiv, new MechanicPlotlySetting(Symbols.TriangleDownOpen,Colors.Yellow), "Vault", "Vault from Big Adds","Vault (Add)", 0),
             new PlayerDstHealthDamageHitMechanic(SlamArtsariiv, new MechanicPlotlySetting(Symbols.Circle,Colors.LightOrange), "Slam", "Slam (Vault) from Boss","Vault (Arts)", 0),
@@ -131,7 +131,7 @@ internal class Artsariiv : ShatteredObservatory
             .FirstOrDefault();
         if (artsariivMarkerGUID != null)
         {
-            var markedsArtsariivs = combatData.Where(x => x.IsStateChange == ArcDPSEnums.StateChange.Marker && x.Value == artsariivMarkerGUID.ContentID).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Distinct();
+            var markedsArtsariivs = combatData.Where(x => x.IsStateChange == StateChange.Marker && x.Value == artsariivMarkerGUID.ContentID).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Distinct();
             foreach (AgentItem artsariiv in agentData.GetNPCsByID(TargetID.Artsariiv))
             {
                 if (!markedsArtsariivs.Any(x => x.Is(artsariiv)))
@@ -203,12 +203,12 @@ internal class Artsariiv : ShatteredObservatory
         RenameCloneArtsariivs(Targets, combatData);
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return LogData.LogMode.CMNoName;
+        return LogData.Mode.CMNoName;
     }
 
-    static private AgentItem FindTargetArtsariiv(AgentData agentData)
+    private static AgentItem FindTargetArtsariiv(AgentData agentData)
     {
         // cc artsariiv clones have the same species id, find target with longest aware time
         return agentData.GetNPCsByID(TargetID.Artsariiv).MaxBy(x => x.LastAware - x.FirstAware) ?? throw new MissingKeyActorsException("Artsariiv not found");
@@ -221,11 +221,11 @@ internal class Artsariiv : ShatteredObservatory
         return GetLogOffsetByInvulnStart(logData, combatData, artsariiv, Determined762);
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
         // reward or death worked
-        if (logData.Success)
+        if (successHandler.Success)
         {
             return;
         }
@@ -235,21 +235,21 @@ internal class Artsariiv : ShatteredObservatory
             // TBC: this looks promising so far
             if (combatData.TryGetEffectEventsByGUID(EffectGUIDs.ArtsariivDeadExplosion, out var effects))
             {
-                logData.SetSuccess(true, effects.Last().Time);
+                successHandler.SetSuccess(true, effects.Last().Time);
             }
             else
             {
-                logData.SetSuccess(false, target.LastAware);
+                successHandler.SetSuccess(false, target.LastAware);
             }
             return;
         }
         // Legacy
-        SetSuccessByBuffCount(combatData, logData, playerAgents, target, Determined762, 4);
+        SetSuccessByBuffCount(combatData, logData, playerAgents, successHandler, target, Determined762, 4);
     }
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -257,7 +257,7 @@ internal class Artsariiv : ShatteredObservatory
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -309,7 +309,7 @@ internal class Artsariiv : ShatteredObservatory
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -337,7 +337,7 @@ internal class Artsariiv : ShatteredObservatory
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
@@ -358,5 +358,12 @@ internal class Artsariiv : ShatteredObservatory
         List<CastEvent> res = [];
         res.AddRange(ProfHelper.ComputeUnderBuffCastEvents(combatData, skillData, NovaLaunchSAK, NovaLaunchBuff));
         return res;
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
     }
 }

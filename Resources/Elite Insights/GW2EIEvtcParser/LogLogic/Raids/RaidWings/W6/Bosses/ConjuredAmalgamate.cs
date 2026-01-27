@@ -17,7 +17,7 @@ namespace GW2EIEvtcParser.LogLogic;
 internal class ConjuredAmalgamate : MythwrightGambit
 {
 
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(Pulverize, new MechanicPlotlySetting(Symbols.Square,Colors.LightOrange), "Arm Slam", "Pulverize (Arm Slam)","Arm Slam", 0)
                     .WithStabilitySubMechanic(
@@ -166,14 +166,14 @@ internal class ConjuredAmalgamate : MythwrightGambit
         return GetGenericLogOffset(logData);
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         // Can be improved
         if (TargetHPPercentUnderThreshold(TargetID.ConjuredAmalgamate, logData.LogStart, combatData, Targets, 90))
         {
-            return LogData.LogStartStatus.Late;
+            return LogData.StartStatus.Late;
         }
-        return LogData.LogStartStatus.Normal;
+        return LogData.StartStatus.Normal;
     }
 
     protected override IReadOnlyList<TargetID> GetSuccessCheckIDs()
@@ -236,7 +236,7 @@ internal class ConjuredAmalgamate : MythwrightGambit
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -297,10 +297,10 @@ internal class ConjuredAmalgamate : MythwrightGambit
         }
     }
 
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
-        if (!logData.Success)
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
+        if (!successHandler.Success)
         {
             SingleActor? target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.ConjuredAmalgamate));
             SingleActor? leftArm = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.CALeftArm));
@@ -338,7 +338,7 @@ internal class ConjuredAmalgamate : MythwrightGambit
             }
             if (npcSpawn != null)
             {
-                logData.SetSuccess(true, lastDamageTaken.Time);
+                successHandler.SetSuccess(true, lastDamageTaken.Time);
             }
         }
     }
@@ -389,9 +389,8 @@ internal class ConjuredAmalgamate : MythwrightGambit
             int leftArmPhase = 0, rightArmPhase = 0, bothArmPhase = 0;
             var targetablesL = GetTargetableTimes(log, leftArm, TargetID.CALeftArmAttackTarget, start, end);
             var targetablesR = GetTargetableTimes(log, rightArm, TargetID.CARightArmAttackTarget, start, end);
-            for (int i = 0; i < phases.Count; i++)
+            foreach (var phase in phases)
             {
-                PhaseData phase = phases[i];
                 var leftExists = targetablesL.Exists(x => phase.InInterval(x));
                 var rightExists = targetablesR.Exists(x => phase.InInterval(x));
                 if (phase.Name.Contains("Arm"))
@@ -448,13 +447,12 @@ internal class ConjuredAmalgamate : MythwrightGambit
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
         // Conjured Protection - Shield AoE
-        var casts = p.GetCastEvents(log);
-        var shieldCast = casts.Where(x => x.SkillID == ConjuredProtectionSAK);
+        var shieldCast = p.GetAnimatedCastEvents(log).Where(x => x.SkillID == ConjuredProtectionSAK);
         foreach (CastEvent c in shieldCast)
         {
             int duration = 10000;
@@ -471,15 +469,15 @@ internal class ConjuredAmalgamate : MythwrightGambit
         replay.Decorations.AddOverheadIcons(p.GetBuffStatus(log, GreatswordPower).Where(x => x.Value > 0), p, ParserIcons.GreatswordPowerEmptyOverhead);
     }
 
-    internal override LogData.LogMode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.ConjuredAmalgamate)) ?? throw new MissingKeyActorsException("Conjured Amalgamate not found");
-        return combatData.GetBuffData(LockedOn).Count > 0 ? LogData.LogMode.CM : LogData.LogMode.Normal;
+        return combatData.GetBuffData(LockedOn).Count > 0 ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
         }
@@ -524,9 +522,16 @@ internal class ConjuredAmalgamate : MythwrightGambit
     }
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 }

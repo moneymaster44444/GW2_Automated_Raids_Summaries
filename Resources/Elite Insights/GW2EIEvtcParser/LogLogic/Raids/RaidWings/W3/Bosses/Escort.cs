@@ -19,7 +19,7 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class Escort : StrongholdOfTheFaithful
 {
-    internal readonly MechanicGroup Mechanics = new MechanicGroup([
+    internal readonly MechanicGroup Mechanics = new([
             new PlayerDstHealthDamageMechanic(DetonateMineEscort, new MechanicPlotlySetting(Symbols.CircleCross, Colors.Red), "Mine.H", "Hit by Mine Detonation", "Mine Detonation Hit", 150).UsingChecker((de, log) => de.CreditedFrom.IsSpecies(TargetID.Mine)),
             new PlayerDstHealthDamageMechanic(GlennaBombHit, new MechanicPlotlySetting(Symbols.Hexagon, Colors.LightGrey), "Bomb.H", "Hit by Glenna's Bomb", "Glenna's Bomb Hit", 0),
             new PlayerDstHealthDamageHitMechanic(FireMortarEscortHit, new MechanicPlotlySetting(Symbols.Hourglass, Colors.DarkPurple), "Shrd.H", "Hit by Mortar Fire (Bloodstone Turrets)", "Mortar Fire Hit", 0),
@@ -79,8 +79,7 @@ internal class Escort : StrongholdOfTheFaithful
             if (i % 2 == 0)
             {
                 phase.Name = "McLeod Split " + (i) / 2;
-                phase.AddTargets(targets.Where(x => x.IsAnySpecies([TargetID.RadiantMcLeod, TargetID.CrimsonMcLeod])), log);
-                phase.OverrideTimes(log);
+                AddTargetsToPhaseAndFit(phase, targets, [TargetID.RadiantMcLeod, TargetID.CrimsonMcLeod], log);
             }
             else
             {
@@ -222,7 +221,7 @@ internal class Escort : StrongholdOfTheFaithful
         return startToUse;
     }
 
-    internal override LogData.LogStartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
+    internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
     {
         if (!agentData.TryGetFirstAgentItem(TargetID.McLeodTheSilent, out var mcLeod))
         {
@@ -239,18 +238,18 @@ internal class Escort : StrongholdOfTheFaithful
                 var glennaInitialPosition = new Vector2(9092.697f, 21477.2969f/*, -2946.81885f*/);
                 if (!combatData.GetMovementData(glenna).Any(x => x is PositionEvent pe && pe.Time < glenna.FirstAware + MinimumInCombatDuration && (pe.GetPointXY() - glennaInitialPosition).Length() < 100))
                 {
-                    return LogData.LogStartStatus.Late;
+                    return LogData.StartStatus.Late;
                 }
             }
-            return LogData.LogStartStatus.Normal;
+            return LogData.StartStatus.Normal;
         }
         else if (combatData.GetLogNPCUpdateEvents().Any())
         {
-            return LogData.LogStartStatus.NoPreEvent;
+            return LogData.StartStatus.NoPreEvent;
         }
         else
         {
-            return LogData.LogStartStatus.Normal;
+            return LogData.StartStatus.Normal;
         }
     }
     internal override IReadOnlyList<TargetID>  GetTargetsIDs()
@@ -267,7 +266,8 @@ internal class Escort : StrongholdOfTheFaithful
 
     internal override IReadOnlyList<TargetID> GetTrashMobsIDs()
     {
-        return [
+        return
+        [
             TargetID.MushroomCharger,
             TargetID.MushroomKing,
             TargetID.MushroomSpikeThrower,
@@ -295,13 +295,13 @@ internal class Escort : StrongholdOfTheFaithful
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
         if (log.CombatData.GetBuffData(AchievementEligibilityLoveIsBunny).Any() || log.CombatData.GetBuffData(AchievementEligibilityFastSiege).Any())
         {
-            var encounterPhases = log.LogData.GetPhases(log).OfType<EncounterPhaseData>().Where(x => x.LogID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)
@@ -315,7 +315,7 @@ internal class Escort : StrongholdOfTheFaithful
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
@@ -329,7 +329,7 @@ internal class Escort : StrongholdOfTheFaithful
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
@@ -340,9 +340,16 @@ internal class Escort : StrongholdOfTheFaithful
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        if (!log.LogData.IsInstance)
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 

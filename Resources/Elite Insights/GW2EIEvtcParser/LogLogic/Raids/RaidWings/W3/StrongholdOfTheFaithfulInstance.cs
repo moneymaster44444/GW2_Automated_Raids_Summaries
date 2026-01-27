@@ -43,15 +43,15 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
     {
         return "Stronghold Of The Faithful";
     }
-    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents)
+    internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
         var chest = agentData.GetGadgetsByID(_xera.ChestID).FirstOrDefault();
         if (chest != null)
         {
-            logData.SetSuccess(true, chest.FirstAware);
+            successHandler.SetSuccess(true, chest.FirstAware);
             return;
         }
-        base.CheckSuccess(combatData, agentData, logData, playerAgents);
+        base.CheckSuccess(combatData, agentData, logData, playerAgents, successHandler);
     }
     private List<EncounterPhaseData> HandleEscortPhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, IReadOnlyList<SingleActor> glennas, ParsedEvtcLog log, List<PhaseData> phases)
     {
@@ -121,7 +121,7 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
                     if (statue.FirstAware > prevStatue.LastAware)
                     {
                         packedStatus.Add(currentPack);
-                        currentPack = new List<SingleActor>();
+                        currentPack = [];
                     }
                     currentPack.Add(statue);
                 }
@@ -239,7 +239,7 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
             }
         }
         {
-            var kcPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.KeepConstruct, [], "Keep Construct", _keepConstruct, (log, kc) => log.CombatData.GetBuffApplyData(SkillIDs.AchievementEligibilityDownDownDowned).Any(x => x.Time >= kc.FirstAware && x.Time <= kc.LastAware) ? LogData.LogMode.CM : LogData.LogMode.Normal);
+            var kcPhases = ProcessGenericEncounterPhasesForInstance(targetsByIDs, log, phases, TargetID.KeepConstruct, [], "Keep Construct", _keepConstruct, (log, kc) => log.CombatData.GetBuffApplyData(SkillIDs.AchievementEligibilityDownDownDowned).Any(x => x.Time >= kc.FirstAware && x.Time <= kc.LastAware) ? LogData.Mode.CM : LogData.Mode.Normal);
             var statues = Targets.Where(x => x.IsAnySpecies(KeepConstruct.KCStatues));
             foreach (var kcPhase in kcPhases)
             {
@@ -406,6 +406,14 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
         foreach (StrongholdOfTheFaithful logic in _subLogics)
         {
             logic.SetInstanceBuffs(log, instanceBuffs);
+        }
+    }
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        foreach (var logic in _subLogics)
+        {
+            logic.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
     }
 
