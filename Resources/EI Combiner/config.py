@@ -44,6 +44,7 @@ top_stats = {
     "overall": {"last_fight": "", "group_data": {}},
     "fight": {},
     "player": {},
+    "stats_per_fight": {},
     "parties_by_fight": {},
     "enemies_by_fight": {},
     "skill_casts_by_role": {},
@@ -58,7 +59,9 @@ team_colors = {
     707: "Red",
     882: "Red",
     885: "Red",
+    886: "Red",
     2520: "Red",
+    2543: "Red",    
     2739: "Green",
     2741: "Green",
     2752: "Green",
@@ -67,6 +70,7 @@ team_colors = {
     432: "Blue",
     433: "Blue",
     1277: "Blue",
+    1282: "Blue",
 }
 
 
@@ -101,6 +105,7 @@ old_mesmer_shatter_skills = [
 "Zeitfresser",
 "Kontinuum-Spaltung"
 ]
+
 mesmer_shatter_skills = [
     "s56930",#: "Split Second"
     "s56925",#: "Split Second"
@@ -143,6 +148,7 @@ pull_skills = [
     "s13020",   #Scorpion Wire
     "s10620",   #Spectral Grasp
     "s30273",   #"Dragon's Maw"
+    "s76993",   #Flux State
     "s63275",   #Shadowfall
     "s5602",    #Whirlpool
     "s30359",   #Gravity Well

@@ -22,6 +22,7 @@ import xlsxwriter
 from glicko2 import Player as GlickoPlayer
 from collections import defaultdict
 from typing import Dict, Any, List, Tuple, Optional
+from requests.exceptions import RequestException, Timeout, ConnectionError
 
 #list of tid files to output
 tid_list = []
@@ -268,6 +269,33 @@ def get_total_shield_damage(fight_data: dict) -> int:
 	for skill_id, skill_data in fight_data["targetDamageDist"].items():
 		total_shield_damage += skill_data["shieldDamage"]
 	return total_shield_damage
+
+def get_boxplot_data(players, stats_per_fight, category, stat):
+    """
+    Extract the boxplot data for the given category and stat.
+
+    Args:
+        players (dict): The players data.
+        stats_per_fight (dict): The stats per fight data.
+        category (str): The category of stats to extract.
+        stat (str): The stat to extract.
+
+    Returns:
+        tuple: A tuple containing the names, professions, and boxplot data.
+
+    """
+    names = []
+    profs = []
+    boxplot_data = []
+
+    for player, pData in players.items():
+        
+        if player in stats_per_fight[category][stat]:
+            names.append(pData["name"])
+            profs.append(pData["profession"])
+            boxplot_data.append(stats_per_fight[category][stat][player])
+            
+    return names, profs, boxplot_data
 
 def build_tag_summary(top_stats):
 	"""Build a summary of tags from the top stats data.
@@ -1325,6 +1353,7 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 			account = player["account"]
 			name = player["name"]
 			tt_name = f'<span data-tooltip="{account}">{name}</span>'
+			print(f"Check Logs for {account} {name} with ActiveTime: {player['active_time']} and Num_Fights: {player['num_fights']}")
 			# Create a row for the player with basic info
 			row = f"| { player['last_party']} |{tt_name} | {{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time'] / 1000:,.1f}|"
 
@@ -1353,7 +1382,10 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 					elif category == "groupBuffs":
 						generation_ms = player[category][boon_id]["generation"]
 						wasted_ms = player[category][boon_id]["wasted"]
-						if stacking:
+						if group_supported == num_fights:
+							uptime_percentage = 0
+							wasted_percentage = 0
+						elif stacking:
 							uptime_percentage = round((generation_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
 							wasted_percentage = round((wasted_ms / player['active_time']) / ((group_supported - num_fights)/num_fights), 3)
 						else:
@@ -2255,7 +2287,7 @@ def build_general_stats_tid(datetime, offensive_detailed, defenses_detailed, sup
 
 	text = " ".join(text_parts)
 	text += f"[[{datetime}-Heal-Stats]] [[{datetime}-Healers]] [[{datetime}-Combat-Resurrect]] [[{datetime}-FB-Pages]] [[{datetime}-Mesmer-Clone-Usage]]"
-	text += f"[[{datetime}-Pull-Skills]]' '{datetime}-Offensive-Summary' '$:/temp/tab1'>>"
+	text += f"[[{datetime}-Pull-Skills]] [[{datetime}-Squad-Health-Pct]]' '{datetime}-Offensive-Summary' '$:/temp/tab1'>>"
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator, fields={'radio': 'Total', 'damage_with_buff': 'might', 'boon_selected':'Might', 'Support_selected': 'condiCleanse', 'Offensive_selected': 'downContribution', 'Defenses_selected': 'damageTaken'}),
@@ -3979,6 +4011,55 @@ option = {{
 		tid_list
 	)
 
+def build_squad_healthpct_table(health_data: dict, tid_date_time: str, tid_list: list) -> None:
+	bucket_list = [
+		"100-90",
+		"90-80",
+		"80-70",
+		"70-60",
+		"60-50",
+		"50-40",
+		"40-30",
+		"30-20",
+		"20-10",
+		"10-0"
+	]
+
+	rows=[]
+
+	tid_title = f"{tid_date_time}-Squad-Health-Pct"
+	tid_caption = "Squad HP% Review"
+	tid_tags = tid_date_time
+
+	rows.append("|thead-dark table-caption-top sortable|k")
+	rows.append("|Accumulated Time per 10% Health Bucket|c")
+	header="|!Player | !Prof | !Group | !Fights |"
+
+	for bucket in bucket_list:
+		header += f" !{bucket}|"
+	header += "h"
+	rows.append(header)
+
+	for player, pData in health_data.items():
+		prof="{{"+pData['Profession']+"}}-"+pData['Profession'][:3]
+		total_sum = sum(pData['Health_Buckets'].values())
+		player_row = f"|{pData['Name']} | {prof} | {pData['Group']} | {pData['Fights']} |"
+		for bucket in bucket_list:
+			pct = pData['Health_Buckets'].get(bucket, 0)
+			if total_sum:
+				pct = pct/total_sum*100
+			else:
+				pct = 0
+			pct = f"{pct:.2f}%" if pct else "-" 
+			player_row += f" {pct}|"
+
+		rows.append(player_row)
+
+	chart_text = "\n".join(rows)
+	append_tid_for_output(
+		create_new_tid_from_template(tid_title, tid_caption, chart_text, tid_tags),
+		tid_list
+	)
 
 def build_mesmer_clone_usage(mesmer_clone_usage: dict, tid_date_time: str, tid_list: list) -> None: 
 	"""
@@ -5627,17 +5708,78 @@ def send_profession_boon_support_embed(webhook_url: str, profession: str, prof_i
         "footer": {
             "text": "TopStats - GW2_EI_Log_Combiner",
             "icon_url": "https://avatars.githubusercontent.com/u/16168556?s=48&v=4"
-		
     }
 	}
 
     # Send to Discord
     payload = {"embeds": [embed]}
-    response = requests.post(webhook_url, json=payload)
+    try:
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10  # prevents hanging forever
+        )
 
-    if response.status_code != 204:
-        raise Exception(f"Failed to send embed: {response.status_code}, {response.text}")
+        if response.status_code != 204:
+            print(
+                f"[Discord] Webhook failed: "
+                f"{response.status_code} {response.text}"
+            )
 
+    except Timeout:
+        print("[Discord] Webhook timeout — internet may be unstable")
+
+    except ConnectionError:
+        print("[Discord] Connection error — likely offline")
+
+    except RequestException as e:
+        print(f"[Discord] Unexpected request error: {e}")
+
+
+
+def send_additional_data_embed(webhook_url: str, discord_additional_notes: str, tid_date_time: str) -> None:
+    """
+    Build and send a Discord embed containing an additional data note.
+    """
+    
+    embed = {
+        "author": {
+        "name": 'TopStats',
+        "icon_url": 'https://wiki.guildwars2.com/images/5/54/Commander_tag_%28blue%29.png'
+    	},
+        "title": f"Additional Notes: {tid_date_time}",
+        "description": f"\n{discord_additional_notes}\n",
+            "color": 0x6DB6DA,
+        "footer": {
+            "text": "TopStats - GW2_EI_Log_Combiner",
+            "icon_url": "https://avatars.githubusercontent.com/u/16168556?s=48&v=4"
+    	}
+        }
+
+    # Send to Discord
+    payload = {"embeds": [embed]}
+    try:
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=10
+        )
+
+        if response.status_code != 204:
+            print(
+                f"[Discord] Additional notes webhook failed: "
+                f"{response.status_code} {response.text}"
+            )
+
+    except Timeout:
+        print("[Discord] Additional notes webhook timeout")
+
+    except ConnectionError:
+        print("[Discord] Additional notes webhook connection error (offline?)")
+
+    except RequestException as e:
+        print(f"[Discord] Additional notes webhook error: {e}")
+	
 
 def write_data_to_excel(top_stats: dict, last_fight: str, excel_path: str = "Top_Stats.xlsx") -> None:
     """
@@ -5802,7 +5944,7 @@ def write_data_to_db(top_stats: dict, last_fight: str, db_path: str = "Top_Stats
 	conn.close()
 	print("Database updated.")
 
-def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, damage_mod_data: dict, high_scores: dict, personal_damage_mod_data: dict, personal_buff_data: dict, fb_pages: dict, mechanics: dict, minions: dict, mesmer_clone_usage: dict, death_on_tag: dict, DPSStats: dict, commander_summary_data: dict, enemy_avg_damage_per_skill: dict, player_damage_mitigation: dict, player_minion_damage_mitigation: dict, stacking_uptime_Table: dict, IOL_revive: dict, fight_data: dict, outfile: str) -> None:
+def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, damage_mod_data: dict, high_scores: dict, personal_damage_mod_data: dict, personal_buff_data: dict, fb_pages: dict, mechanics: dict, minions: dict, mesmer_clone_usage: dict, death_on_tag: dict, DPSStats: dict, commander_summary_data: dict, enemy_avg_damage_per_skill: dict, player_damage_mitigation: dict, player_minion_damage_mitigation: dict, stacking_uptime_Table: dict, IOL_revive: dict, fight_data: dict, health_data: dict, stats_per_fight: dict, outfile: str) -> None:
 	"""Print the top_stats dictionary as a JSON object to the console."""
 
 	json_dict = {}
@@ -5832,6 +5974,8 @@ def output_top_stats_json(top_stats: dict, buff_data: dict, skill_data: dict, da
 	json_dict["stacking_uptime_Table"] = {key: value for key, value in stacking_uptime_Table.items()}
 	json_dict["IOL_revive"] = {key: value for key, value in IOL_revive.items()}
 	json_dict["fight_data"] = {key: value for key, value in fight_data.items()}
+	json_dict["health_data"] = {key: value for key, value in health_data.items()}
+	json_dict['stats_per_fight'] = {key: value for key, value in stats_per_fight.items()}
 
 	with open(outfile, 'w') as json_file:
 		json.dump(json_dict, json_file, indent=4)

@@ -23,9 +23,17 @@ import requests
 import time
 from typing import Optional, Dict
 from requests.exceptions import RequestException, HTTPError, Timeout, ConnectionError
+from collections import OrderedDict, defaultdict
 
 # Top stats dictionary to store combined log data
 top_stats = config.top_stats
+
+stats_per_fight = defaultdict(
+	lambda: defaultdict(          # name_prof
+		lambda: defaultdict(list) # stat → [values]
+	)
+)			
+
 
 team_colors = config.team_colors
 team_code_missing = []
@@ -68,6 +76,7 @@ killing_blow_rallies = {
 	'kb_players': {}
 }
 
+health_data = {}
 
 def get_player_account(player):
 	"""
@@ -556,55 +565,53 @@ def get_player_death_on_tag(
     player_downs = dict(combat_data.get("down", {}))
     player_offset = math.floor(combat_data.get("start", 0) / polling_rate)
 
-    if not (player_deaths and player_downs and commander_tag_positions):
-        return  # no useful data
-
     # Process deaths
-    for death_key, death_value in player_deaths.items():
-        if death_key < 0:
-            continue  # before squad combat log starts
+    if player_deaths and player_downs and commander_tag_positions:
+        for death_key, death_value in player_deaths.items():
+            if death_key < 0:
+                continue  # before squad combat log starts
 
-        position_mark = max(0, math.floor(death_key / polling_rate)) - player_offset
+            position_mark = max(0, math.floor(death_key / polling_rate)) - player_offset
 
-        for down_key, down_value in player_downs.items():
-			
-            if death_key != down_value:
-                continue
+            for down_key, down_value in player_downs.items():
+    			
+                if death_key != down_value:
+                    continue
 
-            # Player & Tag positions at death
-            x1, y1 = safe_position(player_positions, position_mark)
-            x2, y2 = safe_position(commander_tag_positions, position_mark)
+                # Player & Tag positions at death
+                x1, y1 = safe_position(player_positions, position_mark)
+                x2, y2 = safe_position(commander_tag_positions, position_mark)
 
-            # Distance at death
-            death_distance = math.hypot(x1 - x2, y1 - y2)
-            death_range = round(death_distance / inch_to_pixel)
-            entry["Total"] += 1
+                # Distance at death
+                death_distance = math.hypot(x1 - x2, y1 - y2)
+                death_range = round(death_distance / inch_to_pixel)
+                entry["Total"] += 1
 
-            # Average distance calculation
-            if int(down_key) > int(dead_tag_mark) and dead_tag:
-                # After commander tag death
-                player_dead_poll = max(1, int(dead_tag_mark / polling_rate))
-                player_dist_to_tag = avg_distance(
-                    player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
-                )
-                entry["After_Tag_Death"] += 1
-            else:
-                # Before tag death
-                player_dead_poll = position_mark
-                player_dist_to_tag = avg_distance(
-                    player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
-                )
+                # Average distance calculation
+                if int(down_key) > int(dead_tag_mark) and dead_tag:
+                    # After commander tag death
+                    player_dead_poll = max(1, int(dead_tag_mark / polling_rate))
+                    player_dist_to_tag = avg_distance(
+                        player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
+                    )
+                    entry["After_Tag_Death"] += 1
+                else:
+                    # Before tag death
+                    player_dead_poll = position_mark
+                    player_dist_to_tag = avg_distance(
+                        player_positions, commander_tag_positions, player_dead_poll, inch_to_pixel
+                    )
 
-            # Classification
-            if death_range <= On_Tag:
-                entry["On_Tag"] += 1
-            elif death_range <= Run_Back:
-                entry["Off_Tag"] += 1
-                entry["Ranges"].append(death_range)
-            else:
-                entry["Run_Back"] += 1
+                # Classification
+                if death_range <= On_Tag:
+                    entry["On_Tag"] += 1
+                elif death_range <= Run_Back:
+                    entry["Off_Tag"] += 1
+                    entry["Ranges"].append(death_range)
+                else:
+                    entry["Run_Back"] += 1
 
-    # Record static distance
+    # Record distance
     if player_dist_to_tag <= Run_Back:
         entry["distToTag"].append(player_dist_to_tag)
 
@@ -1431,6 +1438,7 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 				high_score_value
 			)
 		top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
+		stats_per_fight[stat_category][stat][name_prof].append(round(value/active_time_seconds,2) if active_time_seconds > 0 else 0)
 		top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
 		top_stats['overall'][stat_category][stat] = top_stats['overall'][stat_category].get(stat, 0) + value
 
@@ -1441,7 +1449,6 @@ def get_stat_by_key(fight_num: int, player: dict, stat_category: str, name_prof:
 			elif stat_category not in commander_summary_data[commander_name]:
 				commander_summary_data[commander_name][stat_category] = {}
 			commander_summary_data[commander_name][stat_category][stat] = commander_summary_data[commander_name][stat_category].get(stat, 0) + value
-
 
 def get_defense_hits_and_glances(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
 	"""
@@ -1799,7 +1806,7 @@ def get_buff_generation(fight_num: int, player: dict, stat_category: str, name_p
 				
 		top_stats['player'][name_prof][stat_category][buff_id]['generation'] = top_stats['player'][name_prof][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['player'][name_prof][stat_category][buff_id]['wasted'] = top_stats['player'][name_prof][stat_category][buff_id].get('wasted', 0) + buff_wasted
-
+		stats_per_fight[stat_category][buff_id][name_prof].append(buff_generation)
 		top_stats['fight'][fight_num][stat_category][buff_id]['generation'] = top_stats['fight'][fight_num][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['fight'][fight_num][stat_category][buff_id]['wasted'] = top_stats['fight'][fight_num][stat_category][buff_id].get('wasted', 0) + buff_wasted
 
@@ -1971,6 +1978,7 @@ def get_healStats_data(fight_num: int, player: dict, players: dict, stat_categor
 					top_stats['overall'][stat_category].get('downed_healing', 0) + downed_healing
 				)
 		update_high_score(f"{stat_category}_Healing", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+" | Healing", round(fight_healing/(fight_time/1000), 2))	
+		stats_per_fight['extHealingStats']['squad_healing'][name_prof].append(round(fight_healing/(fight_time/1000), 2) if fight_time > 0 else 0)
 
 	fight_barrier = 0
 	if stat_category == 'extBarrierStats' and 'extBarrierStats' in player:
@@ -2045,6 +2053,7 @@ def get_healStats_data(fight_num: int, player: dict, players: dict, stat_categor
 					top_stats['overall'][stat_category].get('outgoing_barrier', 0) + outgoing_barrier
 				)
 		update_high_score(f"{stat_category}_Barrier", "{{"+player["profession"]+"}}"+player["name"]+"-"+get_player_account(player)+"-"+str(fight_num)+" | Barrier", round(fight_barrier/(fight_time/1000), 2))
+		stats_per_fight['extBarrierStats']['squad_barrier'][name_prof].append(round(fight_barrier/(fight_time/1000), 2) if fight_time > 0 else 0)
 
 def get_healing_skill_data(player: dict, stat_category: str, name_prof: str) -> None:
 	"""
@@ -2789,6 +2798,57 @@ def get_illusion_of_life_data(players: dict, durationMS: int) -> None:
 					IOL_revive[playerName]['casts'] = IOL_revive[playerName].get('casts', 0) + rotationCasts
 					IOL_revive[playerName]['prof'] = playerProf
 
+
+def get_health_percent_data(player, name_prof, name, prof, group) -> None:
+
+	BUCKET_SIZE = 10
+
+	def health_bucket(h):
+		# Clamp 100% into the 90–100 bucket
+		bucket_start = int(h // BUCKET_SIZE) * BUCKET_SIZE
+		bucket_start = min(bucket_start, 90)
+		bucket_end = bucket_start + BUCKET_SIZE
+
+		return f"{bucket_end}-{bucket_start}"
+
+	def accumulate_health_time(data):
+		"""
+		data: list of [timeMS, healthPercent]
+		returns: dict { "bucket_range": time_ms }
+		"""
+		bucket_time = defaultdict(int)
+
+		for (t1, h1), (t2, _) in zip(data[:-1], data[1:]):
+			dt = t2 - t1
+			if dt <= 0:
+				continue
+
+			bucket = health_bucket(h1)
+			bucket_time[bucket] += dt
+
+		return dict(bucket_time)
+
+	if 'healthPercents' in player:
+		data = player['healthPercents']
+		if name_prof not in health_data:
+			health_data[name_prof] = {
+				"Name": name,
+				"Profession": prof,
+				"Group": group,
+				"Fights": 0,
+				"Health_Buckets": {}
+				}
+		health_data[name_prof]["Fights"] += 1
+		health_data[name_prof]["Group"] = group
+		player_health_data = accumulate_health_time(data)
+
+		for item in player_health_data:
+			if item not in health_data[name_prof]['Health_Buckets']:
+				health_data[name_prof]['Health_Buckets'][item]=player_health_data[item]
+			else:
+				health_data[name_prof]['Health_Buckets'][item]+=player_health_data[item]
+
+
 def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 	"""
 	Parses a single log file and stores the data in a global top_stats dictionary.
@@ -2975,6 +3035,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 				'minions': {},
 			}
 
+		get_health_percent_data(player, name_prof, name, profession, group)
 
 		# store last party the player was a member
 		top_stats['player'][name_prof]['last_party'] = group
@@ -3022,7 +3083,7 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 			top_stats['player'].setdefault(name_prof, {}).setdefault(stat_cat, {})
 			#top_stats['fight'][fight_num].setdefault(stat_cat, {})
 			#top_stats['overall'].setdefault(stat_cat, {})
-
+			
 			# format: player[stat_category][0][stat]
 			if stat_cat in ['defenses', 'support', 'statsAll']:
 				get_stat_by_key(fight_num, player, stat_cat, name_prof)
