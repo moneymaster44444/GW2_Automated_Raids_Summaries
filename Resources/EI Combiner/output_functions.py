@@ -347,11 +347,13 @@ def build_tag_summary(top_stats):
 
 	return tag_summary, tag_list
 
-def output_tag_summary(tag_summary: dict, tid_date_time) -> None:
+def output_tag_summary(LATEST_VERSION, tag_summary: dict, tid_date_time) -> None:
 	"""Output a summary of the tag data in a human-readable format."""
 	rows = []
 	
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
+	if LATEST_VERSION:
+		rows.append(f'New version available: {LATEST_VERSION} \n\n')
 	rows.append("|thead-dark table-caption-top table-hover sortable|k")
 	rows.append("| Summary by Command Tag |c")
 	rows.append(
@@ -676,7 +678,7 @@ Uncheck to Hide: """)
             rows.append(f"<label><input type='checkbox' id='toggle-col{i}' checked> {stat_icon}</label>")
         rows.append("</div>\n")
 
-    # === Focus Layout (table + 3-bar chart per stat) ===
+    #Detailed Layout (table + chart per stat)
     if layout == "detailed":
         rows.append("""
 <style>
@@ -773,34 +775,10 @@ Uncheck to Hide: """)
             rows.append("\n    </div>\n    <div class='flex-col border'>\n\n")
             # Sort chart by requested metric
             sorted_chart = sorted(chart_data, key=lambda x: x.get(sort_mode, 0), reverse=True)
-            json_chart = json.dumps(sorted_chart)
+            #json_chart = json.dumps(sorted_chart)
 
-            # Chart: 3 bars per player with legend toggle
-            chart_block = f"""
-<$echarts $text=```
-option = {{
-  title: {{ text: '{format_stat}', subtext: '{caption}' }},
-  tooltip: {{ trigger: 'axis' }},
-  legend: {{ selected: {{ "Stat/1s": false, "Total": true, "Stat/60s":false }}, top:'10%' }},
-  dataset: {{
-    dimensions: ["Party", "Name", "Profession", "Total", "Stat/1s", "Stat/60s"],
-    source: {json_chart}
-  }},
-  xAxis: {{}},
-  yAxis: {{ type: 'category', inverse: true }},
-  grid: {{ top: '15%', containLabel: true }},
-  series: [
-    {{ type: 'bar', name: 'Total', encode: {{ x: 'Total', y: 'Name' }} }},
-    {{ type: 'bar', name: 'Stat/1s', encode: {{ x: 'Stat/1s', y: 'Name' }} }},
-    {{ type: 'bar', name: 'Stat/60s', encode: {{ x: 'Stat/60s', y: 'Name' }} }}
-  ],
-  dataZoom: [
-    {{ type: 'slider', yAxisIndex: 0, start: 0, end: 50 }},
-    {{ type: 'inside', yAxisIndex: 0 }}
-  ]
-}};
-```$height="900px" $theme="dark"/>
-"""
+            # Chart: Echart Bar or Boxplot future state
+            chart_block = build_bar_echart(sorted_chart, format_stat, caption)
             rows.append(chart_block)
             rows.append("\n    </div>\n</div>\n\n")
             rows.append("</$reveal>\n")
@@ -1353,7 +1331,7 @@ def build_boon_summary(top_stats: dict, boons: dict, category: str, buff_data: d
 			account = player["account"]
 			name = player["name"]
 			tt_name = f'<span data-tooltip="{account}">{name}</span>'
-			print(f"Check Logs for {account} {name} with ActiveTime: {player['active_time']} and Num_Fights: {player['num_fights']}")
+			#print(f"Check Logs for {account} {name} with ActiveTime: {player['active_time']} and Num_Fights: {player['num_fights']}")
 			# Create a row for the player with basic info
 			row = f"| { player['last_party']} |{tt_name} | {{{{{player['profession']}}}}} {player['profession'][:3]} | {player['active_time'] / 1000:,.1f}|"
 
@@ -1744,7 +1722,7 @@ def build_healing_summary(top_stats: dict, caption: str, tid_date_time: str) -> 
 	
 	# Initialize HTML rows for the table
 	rows = []
-	
+	rows.append('<div class="flex-row">\n    <div class="flex-col border">\n')
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	
 	# Build the table header
@@ -1788,6 +1766,11 @@ def build_healing_summary(top_stats: dict, caption: str, tid_date_time: str) -> 
 		rows.append("\n</$reveal>")
 	#rows.append(f"|{caption} Table|c")
 	rows.append("\n\n</div>")
+	rows.append('</div>\n    <div class="flex-col border">')
+	Barrier_Boxplot = f"{tid_date_time}-extBarrierStats-squad_barrier-boxplot"
+	Healing_BoxPlot = f"{tid_date_time}-extHealingStats-squad_healing-boxplot"
+	rows.append("{{"+Healing_BoxPlot+"}}\n\n{{"+Barrier_Boxplot+"}}\n\n</div>\n\n</div>\n\n")
+
 	
 	# Convert rows to text and append to output list
 	tid_text = "\n".join(rows)
@@ -3751,48 +3734,22 @@ def build_boon_generation_bar_chart(top_stats: dict, boons: dict, weights: dict,
 			#print(f"Boon Wt Type: {type(boon_weight)}")
 			gen_per_sec = (generation_ms / player_active_time)
 			wt_gen_per_sec = gen_per_sec * boon_weight
-			player_boon_generation.append(f"{wt_gen_per_sec:.3g}")
+			#player_boon_generation.append(f"{wt_gen_per_sec:.3g}")
+			player_boon_generation.append(round(wt_gen_per_sec,3))
 			player_total += (wt_gen_per_sec)
-		player_boon_generation.append(f"{player_total:.3g}")
+		#player_boon_generation.append(f"{player_total:.3g}")
+		player_boon_generation.append(round(player_total,3))
 		player_boon_generation.append(profession)
 
 		total_boon_generation.append(player_boon_generation)
 
 	calcHeight = str(playerCount*25)
+	sorted_total_boon_generation = sorted(total_boon_generation, key=lambda x: x[13])
+	key_list = ['Player',"Might", "Fury", "Quickness", "Alacrity", "Protection", "Regeneration", "Vigor", "Aegis", "Stability", "Swiftness", "Resistance", "Resolution",'Total','Profession']
+	chart_dataset = [key_list] + sorted_total_boon_generation
+
 	chart_text = f"""
 <$echarts $text=```
-const dataset = [
-  {{
-    dimensions: [
-      'Player',"Might", "Fury", "Quickness", "Alacrity", "Protection", "Regeneration", "Vigor", "Aegis", "Stability", "Swiftness", "Resistance", "Resolution",'Total','Profession'
-    ],
-    source: {total_boon_generation}
-  }}
-];
-function buildSeries(datasetIndex = 1) {{
-  // List of dimensions we don't want as boons
-  const skip = ['Player', 'Total', 'Profession'];
-
-  // Grab dimensions from your dataset
-  const dimensions = dataset[0].dimensions;
-
-  // Capitalize helper
-  const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
-
-  // Build the series for each boon
-  return dimensions
-    .filter(dim => !skip.includes(dim)) // skip unwanted dimensions
-    .map(dim => ({{
-      type: 'bar',
-      stack: 'totalBoons',
-      name: capitalize(dim),
-      encode: {{ y: 'Player', x: dim }},
-      datasetIndex
-    }}));
-}}
-
-boonSeries = buildSeries(1);
-
 const boonColors = [
     '#e69f00',  // Orange
     '#56b4e9',  // Sky blue
@@ -3827,23 +3784,11 @@ option = {{
   grid: {{left: '25%', top: '10%'}},
   dataset: [
     {{
-      dimensions: dataset[0].dimensions,
-      source: dataset[0].source
+      source: {chart_dataset}
     }},
-    {{
-      transform: {{
-        type: 'sort',
-        config: [
-          {{ dimension: 'Total', order: 'asc' }},
-          {{ dimension: 'Profession', order: 'desc' }}
-          
-        ]
-      }}
-    }}
   ],
   yAxis: {{
     type: 'category',
-    axisLabel: {{ interval: 0, rotate: 0 }}
   }},
   xAxis: {{}},
   dataZoom: [
@@ -3858,7 +3803,12 @@ option = {{
       filterMode: 'none'
     }}
   ],    
-  series: boonSeries
+  series: [
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}
+    ]
 }};
 ```$height="{calcHeight}px" $width="100%" $theme="dark"/>
 """
@@ -3893,60 +3843,36 @@ def build_condition_generation_bar_chart(top_stats: dict, conditions: dict, weig
 			boon_weight = float(weights['Condition_Weights'].get(conditions[boon].lower(), 0))
 			gen_per_sec = (generation_ms / player_active_time)
 			wt_gen_per_sec = gen_per_sec * boon_weight
-			player_condition_generation.append(f"{wt_gen_per_sec:.3g}")
+			#player_condition_generation.append(f"{wt_gen_per_sec:.3g}")
+			player_condition_generation.append(round(wt_gen_per_sec,3))
 			player_total += (wt_gen_per_sec)
-		player_condition_generation.append(f"{player_total:.3g}")
+		#player_condition_generation.append(f"{player_total:.3g}")
+		player_condition_generation.append(round(player_total,3))
 		player_condition_generation.append(profession)
 
 		total_condition_generation.append(player_condition_generation)
+
 	calcHeight = str(playerCount*25)
+	sorted_total_condition_generation = sorted(total_condition_generation, key=lambda x: x[15])		
+	key_list = ['Player',"Bleeding", "Burning", "Confusion", "Poison", "Torment", "Blind", "Chilled", "Crippled", "Fear", "Immobile", "Slow", "Weakness", "Taunt",  "Vulnerability",'Total','Profession']
+	chart_dataset = [key_list] + sorted_total_condition_generation	
 	chart_text = f"""
 <$echarts $text=```
-const dataset = [
-  {{
-    dimensions: [
-      'Player',"Bleeding", "Burning", "Confusion", "Poison", "Torment", "Blind", "Chilled", "Crippled", "Fear", "Immobile", "Slow", "Weakness", "Taunt",  "Vulnerability",'Total','Profession'
-    ],
-    source: {total_condition_generation}
-  }}
-];
-function buildSeries(datasetIndex = 1) {{
-  // List of dimensions we don't want as boons
-  const skip = ['Player', 'Total', 'Profession'];
-
-  // Grab dimensions from your dataset
-  const dimensions = dataset[0].dimensions;
-
-  // Capitalize helper
-  const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
-
-  // Build the series for each boon
-  return dimensions
-    .filter(dim => !skip.includes(dim)) // skip unwanted dimensions
-    .map(dim => ({{
-      type: 'bar',
-      stack: 'totalBoons',
-      name: capitalize(dim),
-      encode: {{ y: 'Player', x: dim }},
-      datasetIndex
-    }}));
-}}
-
-boonSeries = buildSeries(1);
-
 const boonColors = [
-	'#b22222', //Might
-	'#FD6124', //Fury
-	'#800000', //Quickness
-	'#710193', //Alacrity
-	'#848482', //Protection
-	'#228B22', //Regeneration
-	'#00008B', //Vigor
-	'#0095B6', //Aegis
-	'#494F55', //Stability
-	'#F1C40F', //Swiftness
-	'#d3d3d3', //Resistance
-	'#D891EF', //Resolution
+	'#b22222',  // red
+	'#FD6124',  // orange-red
+	'#800000',  // maroon
+	'#710193',  // purple
+	'#848482',  // gray
+	'#228B22',  // forest green
+	'#00008B',  // dark blue
+	'#0095B6',  // teal blue
+	'#494F55',  // dark gray
+	'#F1C40F',  // yellow
+	'#d3d3d3',  // light gray
+	'#D891EF',  // lavender
+	'#FF7F50',  // coral
+	'#00CED1',  // dark turquoise
 ];
 
 option = {{
@@ -3968,19 +3894,8 @@ option = {{
   grid: {{left: '25%', top: '10%'}},
   dataset: [
     {{
-      dimensions: dataset[0].dimensions,
-      source: dataset[0].source
+		source: {chart_dataset}
     }},
-    {{
-      transform: {{
-        type: 'sort',
-        config: [
-          {{ dimension: 'Total', order: 'asc' }},
-          {{ dimension: 'Profession', order: 'desc' }}
-          
-        ]
-      }}
-    }}
   ],
   yAxis: {{
     type: 'category',
@@ -3999,7 +3914,13 @@ option = {{
       filterMode: 'none'
     }}
   ],    
-  series: boonSeries
+  series: [
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+    {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}},
+	{{ type: 'bar', stack:'Total'}}, {{ type: 'bar', stack:'Total'}}
+    ]
 }};
 ```$height="{calcHeight}px" $width="100%" $theme="dark"/>
 """
@@ -4010,6 +3931,213 @@ option = {{
 		create_new_tid_from_template(tid_title, tid_caption, chart_text, tid_tags),
 		tid_list
 	)
+
+def build_and_sort_stat(stat_dict, sort_key="avgStat", reverse=False):
+    built = {
+        name: {
+            "numFights": len(data),
+            "totalStat": sum(data),
+			"avgStat": sum(data) / len(data),
+            "fightData": data,
+        }
+        for name, data in stat_dict.items()
+		if sum(data) > 0
+    }
+
+    return dict(
+        sorted(built.items(), key=lambda i: i[1][sort_key], reverse=reverse)
+    )
+    
+
+def build_boxplot_echart(
+    stat,
+    stat_name,
+    stat_boxplot_data,
+    stat_boxplot_names,
+    stat_boxplot_profs,
+    profession_color,
+):
+    """
+    Returns a string containing the ECharts boxplot option JS.
+    """
+
+    #if stat in chart_per_second:
+    #    title_text = f"{stat_name} per Second for all Fights Present"
+    #else:
+
+    title_text = f"{stat_name.upper()} per Second for all Fights Present"
+
+    short_prof = {
+        "Guardian": "Gdn", "Dragonhunter": "Dgh", "Firebrand": "Fbd", "Willbender": "Wbd",
+        "Luminary": "Lum", "Warrior": "War", "Berserker": "Brs", "Spellbreaker": "Spb",
+        "Bladesworn": "Bds", "Paragon": "Par", "Engineer": "Eng", "Scrapper": "Scr",
+        "Holosmith": "Hls", "Mechanist": "Mec", "Amalgam": "Aml", "Ranger": "Rgr",
+        "Druid": "Dru", "Soulbeast": "Slb", "Untamed": "Unt", "Galeshot": "Gsh",
+        "Thief": "Thf", "Daredevil": "Dar", "Deadeye": "Ded", "Specter": "Spe",
+        "Antiquary": "Ant", "Elementalist": "Ele", "Tempest": "Tmp", "Weaver": "Wea",
+        "Catalyst": "Cat", "Evoker": "Evo", "Mesmer": "Mes", "Chronomancer": "Chr",
+        "Mirage": "Mir", "Virtuoso": "Vir", "Troubadour": "Tbd", "Necromancer": "Nec",
+        "Reaper": "Rea", "Scourge": "Scg", "Harbinger": "Har", "Ritualist": "Rit",
+        "Revenant": "Rev", "Herald": "Her", "Renegade": "Ren", "Vindicator": "Vin",
+        "Conduit": "Con", "Unknown": "Ukn",
+    }
+
+    names_js = json.dumps(stat_boxplot_names)
+    profs_js = json.dumps(stat_boxplot_profs)
+    colors_js = json.dumps(profession_color)
+    short_prof_js = json.dumps(short_prof)
+    data_js = json.dumps(stat_boxplot_data)
+
+    return f'''
+<$echarts $text="""
+
+const names = {names_js};
+const professions = {profs_js};
+const ProfessionColor = {colors_js};
+const short_Prof = {short_prof_js};
+
+option = {{
+  title: [
+    {{ text: '{title_text}', left: 'center' }},
+    {{
+      text: 'Output in seconds across all fights\\nupper: Q3 + 1.5 * IQR\\nlower: Q1 - 1.5 * IQR',
+      borderColor: '#999',
+      borderWidth: 1,
+      textStyle: {{ fontSize: 10 }},
+      left: '1%',
+      top: '90%'
+    }}
+  ],
+
+  dataset: [
+    {{
+      source: {data_js}
+    }},
+    {{
+      transform: {{
+        type: 'boxplot',
+        config: {{
+          itemNameFormatter: function (params) {{
+            return names[params.value] + " (" + short_Prof[professions[params.value]] + ")";
+          }}
+        }}
+      }}
+    }},
+    {{
+      fromDatasetIndex: 1,
+      fromTransformResult: 1
+    }}
+  ],
+
+  dataZoom: [
+    {{ type: 'slider', yAxisIndex: [0], start: 100, end: 50 }},
+    {{ type: 'inside', yAxisIndex: [0], start: 100, end: 50 }}
+  ],
+
+  tooltip: {{ trigger: 'item' }},
+  grid: {{ left: '25%', right: '10%', bottom: '15%' }},
+  yAxis: {{
+    type: 'category',
+    boundaryGap: true,
+    nameGap: 30,
+    splitArea: {{ show: true }},
+    splitLine: {{ show: true }}
+  }},
+  xAxis: {{
+    type: 'value',
+    name: 'Sec',
+    splitArea: {{ show: true }}
+  }},
+
+  series: [
+    {{
+      name: 'boxplot',
+      type: 'boxplot',
+      datasetIndex: 1,
+      encode: {{ tooltip: [1, 2, 3, 4, 5] }},
+      tooltip: {{
+        formatter: function (params) {{
+          return `
+<u><b>${{params.value[0]}}</b></u>
+<table>
+<tr><td>&#x2022;</td><td>Low :</td><td><b>${{params.value[1].toFixed(2)}}</b></td></tr>
+<tr><td>&#x2022;</td><td>Q1 :</td><td><b>${{params.value[2].toFixed(2)}}</b></td></tr>
+<tr><td>&#x2022;</td><td>Q2 :</td><td><b>${{params.value[3].toFixed(2)}}</b></td></tr>
+<tr><td>&#x2022;</td><td>Q3 :</td><td><b>${{params.value[4].toFixed(2)}}</b></td></tr>
+<tr><td>&#x2022;</td><td>High :</td><td><b>${{params.value[5].toFixed(2)}}</b></td></tr>
+</table>`;
+        }}
+      }},
+      itemStyle: {{
+        borderColor: function (seriesIndex) {{
+          let idx = names.indexOf(seriesIndex.name.split(" (")[0]);
+          return ProfessionColor[professions[idx]];
+        }},
+        borderWidth: 2
+      }}
+    }},
+    {{
+      name: 'outlier',
+      type: 'scatter',
+      datasetIndex: 2,
+      encode: {{ x: 1, y: 0 }}
+    }}
+  ]
+}};"""$height="500px" $width="100%" $theme="dark"/>
+'''
+
+def build_bar_echart(sorted_chart, format_stat, caption):
+    json_chart = json.dumps(sorted_chart)
+
+    # Chart: 3 bars per player with legend toggle
+    chart_block = f"""
+<$echarts $text=```
+option = {{
+  title: {{ text: '{format_stat}', subtext: '{caption}' }},
+  tooltip: {{ trigger: 'axis' }},
+  legend: {{ selected: {{ "Stat/1s": false, "Total": true, "Stat/60s":false }}, top:'10%' }},
+  dataset: {{
+    dimensions: ["Party", "Name", "Profession", "Total", "Stat/1s", "Stat/60s"],
+    source: {json_chart}
+  }},
+  xAxis: {{}},
+  yAxis: {{ type: 'category', inverse: true }},
+  grid: {{ top: '15%', containLabel: true }},
+  series: [
+    {{ type: 'bar', name: 'Total', encode: {{ x: 'Total', y: 'Name' }} }},
+    {{ type: 'bar', name: 'Stat/1s', encode: {{ x: 'Stat/1s', y: 'Name' }} }},
+    {{ type: 'bar', name: 'Stat/60s', encode: {{ x: 'Stat/60s', y: 'Name' }} }}
+  ],
+  dataZoom: [
+    {{ type: 'slider', yAxisIndex: 0, start: 0, end: 50 }},
+    {{ type: 'inside', yAxisIndex: 0 }}
+  ]
+}};
+```$height="900px" $theme="dark"/>
+"""
+
+    return chart_block
+
+def render_boxplot_echart(StatsPerFight, stat_category, stat_name, profession_color, tid_date_time: str, tid_list: list):
+  sorted_stats = build_and_sort_stat(StatsPerFight[stat_category][stat_name], sort_key="totalStat", reverse=False)
+  stat_boxplot_data = list([]) 
+  stat_boxplot_names = list([]) 
+  stat_boxplot_profs = list([])
+  for name, data in sorted_stats.items():
+      playerName, Profession, Account = name.split("|")
+      stat_boxplot_names.append(playerName)
+      stat_boxplot_profs.append(Profession)
+      stat_boxplot_data.append(data['fightData'])
+    
+  echart_text = build_boxplot_echart(stat_category, stat_name, stat_boxplot_data, stat_boxplot_names, stat_boxplot_profs, profession_color)
+
+  tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
+  tid_caption = f"{stat_category} {stat_name} Boxplot"
+  tid_tags = tid_date_time
+  append_tid_for_output(
+    create_new_tid_from_template(tid_title, tid_caption, echart_text, tid_tags),
+    tid_list
+  )    
 
 def build_squad_healthpct_table(health_data: dict, tid_date_time: str, tid_list: list) -> None:
 	bucket_list = [
