@@ -117,19 +117,19 @@ internal class Samarog : BastionOfThePenitent
         TargetID.Rigom,
         TargetID.Guldhem
     ];
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor samarog, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor samarog, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
-        var phases = new List<PhaseData>(5);
+        var phases = new List<SubPhasePhaseData>(5);
         // Determined check
-        phases.AddRange(GetPhasesByInvul(log, Determined762, samarog, true, true, encounterPhase.Start, encounterPhase.End));
+        phases.AddRange(GetSubPhasesByInvul(log, Determined762, samarog, true, true, encounterPhase.Start, encounterPhase.End));
         for (int i = 0; i < phases.Count; i++)
         {
             int phaseIndex = i + 1;
-            PhaseData phase = phases[i];
+            var phase = phases[i];
             phase.AddParentPhase(encounterPhase);
             if (phaseIndex % 2 == 0)
             {
@@ -271,7 +271,7 @@ internal class Samarog : BastionOfThePenitent
             replay.Decorations.AddOverheadIcon(seg, p, ParserIcons.FixationPurpleOverhead);
         }
         var fixatedSamarog = GetBuffApplyRemoveSequence(log.CombatData, FixatedSamarog, p, true, true);
-        replay.Decorations.AddTether(fixatedSamarog, "rgba(255, 80, 255, 0.3)");
+        replay.Decorations.AddTethers(fixatedSamarog, Colors.FixationPurple.WithAlpha(0.3).ToString());
         //fixated Guldhem
         var fixatedGuldhem = p.GetBuffStatus(log, FixatedGuldhem).Where(x => x.Value > 0);
         foreach (Segment seg in fixatedGuldhem)

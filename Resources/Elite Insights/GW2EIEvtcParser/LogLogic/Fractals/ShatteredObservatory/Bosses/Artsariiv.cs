@@ -65,18 +65,18 @@ internal class Artsariiv : ShatteredObservatory
         return trashIDs;
     }
 
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor artsariiv, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor artsariiv, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
-        var phases = new List<PhaseData>(5);
-        phases.AddRange(GetPhasesByInvul(log, Determined762, artsariiv, true, true, encounterPhase.Start, encounterPhase.End));
+        var phases = new List<SubPhasePhaseData>(5);
+        phases.AddRange(GetSubPhasesByInvul(log, Determined762, artsariiv, true, true, encounterPhase.Start, encounterPhase.End));
         for (int i = 0; i < phases.Count; i++)
         {
             var phaseIndex = i + 1;
-            PhaseData phase = phases[i];
+            var phase = phases[i];
             phase.AddParentPhase(encounterPhase);
             if (phaseIndex % 2 == 0)
             {
@@ -131,7 +131,7 @@ internal class Artsariiv : ShatteredObservatory
             .FirstOrDefault();
         if (artsariivMarkerGUID != null)
         {
-            var markedsArtsariivs = combatData.Where(x => x.IsStateChange == StateChange.Marker && x.Value == artsariivMarkerGUID.ContentID).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Distinct();
+            var markedsArtsariivs = combatData.Where(x => x.IsStateChange == StateChange.Marker && x.Value == artsariivMarkerGUID.MarkerID).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Distinct();
             foreach (AgentItem artsariiv in agentData.GetNPCsByID(TargetID.Artsariiv))
             {
                 if (!markedsArtsariivs.Any(x => x.Is(artsariiv)))
@@ -236,10 +236,6 @@ internal class Artsariiv : ShatteredObservatory
             if (combatData.TryGetEffectEventsByGUID(EffectGUIDs.ArtsariivDeadExplosion, out var effects))
             {
                 successHandler.SetSuccess(true, effects.Last().Time);
-            }
-            else
-            {
-                successHandler.SetSuccess(false, target.LastAware);
             }
             return;
         }

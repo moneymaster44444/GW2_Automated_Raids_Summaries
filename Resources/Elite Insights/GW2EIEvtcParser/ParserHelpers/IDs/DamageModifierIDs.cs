@@ -337,7 +337,7 @@ public static class DamageModifierIDs
     public const int Mod_ImprovedKallasFervorStrike = 324;
     public const int Mod_ImprovedKallasFervorConditionLifeLeech = 325;
     public const int Mod_Wolfsong = 326;
-    public const int Mod_BeastlyWardenPetOnly = 327;
+    public const int Mod_BeastlyWarden_Pet = 327;
     public const int Mod_EmpoweredIllusions = 328;
     public const int Mod_ViciousExpressionWithIllusions = 329;
     public const int Mod_SuperiorityComplex = 330;
@@ -379,8 +379,8 @@ public static class DamageModifierIDs
     public const int Mod_GaleForce = 366;
     public const int Mod_EmpoweredArmaments = 367;
     public const int Mod_LuminarysBlessing = 368;
-    public const int Mod_ChantOfAction = 369;
-    public const int Mod_ChantOfRecuperation = 370;
+    public const int Mod_ChantOfAction_StrengtheningStanzas = 369;
+    public const int Mod_ChantOfRecuperation_StrengtheningStanzas = 370;
     public const int Mod_WillingHost_StrikeCondition = 371;
     public const int Mod_PlasmaticState = 372;
     public const int Mod_ShieldingHands = 373;
@@ -419,4 +419,8 @@ public static class DamageModifierIDs
     public const int Mod_EnterprisingAristocrat = 406;
     public const int Mod_LesserSicEmPet = 407;
     public const int Mod_LesserSicEm = 408;
+    public const int Mod_DeterminedResolution_NuminousGift = 409;
+    public const int Mod_TargetedDestruction_NuminousGift = 410;
+    public const int Mod_LoveSong = 411;
+    public const int Mod_ShreddedArmor = 412;
 }

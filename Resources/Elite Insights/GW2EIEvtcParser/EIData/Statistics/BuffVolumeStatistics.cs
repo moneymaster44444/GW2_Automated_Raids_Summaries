@@ -19,7 +19,8 @@ public class BuffVolumeStatistics
 
         var buffsToTrack = new HashSet<Buff>();
         var playerCount = 0;
-        foreach (Player p in playerList)
+        var playersToUse = playerList.Where(x => x.InAwareTimes(start, end)).ToList();
+        foreach (Player p in playersToUse)
         {
             buffsToTrack.UnionWith(p.GetTrackedBuffs(log));
             playerCount++;
@@ -37,7 +38,7 @@ public class BuffVolumeStatistics
             double totalActiveOutgoing = 0;
             double totalActiveOutgoingByExtension = 0;
             int activePlayerCount = 0;
-            foreach (Player p in playerList)
+            foreach (Player p in playersToUse)
             {
                 long playerActiveDuration = p.GetActiveDuration(log, start, end);
                 if (playerActiveDuration > 0)
@@ -56,7 +57,7 @@ public class BuffVolumeStatistics
                         totalOutgoing += bae.AppliedDuration;
                         if (playerActiveDuration > 0)
                         {
-                            totalActiveOutgoing += bae.AppliedDuration / playerActiveDuration;
+                            totalActiveOutgoing += (double)bae.AppliedDuration / playerActiveDuration;
                         }
                     }
                     if (abae is BuffExtensionEvent bee)
@@ -64,7 +65,7 @@ public class BuffVolumeStatistics
                         totalOutgoingByExtension += bee.ExtendedDuration;
                         if (playerActiveDuration > 0)
                         {
-                            totalActiveOutgoingByExtension += bee.ExtendedDuration / playerActiveDuration;
+                            totalActiveOutgoingByExtension += (double)bee.ExtendedDuration / playerActiveDuration;
                         }
                     }
                 }

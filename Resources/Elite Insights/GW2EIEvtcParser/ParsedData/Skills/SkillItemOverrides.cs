@@ -11,6 +11,7 @@ public static class SkillItemOverrides
     {
         { WeaponSwap, "Weapon Swap" },
         { Resurrect, "Resurrect" },
+        { Resurrect2, "Resurrect" },
         { Bandage, "Bandage" },
         { ArcDPSDodge, "Dodge" },
         { ArcDPSDodge20220307, "Dodge" },
@@ -89,6 +90,7 @@ public static class SkillItemOverrides
         { RelicGolemancerSpawn, "Relic of the Golemancer (Spawn Minion)" },
         { RelicPrivateerSpawn, "Relic of the Privateer (Spawn Minion)" },
         { RelicOfTheSteamshrieker, "Relic of the Steamshrieker" },
+        { RelicOfShacklesDamageSkill, "Relic of Shackles (Damage)" },
         #endregion Relics
         #region Elementalist
         { ShatteringIceDamage, "Shattering Ice (Hit)" },
@@ -294,8 +296,11 @@ public static class SkillItemOverrides
         { BigMagmaDrop, "Big Magma Drop" },
         // Ura
         { UraDispelSAK, "Dispel" },
+        // Kela
+        { KelaBurrow, "Burrow" },
+        { KelaAura, "Aura (Kela)" },
         #endregion Raids
-        #region Strikes
+        #region Raid Encounters
         // Voice and Claw
         { KodanTeleport, "Kodan Teleport" },
         // Mai Trin (Aetherblade Hideout)
@@ -346,7 +351,9 @@ public static class SkillItemOverrides
         { PetrifySkill, "Petrify" },
         { EnragedSmashNM, "Enraged Smash (NM)" },
         { EnragedSmashCM, "Enraged Smash (CM)" },
-        #endregion Strikes
+        // Kela
+        { ThrowRelic, "Throw Relic" },
+        #endregion Raid Encounters
         #region Fractals
         // Artsariiv
         { NovaLaunchSAK, "Nova Launch" },
@@ -405,6 +412,7 @@ public static class SkillItemOverrides
         { WeaponStow, SkillImages.WeaponStow },
         { WeaponDraw, SkillImages.WeaponDraw },
         { Resurrect, SkillImages.Resurrect },
+        { Resurrect2, SkillImages.Resurrect },
         { Bandage, SkillImages.Bandage },
         { LevelUp, ParserIcons.LevelUp },
         { LevelUp2, ParserIcons.LevelUp },
@@ -503,6 +511,7 @@ public static class SkillItemOverrides
         { WarclawChainPull1, SkillImages.WarclawChainPull },
         { WarclawChainPull2, SkillImages.WarclawChainPull },
         { WarclawChainPullPvE, SkillImages.WarclawChainPull },
+        { WarclawChainPull3, SkillImages.WarclawChainPull },
         { WarclawDashWildClaws, SkillImages.WarclawDash },
         // Jackal
         { JackalPounceDamage, SkillImages.JackalPounce },
@@ -554,6 +563,9 @@ public static class SkillItemOverrides
         { RelicOfTheMistStranger, ItemImages.RelicOfTheMistStranger },
         { RelicOfCastora, ItemImages.RelicOfCastora },
         { RelicOfTheBiomancer, ItemImages.RelicOfTheBiomancer },
+        { RelicOfTheNauticalBeastDamageHealing, ItemImages.RelicOfTheNauticalBeast },
+        { RelicOfShacklesDamageSkill, ItemImages.RelicOfShackles },
+        { RelicOfTheForestDwellerMissileDamage, ItemImages.RelicOfTheForestDweller },
 #endregion RelicIcons
         #region ElementalistIcons
         { EarthenBlast, TraitImages.EarthenBlast },
@@ -581,6 +593,12 @@ public static class SkillItemOverrides
         { SplashPetSkill, SkillImages.Splash },
         { CalcifyPetSkill, SkillImages.Calcify },
         { ZapPetSkill, SkillImages.Zap },
+        { FrostfireWardSecondaryAttack, SkillImages.FrostfireWard },
+        { GalvanizeSecondaryAttack, SkillImages.Galvanize },
+        { FieryImpactSecondaryAttack, SkillImages.FieryImpact },
+        { ElutriateSecondaryAttack, SkillImages.Elutriate },
+        { SoothingBurstSecondaryAttack, SkillImages.SoothingBurst },
+        { ShaleStormSecondaryAttack, SkillImages.ShaleStorm },
 #endregion  ElementalistIcons
         #region EngineerIcons
         { ShredderGyroHit, SkillImages.ShredderGyro },
@@ -629,6 +647,9 @@ public static class SkillItemOverrides
         { PlasmaticStateSkill2, SkillImages.PlasmaticState },
         { RapaciousStrain2, SkillImages.DefensiveProtocolThorns },
         { ThornsSkill, SkillImages.DefensiveProtocolThorns },
+        { ChainReactivityBarrier, TraitImages.ChainReactivity },
+        { ChainReactivityBarrier3rdHit, TraitImages.ChainReactivity },
+        { JumpShotBounce, SkillImages.JumpShot },
 #endregion EngineerIcons
             #region GuardianIcons
             { LesserSymbolOfResolution, SkillImages.SymbolOfResolution }, // game uses symbol of swiftness
@@ -725,7 +746,8 @@ public static class SkillItemOverrides
             { PersistenceOfMemory, TraitImages.PersistenceOfMemory },
             { FriendlyFireIllu, SkillImages.FriendlyFire },
             { PhantasmalSharpshooterAttack,SkillImages.PhantasmalSharpshooter },
-            { PhantasmalLancerDamage, SkillImages.PhantasmalLancher },
+            { PhantasmalJavelin, SkillImages.PhantasmalLancer },
+            { PhantasmalLancerDamage, SkillImages.PhantasmalLancer },
             { JabSpearClone, SkillImages.JabMesmerSpear },
             { StabSpearClone, SkillImages.StabMesmerSpear },
             { PhantasmalSwordsman, SkillImages.PhantasmalSwordsman },
@@ -733,6 +755,11 @@ public static class SkillItemOverrides
             { PhantasmalSpinningAxe, TraitImages.PhantomPain },
             { Syncopate, TraitImages.Syncopate },
             { TimeBombDamage, TraitImages.TimeBomb },
+            { PsystrikeClone, SkillImages.Psystrike },
+            { PsycutClone, SkillImages.Psycut },
+            { MindPierceClone, SkillImages.MindPierce },
+            { DeafeningDrumAfterImage, SkillImages.DeafeningDrum },
+            { FlusteringFluteAfterImage, SkillImages.FlusteringFlute },
             #endregion  MesmerIcons
             #region NecromancerIcons
             { LifeFromDeath, TraitImages.LifeFromDeath },
@@ -790,6 +817,12 @@ public static class SkillItemOverrides
             { AnguishAutoattack_Wanderlust, SkillImages.Wanderlust },
             { PreservationAutoattack, SkillImages.Preservation },
             { PreservationHealingBuff, SkillImages.Preservation },
+            { SignetOfTheLocusSomething1, SkillImages.SignetOfTheLocust },
+            { SignetOfTheLocusSomething2, SkillImages.SignetOfTheLocust },
+            { SignetOfTheLocusSomething3, SkillImages.SignetOfTheLocust },
+            { SignetOfTheLocusSomething4, SkillImages.SignetOfTheLocust },
+            { UnstableSlashMinion, SkillImages.BoneSlash },
+            { GrimSpecterLifeSteal, SkillImages.GrimSpecter },
 #endregion  NecromancerIcons
             #region RangerIcons
             // Ranger
@@ -900,6 +933,12 @@ public static class SkillItemOverrides
             { GlyphOfEmpowermentSkill, SkillImages.GlyphOfTheStars },
             { GlyphOfEmpowermentSkillCA, SkillImages.GlyphOfTheStarsCelestialAvatar },
             { MistralDamage, SkillImages.Mistral },
+            { SwoopBirdOwl, SkillImages.SwoopBird },
+            { PhasePounceSoulbeastMerged, SkillImages.PhasePounceWhiteTiger },
+            { BiteWhiteTiger, SkillImages.BiteFeline },
+            { LeyLineVortexAetherHunterPet, SkillImages.LeylineVortexAetherHunter },
+            { LungeAetherHunterPet, SkillImages.LungeVortexAetherHunter },
+            { BumbleJanthiriBee, SkillImages.BumbleJanthiriBee },
             #endregion RangerIcons
             #region RevenantIcons
             { RiftSlashRiftHit, SkillImages.RiftSlash },
@@ -959,6 +998,8 @@ public static class SkillItemOverrides
             { RapidFlowHealing, TraitImages.RapidFlow },
             { BeguilingHaze6, SkillImages.BeguilingHaze },
             { Mistfire, TraitImages.Mistfire },
+            { ManifestToxinChain, SkillImages.ManifestToxin },
+            { LesserEnchantedDaggers, SkillImages.EnchantedDaggers },
             #endregion RevenantIcons
             #region ThiefIcons
             { ThrowMagneticBomb, SkillImages.ThrowMagneticBomb },
@@ -1022,6 +1063,7 @@ public static class SkillItemOverrides
             { ForgedSurferDashSkillAdditionalBombs, SkillImages.ForgedSurferDash },
             { EternalNightHealing, SkillImages.EternalNight },
             { LarcenousTormentSiphonHealing, TraitImages.LarcenousTorment },
+            { HoloDancerTaunt, SkillImages.HoloDancerDecoy },
             #endregion ThiefIcons
             #region WarriorIcons
             { MendingMight, TraitImages.MendingMight },
@@ -1073,6 +1115,12 @@ public static class SkillItemOverrides
             { FuriousRally, SkillImages.BannerOfDiscipline },
             { PlantStandard, SkillImages.PlantStandard },
             { CounterblowDamage, SkillImages.Counterblow },
+            { HammerSwingNPC, SkillImages.HammerSwing },
+            { HammerShockNPC, SkillImages.HammerShock },
+            { BackBreakerNPC, SkillImages.Backbreaker },
+            { OnYourKneesEcho, SkillImages.OnYourKnees },
+            { ChantOfRecuperationHealing, SkillImages.ChantOfRecuperation },
+            { ChantOfRecuperationBarrier, SkillImages.ChantOfRecuperation },
         #endregion WarriorIcons
             #region EncounterIcons
             { KickHeavyBomb, SkillImages.Kick },
@@ -1125,7 +1173,7 @@ public static class SkillItemOverrides
             // Eater of Souls
             { ReclaimedEnergySkill, BuffImages.ReclaimedEnergy },
             // Eyes of Judgment
-            { ThrowLight, "https://wiki.guildwars2.com/images/8/8c/Throw_Light.png" },
+            { ThrowLight, SkillImages.ThrowLight },
             { Flare, "https://wiki.guildwars2.com/images/5/54/Flare.png" },
             // - Dhuum
             { ExpelEnergySAK, "https://wiki.guildwars2.com/images/c/c1/Core_Capture.png" },
@@ -1152,6 +1200,8 @@ public static class SkillItemOverrides
             { HypernovaLaunchSAK, SkillImages.CelestialDash },
             // - Eparch
             { HeartOfTheObscure, "https://wiki.guildwars2.com/images/5/5a/Scan_for_Rift.png" },
+            // Kela
+            { ThrowRelic, SkillImages.ThrowLight },
             // Freezie
             { FireSnowball, "https://wiki.guildwars2.com/images/d/d0/Fire_Snowball.png" },
             // Generic Encounter Skills
@@ -1166,8 +1216,9 @@ public static class SkillItemOverrides
         #region Misc
             { WhirlingAssault, SkillImages.WhirlingAssault },
             { PunchGolem, "https://wiki.guildwars2.com/images/8/8f/Punch.png" },
-            { GatlingFists1, "https://wiki.guildwars2.com/images/8/89/Gatling_Fists.png" },
-            { GatlingFists2, "https://wiki.guildwars2.com/images/8/89/Gatling_Fists.png" },
+            { GatlingFists1, SkillImages.GatlingFists },
+            { GatlingFists2, SkillImages.GatlingFists },
+            { GatlingFists3, SkillImages.GatlingFists },
             { HollowedBoulderShot, SkillImages.FireBoulder },
             { SmokeScreen, "https://wiki.guildwars2.com/images/0/0a/Smoke_Screen_%28engineer_skill%29.png" },
             { EjectionSeat, SkillImages.Eject },
@@ -1369,6 +1420,8 @@ public static class SkillItemOverrides
             { RendingThrashCentaurBannerSkill, BuffImages.RendingThrashCentaurBanner },
             { CripplingStrikeCentaurBannerSkill, BuffImages.CripplingStrikeCentaurBanner },
             { KickDustCentaurBannerSkill, BuffImages.KickDustCentaurBanner },
+            //
+            { Tracer, ItemImages.HolographicCommunicator },
         #endregion WvWIcons
         #region FinisherIcons
             { Finisher1, ItemImages.BasicFinisher },

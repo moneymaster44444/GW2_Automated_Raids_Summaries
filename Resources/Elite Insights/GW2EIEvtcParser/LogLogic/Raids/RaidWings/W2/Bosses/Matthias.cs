@@ -142,7 +142,7 @@ internal class Matthias : SalvationPass
         ];
     }
 
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor matthias, IEnumerable<SingleActor> sacrifices, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor matthias, IEnumerable<SingleActor> sacrifices, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
@@ -150,7 +150,7 @@ internal class Matthias : SalvationPass
         }
         var encounterStart = encounterPhase.Start;
         var encounterEnd = encounterPhase.End;
-        var phases = new List<PhaseData>(4);
+        var phases = new List<SubPhasePhaseData>(4);
         // Special buff cast check
         BuffEvent? heatWave = log.CombatData.GetBuffData(HeatWaveMatthias).FirstOrDefault();
         if (heatWave != null)
@@ -242,8 +242,11 @@ internal class Matthias : SalvationPass
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
+        // Bees can be brought to Matthias
+        var bees = BanditTrio.CreateCustomInsectSwarmMasterAgent(logData, agentData);
         FindSacrifices(logData, agentData, combatData, extensions);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
+        BanditTrio.RedirectInsectSwarmsToCustomMaster(bees, agentData);
         ForceSacrificeHealth(Targets);
     }
 
@@ -258,7 +261,9 @@ internal class Matthias : SalvationPass
 
     protected override HashSet<int> IgnoreForAutoNumericalRenaming()
     {
-        return [(int)TargetID.MatthiasSacrificeCrystal];
+        return [
+            (int)TargetID.MatthiasSacrificeCrystal,
+        ];
     }
 
     internal override IReadOnlyList<TargetID> GetTrashMobsIDs()

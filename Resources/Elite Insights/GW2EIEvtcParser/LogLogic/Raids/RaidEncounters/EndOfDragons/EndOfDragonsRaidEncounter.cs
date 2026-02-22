@@ -15,20 +15,6 @@ internal abstract class EndOfDragonsRaidEncounter : RaidEncounterLogic
 
     internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        if (IsInstance)
-        {
-            successHandler.SetSuccess(true, GetFinalMapChangeTime(logData, combatData));
-            return;
-        }
-        IReadOnlyList<RewardEvent> rewards = combatData.GetRewardEvents();
-        RewardEvent? reward = rewards.FirstOrDefault(x => x.RewardType == RewardTypes.PostEoDRaidEncounterReward && x.Time > logData.LogStart);
-        if (reward != null)
-        {
-            successHandler.SetSuccess(true, reward.Time);
-        }
-        else
-        {
-            NoBouncyChestGenericCheckSucess(combatData, agentData, logData, playerAgents, successHandler);
-        }
+        CheckPostEODRewardSuccess(combatData, agentData, logData, playerAgents, successHandler);
     }
 }

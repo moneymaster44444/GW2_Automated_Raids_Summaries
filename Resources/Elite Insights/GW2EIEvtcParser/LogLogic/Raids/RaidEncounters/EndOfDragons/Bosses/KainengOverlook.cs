@@ -226,7 +226,7 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
         {
             return phases;
         }
-        List<PhaseData> subPhases = GetPhasesByInvul(log, Determined762, ministerLi, false, true);
+        var subPhases = GetSubPhasesByInvul(log, Determined762, ministerLi, false, true);
         for (int i = 0; i < subPhases.Count; i++)
         {
             subPhases[i].Name = "Phase " + (i + 1);
@@ -234,8 +234,7 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
             subPhases[i].AddParentPhase(phases[0]);
         }
         // when wiped during a split phase, Li's LastAware is well before fight end
-        subPhases.RemoveAll(x => (x.End + x.Start) / 2 > ministerLi.LastAware + ServerDelayConstant);
-        phases.AddRange(subPhases);
+        phases.AddRange(subPhases.Where(x => (x.End + x.Start) / 2 <= ministerLi.LastAware + ServerDelayConstant));
         AddSplitPhase(phases, [enforcer, mindblade, ritualist], ministerLi, log, 1);
         AddSplitPhase(phases, [mechRider, sniper], ministerLi, log, 2);
         return phases;
@@ -263,7 +262,10 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        base.ComputePlayerCombatReplayActors(p, log, replay);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(p, log, replay);
+        }
 
         (long start, long end) lifespan;
 
@@ -277,7 +279,7 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
         // Fixation
         replay.Decorations.AddOverheadIcons(p.GetBuffStatus(log, FixatedAnkkaKainengOverlook).Where(x => x.Value > 0), p, ParserIcons.FixationPurpleOverhead);
         var fixationEvents = GetBuffApplyRemoveSequence(log.CombatData, FixatedAnkkaKainengOverlook, p, true, true);
-        replay.Decorations.AddTether(fixationEvents, Colors.Magenta, 0.5);
+        replay.Decorations.AddTethers(fixationEvents, Colors.Magenta, 0.5);
 
         // Shared Destruction (Green)
         int greenDuration = 6250;
@@ -287,7 +289,7 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
         {
             foreach (EffectEvent effect in greenEndEffectEvents)
             {
-                bool isSuccess = effect.GUIDEvent.ContentGUID == EffectGUIDs.KainengOverlookSharedDestructionGreenSuccess;
+                bool isSuccess = effect.GUIDEvent.GUID == EffectGUIDs.KainengOverlookSharedDestructionGreenSuccess;
                 AddSharedDestructionDecoration(p, replay, (effect.Time - greenDuration, effect.Time), isSuccess);
             }
         }
@@ -323,7 +325,7 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
                 lifespan = (effect.Time, effect.Time + correctedDuration);
 
                 // Tether Sniper to Player
-                replay.Decorations.AddTetherByEffectGUID(log, effect, Colors.Yellow, 0.3, correctedDuration, true);
+                replay.Decorations.AddTethersByEffectGUID(log, effect, Colors.Yellow, 0.3, correctedDuration, true);
 
                 // Circle around the player
                 replay.Decorations.Add(new CircleDecoration(500, lifespan, Colors.Red, 0.2, new AgentConnector(p)).UsingFilled(false));
@@ -382,6 +384,10 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeNPCCombatReplayActors(target, log, replay);
+        }
         long castDuration;
         (long start, long end) lifespan;
 
@@ -476,14 +482,14 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
             case (int)TargetID.TheEnforcerCM:
                 // Blue tether from Enforcer to Mindblade when they're close to each other
                 var enforcerInspiration = GetBuffApplyRemoveSequence(log.CombatData, LethalInspiration, target, true, true);
-                replay.Decorations.AddTether(enforcerInspiration, Colors.Blue, 0.1);
+                replay.Decorations.AddTethers(enforcerInspiration, Colors.Blue, 0.1);
                 HideAfterDetermined(target, log, replay);
                 break;
             case (int)TargetID.TheMindblade:
             case (int)TargetID.TheMindbladeCM:
                 // Blue tether from Mindblade to Enforcer when they're close to each other
                 var mindbladeInspiration = GetBuffApplyRemoveSequence(log.CombatData, LethalInspiration, target, true, true);
-                replay.Decorations.AddTether(mindbladeInspiration, Colors.Blue, 0.1);
+                replay.Decorations.AddTethers(mindbladeInspiration, Colors.Blue, 0.1);
                 HideAfterDetermined(target, log, replay);
                 break;
             case (int)TargetID.TheRitualist:
@@ -521,7 +527,10 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
 
         (long start, long end) lifespan;
 
@@ -688,6 +697,14 @@ internal class KainengOverlook : EndOfDragonsRaidEncounter
         var connector = new AgentConnector(p);
         replay.Decorations.Add(new CircleDecoration(180, lifespan, green, 0.4, connector).UsingGrowingEnd(lifespan.end));
         replay.Decorations.Add(new CircleDecoration(180, lifespan, color, 0.4, connector));
+    }
+
+    internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
     }
 
     internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)

@@ -75,8 +75,10 @@ internal class SalvationPassInstance : SalvationPass
                 {
                     foreach (var narella in narellas)
                     {
-                        var pack = new List<SingleActor>(3);
-                        pack.Add(narella);
+                        var pack = new List<SingleActor>(3)
+                        {
+                            narella
+                        };
                         var curZane = zanes.FirstOrDefault(x => x.AgentItem.InAwareTimes(narella.AgentItem));
                         if (curZane != null)
                         {
@@ -94,6 +96,10 @@ internal class SalvationPassInstance : SalvationPass
                     }
                 }
             }
+        }
+        if (packedTrios.Count == 0)
+        {
+            return [];
         }
         // Thrash mob start check
         var boxStart = new Vector2(-2200, -11300);
@@ -238,9 +244,11 @@ internal class SalvationPassInstance : SalvationPass
     {
         Slothasor.FindMushrooms(logData, agentData, combatData, extensions);
         Slothasor.FindSlublingTransformations(logData, agentData, combatData, extensions);
+        var bees = BanditTrio.CreateCustomInsectSwarmMasterAgent(logData, agentData);
         BanditTrio.FindCageAndBombs(agentData, combatData);
         Matthias.FindSacrifices(logData, agentData, combatData, extensions);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
+        BanditTrio.RedirectInsectSwarmsToCustomMaster(bees, agentData);
         Matthias.ForceSacrificeHealth(Targets);
     }
 

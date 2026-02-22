@@ -124,7 +124,7 @@ internal class Dhuum : HallOfChains
     }
 
     //TODO_PERF(Rennorb)
-    private static void ComputeFightPhases(List<PhaseData> phases, SingleActor dhuum, IEnumerable<CastEvent> castLogs, ParsedEvtcLog log, long logEnd, long start, PhaseData mainFightPhase)
+    private static void ComputeFightPhases(List<SubPhasePhaseData> phases, SingleActor dhuum, IEnumerable<CastEvent> castLogs, ParsedEvtcLog log, long logEnd, long start, PhaseData mainFightPhase)
     {
         CastEvent? shield = castLogs.FirstOrDefault(x => x.SkillID == MajorSoulSplit);
         // Dhuum brought down to 10%
@@ -158,17 +158,17 @@ internal class Dhuum : HallOfChains
         }
     }
 
-    private static List<PhaseData> GetInBetweenSoulSplits(ParsedEvtcLog log, SingleActor dhuum, IEnumerable<SingleActor> enforcers, long mainStart, long mainEnd, bool hasRitual, PhaseData parentPhase)
+    private static List<SubPhasePhaseData> GetInBetweenSoulSplits(ParsedEvtcLog log, SingleActor dhuum, IEnumerable<SingleActor> enforcers, long mainStart, long mainEnd, bool hasRitual, PhaseData parentPhase)
     {
         var cls = dhuum.GetAnimatedCastEvents(log);
-        var cataCycles = cls.Where(x => x.SkillID == CataclysmicCycle);
+        var cataCycles = cls.Where(x => x.SkillID == CataclysmicCycle).ToList();
         var gDeathmarks = cls.Where(x => x.SkillID == GreaterDeathMark).ToList();
-        if (gDeathmarks.Count < cataCycles.Count())
+        if (gDeathmarks.Count < cataCycles.Count)
         {
             // anomaly, don't do sub phases
             return [];
         }
-        var phases = new List<PhaseData>();
+        var phases = new List<SubPhasePhaseData>();
         long start = mainStart;
         long end = 0;
         int i = 0;
@@ -179,22 +179,25 @@ internal class Dhuum : HallOfChains
             long soulsplitEnd = Math.Min(cataCycle.EndTime, mainEnd);
             ++i;
 
-            var preSoulSplit = new SubPhasePhaseData(start, end, "Pre-Soulsplit " + i).WithParentPhase(parentPhase);
+            var preSoulSplit = new SubPhasePhaseData(start, end, "Pre-Soulsplit " + i);
+            preSoulSplit.AddParentPhase(parentPhase);
             preSoulSplit.AddTarget(dhuum, log);
             preSoulSplit.AddTargets(enforcers, log, PhaseData.TargetPriority.NonBlocking);
             phases.Add(preSoulSplit);
 
-            var soulSplit = new SubPhasePhaseData(end, soulsplitEnd, "Soulsplit " + i).WithParentPhase(parentPhase);
+            var soulSplit = new SubPhasePhaseData(end, soulsplitEnd, "Soulsplit " + i);
+            soulSplit.AddParentPhase(parentPhase);
             soulSplit.AddTarget(dhuum, log);
             phases.Add(soulSplit);
             start = cataCycle.EndTime;
         }
-        var final = new SubPhasePhaseData(start, mainEnd, hasRitual ? "Pre-Ritual" : "Pre-Wipe").WithParentPhase(parentPhase);
+        var final = new SubPhasePhaseData(start, mainEnd, hasRitual ? "Pre-Ritual" : "Pre-Wipe");
+        final.AddParentPhase(parentPhase);
         final.AddTarget(dhuum, log);
         phases.Add(final);
         return phases;
     }
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor dhuum, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor dhuum, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
@@ -203,8 +206,8 @@ internal class Dhuum : HallOfChains
         bool hasPreEvent = encounterPhase.StartStatus == LogData.StartStatus.Normal;
         long end = encounterPhase.End;
         long start = encounterPhase.Start;
-        var phases = new List<PhaseData>(6);
-        var enforcers = targets.Where(x => x.IsSpecies(TargetID.Enforcer));
+        var phases = new List<SubPhasePhaseData>(6);
+        var enforcers = targets.Where(x => x.IsSpecies(TargetID.DhuumsEnforcer));
         var castLogs = dhuum.GetAnimatedCastEvents(log);
         PhaseData? mainFight = null;
         // Sometimes the pre event is not in the evtc
@@ -221,14 +224,16 @@ internal class Dhuum : HallOfChains
             if (invulDhuum != null)
             {
                 long preEventEnd = invulDhuum.Time;
-                var preEvent = new SubPhasePhaseData(start, preEventEnd, "Pre Event").WithParentPhase(encounterPhase);
+                var preEvent = new SubPhasePhaseData(start, preEventEnd, "Pre Event");
+                preEvent.AddParentPhase(encounterPhase);
                 preEvent.AddTarget(dhuum, log);
                 preEvent.AddTargets(enforcers, log, PhaseData.TargetPriority.NonBlocking);
                 phases.Add(preEvent);
 
                 mainFight = new SubPhasePhaseData(preEventEnd, end, "Main Fight");
+                mainFight.AddParentPhase(encounterPhase);
                 mainFight.AddTarget(dhuum, log);
-                phases.Add(mainFight.WithParentPhase(encounterPhase));
+                phases.Add((SubPhasePhaseData)mainFight);
                 ComputeFightPhases(phases, dhuum, castLogs, log, end, preEventEnd, mainFight);
             }
         }
@@ -263,8 +268,8 @@ internal class Dhuum : HallOfChains
         return
         [
             TargetID.Dhuum,
-            TargetID.Echo,
-            TargetID.Enforcer,
+            TargetID.EndersEcho,
+            TargetID.DhuumsEnforcer,
             TargetID.UnderworldReaper,
         ];
     }
@@ -273,7 +278,7 @@ internal class Dhuum : HallOfChains
     {
         return
         [
-            TargetID.Messenger,
+            TargetID.DhuumsMessenger,
             TargetID.Deathling,
             TargetID.DhuumDesmina
         ];
@@ -285,7 +290,7 @@ internal class Dhuum : HallOfChains
         CombatItem? logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogNPCUpdate);
         if (logStartNPCUpdate != null)
         {
-            AgentItem messenger = agentData.GetNPCsByID(TargetID.Messenger).MinBy(x => x.FirstAware);
+            AgentItem messenger = agentData.GetNPCsByID(TargetID.DhuumsMessenger).MinBy(x => x.FirstAware);
             if (messenger != null)
             {
                 startToUse = messenger.FirstAware;
@@ -536,10 +541,10 @@ internal class Dhuum : HallOfChains
             break;
             case (int)TargetID.DhuumDesmina:
                 break;
-            case (int)TargetID.Echo:
+            case (int)TargetID.EndersEcho:
                 replay.Decorations.Add(new CircleDecoration(120, lifespan, Colors.Red, 0.5, new AgentConnector(target)));
                 break;
-            case (int)TargetID.Enforcer:
+            case (int)TargetID.DhuumsEnforcer:
             {
                 foreach (CastEvent cast in target.GetAnimatedCastEvents(log))
                 {
@@ -562,11 +567,11 @@ internal class Dhuum : HallOfChains
                 }
             }
             break;
-            case (int)TargetID.Messenger:
+            case (int)TargetID.DhuumsMessenger:
                 replay.Decorations.Add(new CircleDecoration(180, lifespan, Colors.Orange, 0.5, new AgentConnector(target)));
                 // Fixation tether to player
                 var fixations = GetBuffApplyRemoveSequence(log.CombatData, DhuumsMessengerFixationBuff, target, true, true);
-                replay.Decorations.AddTether(fixations, Colors.Red, 0.4);
+                replay.Decorations.AddTethers(fixations, Colors.Red, 0.4);
                 break;
             case (int)TargetID.Deathling:
                 break;
@@ -716,13 +721,13 @@ internal class Dhuum : HallOfChains
         }
         // shackles connection
         var shackles = GetBuffApplyRemoveSequence(log.CombatData, [DhuumShacklesBuff, DhuumShacklesBuff2], p, true, true);
-        replay.Decorations.AddTether(shackles, Colors.Teal, 0.5);
+        replay.Decorations.AddTethers(shackles, Colors.Teal, 0.5);
 
         // shackles damage (identical to the connection for now, not yet properly distinguishable from the pure connection, further investigation needed due to inconsistent behavior (triggering too early, not triggering the damaging skill though)
         // shackles start with buff 47335 applied from one player to the other, this is switched over to buff 48591 after mostly 2 seconds, sometimes later. This is switched to 48042 usually 4 seconds after initial application and the damaging skill 47164 starts to deal damage from that point on.
         // Before that point, 47164 is only logged when evaded/blocked, but doesn't deal damage. Further investigation needed.
         var shacklesDmg = GetBuffApplyRemoveSequence(log.CombatData, DhuumDamagingShacklesBuff, p, true, true);
-        replay.Decorations.AddTether(shacklesDmg, Colors.Yellow, 0.5);
+        replay.Decorations.AddTethers(shacklesDmg, Colors.Yellow, 0.5);
 
         // Soul split
         var hastenedDemise = p.GetBuffStatus(log, HastenedDemise).Where(x => x.Value == 1);

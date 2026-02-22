@@ -29,8 +29,9 @@ internal class BanditTrio : SalvationPass
                 ]),
                 new MechanicGroup([
                     new PlayerCastStartMechanic(Beehive, new MechanicPlotlySetting(Symbols.Pentagon, Colors.Yellow), "Beehive.T", "Threw Beehive", "Beehive Throw", 0),
-                    new PlayerSrcHealthDamageHitMechanic(Beehive, new MechanicPlotlySetting(Symbols.PentagonOpen, Colors.Yellow), "Beehive.H.B", "Beehive Hits (Berg)", "Beehive Hit (Berg)", 0).UsingChecker((ahde, log) => ahde.To.IsSpecies(TargetID.Berg)),
-                    new PlayerSrcHealthDamageHitMechanic(Beehive, new MechanicPlotlySetting(Symbols.PentagonOpen, Colors.LightOrange), "Beehive.H.A", "Beehive Hits (Any)", "Beehive Hit (Any)", 0),
+                    new PlayerSrcHealthDamageHitMechanic(Beehive, new MechanicPlotlySetting(Symbols.PentagonOpen, Colors.Yellow), "Beehive.H.B", "Beehive Hits (Berg)", "Beehive Hit (Berg)", 0)
+                        .UsingChecker((ahde, log) => ahde.To.IsSpecies(TargetID.Berg)),
+                    new PlayerSrcHealthDamageHitMechanic(Beehive, new MechanicPlotlySetting(Symbols.PentagonOpen, Colors.LightOrange), "Beehive.H.A", "Beehive Hits (Any)", "Beehive Hit (Any)", 0)
                 ]),
                 new PlayerDstHealthDamageHitMechanic(OverheadSmashBerg, new MechanicPlotlySetting(Symbols.TriangleLeft,Colors.Orange), "Smash", "Overhead Smash (CC Attack Berg)","CC Smash", 0),
             ]),
@@ -77,7 +78,10 @@ internal class BanditTrio : SalvationPass
 
     internal override IReadOnlyList<TargetID> GetFriendlyNPCIDs()
     {
-        return [ TargetID.Cage ];
+        return [ 
+            TargetID.Cage,
+            TargetID.InsectSwarms,
+        ];
     }
 
     internal override CombatReplayMap GetCombatMapInternal(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations)
@@ -164,10 +168,24 @@ internal class BanditTrio : SalvationPass
         }
     }
 
+    internal static AgentItem CreateCustomInsectSwarmMasterAgent(LogData logData, AgentData agentData)
+    {
+        return agentData.AddCustomNPCAgent(logData.LogStart, logData.LogEnd, "Insect Swarms\0:Insect Swarms\051", Spec.NPC, TargetID.InsectSwarms, false);
+    }
+
+    internal static void RedirectInsectSwarmsToCustomMaster(AgentItem bees, AgentData agentData)
+    {
+        foreach (var bee in agentData.GetNPCsByID(MinionID.InsectSwarm))
+        {
+            bee.SetMaster(bees);
+        }
+    }
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
         FindCageAndBombs(agentData, combatData);
+        var insectSwarms = CreateCustomInsectSwarmMasterAgent(logData, agentData);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
+        RedirectInsectSwarmsToCustomMaster(insectSwarms, agentData);
     }
 
     internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
@@ -187,7 +205,7 @@ internal class BanditTrio : SalvationPass
         return LogData.StartStatus.Normal;
     }
 
-    private static void SetPhasePerTarget(SingleActor target, List<PhaseData> phases, PhaseData encounterPhase, ParsedEvtcLog log)
+    private static void SetPhasePerTarget(SingleActor target, List<SubPhasePhaseData> phases, PhaseData encounterPhase, ParsedEvtcLog log)
     {
         EnterCombatEvent? phaseStart = log.CombatData.GetEnterCombatEvents(target.AgentItem).LastOrDefault(x => x.Time >= encounterPhase.Start);
         if (phaseStart != null)
@@ -213,13 +231,13 @@ internal class BanditTrio : SalvationPass
         }
     }
 
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor berg, SingleActor zane, SingleActor narella, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor berg, SingleActor zane, SingleActor narella, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
-        var phases = new List<PhaseData>(3);
+        var phases = new List<SubPhasePhaseData>(3);
         SetPhasePerTarget(berg, phases, encounterPhase, log);
         SetPhasePerTarget(zane, phases, encounterPhase, log);
         SetPhasePerTarget(narella, phases, encounterPhase, log);
@@ -261,7 +279,6 @@ internal class BanditTrio : SalvationPass
             TargetID.OilSlick,
             TargetID.Prisoner1,
             TargetID.Prisoner2,
-            TargetID.InsectSwarm,
             TargetID.Bombs,
         ];
     }
