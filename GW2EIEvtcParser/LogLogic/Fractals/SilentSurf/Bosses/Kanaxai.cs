@@ -135,22 +135,22 @@ internal class Kanaxai : SilentSurf
         return GetLogOffsetByInvulnStart(logData, combatData, kanaxai, Determined762);
     }
 
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor kanaxai, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor kanaxai, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
-        var phases = new List<PhaseData>(5);
+        var phases = new List<SubPhasePhaseData>(5);
         // Phases
-        List<PhaseData> mainPhases = GetPhasesByInvul(log, DeterminedToDestroy, kanaxai, true, true, encounterPhase.Start, encounterPhase.End);
+        var mainPhases = GetSubPhasesByInvul(log, DeterminedToDestroy, kanaxai, true, true, encounterPhase.Start, encounterPhase.End);
         var worldCleaverPhaseStarts = log.CombatData.GetBuffApplyDataByIDByDst(DeterminedToDestroy, kanaxai.AgentItem).OfType<BuffApplyEvent>().Select(x => x.Time);
         int worldCleaverCount = 0;
         int repeatedCount = 0;
         var isRepeatedWorldCleaverPhase = new List<bool>();
         for (int i = 0; i < mainPhases.Count; i++)
         {
-            PhaseData curPhase = mainPhases[i];
+            var curPhase = mainPhases[i];
             curPhase.AddParentPhase(encounterPhase);
             if (worldCleaverPhaseStarts.Any(x => curPhase.Start == x))
             {
@@ -218,7 +218,7 @@ internal class Kanaxai : SilentSurf
         int phaseCount = 0;
         for (int i = 0; i < mainPhases.Count; i++)
         {
-            PhaseData curPhase = mainPhases[i];
+            var curPhase = mainPhases[i];
             if (!worldCleaverPhaseStarts.Any(x => curPhase.Start == x))
             {
                 var baseName = "Phase ";
@@ -294,7 +294,7 @@ internal class Kanaxai : SilentSurf
         // Blue tether from Aspect to player, appears when the player gains Phantasmagoria
         // Custom decoration not visible in game
         var phantasmagorias = GetBuffApplyRemoveSequence(log.CombatData, Phantasmagoria, player, true, true);
-        replay.Decorations.AddTether(phantasmagorias, Colors.LightBlue, 0.5);
+        replay.Decorations.AddTethers(phantasmagorias, Colors.LightBlue, 0.5);
 
         // Rending Storm - Axe AoE attached to players - There are 2 buffs for the targetting
         IEnumerable<Segment> axes = player.GetBuffStatus(log, [RendingStormAxeTargetBuff1, RendingStormAxeTargetBuff2]).Where(x => x.Value > 0);

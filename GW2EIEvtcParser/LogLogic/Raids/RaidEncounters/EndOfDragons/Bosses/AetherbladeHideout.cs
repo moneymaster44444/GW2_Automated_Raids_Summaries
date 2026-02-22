@@ -30,7 +30,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                 new MechanicGroup([
                     new PlayerDstHealthDamageHitMechanic(Heartpiercer, new MechanicPlotlySetting(Symbols.Octagon, Colors.White), "HrtPier.H", "Hit by Heartpiercer", "Heartpiercer Hit", 0)
                         .WithStabilitySubMechanic(
-                            new PlayerDstHealthDamageHitMechanic(Heartpiercer, new MechanicPlotlySetting(Symbols.Octagon, Colors.DarkWhite), "HrtPier.CC", "Knocked Down by Heartpiercer", "Heartpiercer Knockdown", 150),
+                            new SubMechanic(new MechanicPlotlySetting(Symbols.Octagon, Colors.DarkWhite), "HrtPier.CC", "Knocked Down by Heartpiercer", "Heartpiercer Knockdown", 150),
                             false
                         ),
                 ]),
@@ -130,6 +130,10 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeNPCCombatReplayActors(target, log, replay);
+        }
         long castDuration;
         long growing;
         (long start, long end) lifespan;
@@ -331,7 +335,10 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
     }
     internal override void ComputePlayerCombatReplayActors(PlayerActor player, ParsedEvtcLog log, CombatReplay replay)
     {
-        base.ComputePlayerCombatReplayActors(player, log, replay);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(player, log, replay);
+        }
 
         // Mag Beam - Rectangular Beams during the bomb puzzle.
         AddMagBeamDecorations(player, log, replay, MaiTrinCMBeamsTargetGreen, 30, 120);
@@ -380,7 +387,10 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
 
         // Ley Breach - Red Puddles Indicator
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.AetherbladeHideoutLeyBreachIndicator1, out var leyBreachIndicators))
@@ -601,7 +611,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                 phases.Add(maiTrinPhase);
 
                 // Candidate phases
-                List<PhaseData> maiPhases = GetPhasesByInvul(log, Untargetable, maiTrin, true, true, maiTrinStart, maiTrinEnd, false);
+                var maiPhases = GetSubPhasesByInvul(log, Untargetable, maiTrin, true, true, maiTrinStart, maiTrinEnd, false);
                 List<PhaseData> candidateMainPhases = [];
                 List<PhaseData> candidateSplitPhases = [];
                 for (int i = 0; i < maiPhases.Count; i++)
@@ -673,7 +683,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
             phases.Add(echoPhase);
             var beamNPCs = TrashMobs.Where(x => x.IsAnySpecies([TargetID.ScarletPhantomBeamNM, TargetID.ScarletPhantomDeathBeamCM, TargetID.ScarletPhantomDeathBeamCM2]));
             var bombs = Targets.Where(x => x.IsSpecies(TargetID.FerrousBomb));
-            List <PhaseData> echoPhases = GetPhasesByInvul(log, Untargetable, echoOfScarlet, true, true, echoStart, log.LogData.LogEnd);
+            var echoPhases = GetSubPhasesByInvul(log, Untargetable, echoOfScarlet, true, true, echoStart, log.LogData.LogEnd);
             for (int i = 0; i < echoPhases.Count; i++)
             {
                 PhaseData subPhase = echoPhases[i];
@@ -891,7 +901,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         Color color = Colors.LightOrange;
         var species = new List<int>();
 
-        switch (effect.GUIDEvent.ContentGUID)
+        switch (effect.GUIDEvent.GUID)
         {
             case var focusedDestruction when focusedDestruction == EffectGUIDs.AetherbladeHideoutFocusedDestructionGreen:
                 color = Colors.DarkGreen;
@@ -1066,7 +1076,10 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        base.SetInstanceBuffs(log, instanceBuffs);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
 
         var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
 
@@ -1139,5 +1152,13 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
             }
         }
         return segments;
+    }
+
+    internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
+        }
     }
 }

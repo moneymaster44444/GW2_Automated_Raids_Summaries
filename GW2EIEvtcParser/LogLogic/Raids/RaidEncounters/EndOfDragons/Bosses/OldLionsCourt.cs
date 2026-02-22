@@ -1,8 +1,10 @@
-﻿using GW2EIEvtcParser.EIData;
+﻿using System.Numerics;
+using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using GW2EIGW2API;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -10,7 +12,6 @@ using static GW2EIEvtcParser.LogLogic.LogLogicUtils;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
-using static GW2EIEvtcParser.AchievementEligibilityIDs;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -197,16 +198,16 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
         return Targets.FirstOrDefault(x => x.IsSpecies(TargetID.PrototypeArseniteCM)) ?? Targets.FirstOrDefault(x => x.IsSpecies(TargetID.PrototypeArsenite));
     }
 
-    private static List<PhaseData> GetSubPhases(SingleActor target, ParsedEvtcLog log, string phaseName, EncounterPhaseData fullFightPhase)
+    private static IReadOnlyList<SubPhasePhaseData> GetSubPhases(SingleActor target, ParsedEvtcLog log, string phaseName, EncounterPhaseData fullFightPhase)
     {
         DeadEvent? dead = log.CombatData.GetDeadEvents(target.AgentItem).LastOrDefault();
-        long end = log.LogData.LogEnd;
-        long start = log.LogData.LogStart;
+        long end = fullFightPhase.End;
+        long start = fullFightPhase.Start;
         if (dead != null && dead.Time < end)
         {
             end = dead.Time;
         }
-        List<PhaseData> subPhases = GetPhasesByInvul(log, new[] { LeyWovenShielding, MalfunctioningLeyWovenShielding }, target, false, true, start, end);
+        var subPhases = GetSubPhasesByInvul(log, new[] { LeyWovenShielding, MalfunctioningLeyWovenShielding }, target, false, true, start, end);
         string[] phaseNames;
         if (fullFightPhase.IsCM)
         {
@@ -316,7 +317,10 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        base.SetInstanceBuffs(log, instanceBuffs);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
         if (log.CombatData.GetBuffData(AchievementEligibilityFearNotThisKnight).Any())
         {
             var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
@@ -332,7 +336,10 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        base.ComputePlayerCombatReplayActors(p, log, replay);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(p, log, replay);
+        }
         // Fixation
         IEnumerable<BuffEvent> fixations = log.CombatData.GetBuffDataByIDByDst(FixatedOldLionsCourt, p.AgentItem);
         IEnumerable<BuffEvent> fixatedVermillion = fixations.Where(bae => bae.CreditedBy.IsAnySpecies(new List<TargetID> { TargetID.PrototypeVermilion, TargetID.PrototypeVermilionCM }));
@@ -348,7 +355,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
         // In game, the green tether lasts for the entire duration of the blade, meanwhile the buff on the player displays the green border overlay and is hidden.
         // In the log, the tether effect can't be found, so this decoration is only indicative of who has been targeted, the duration is not correct.
         var noxiousBlade = GetBuffApplyRemoveSequence(log.CombatData, NoxiousVaporBladeTargetBuff, p, true, true);
-        replay.Decorations.AddTether(noxiousBlade, Colors.Green, 0.5);
+        replay.Decorations.AddTethers(noxiousBlade, Colors.Green, 0.5);
 
         // Tri-Bolt
         if (log.CombatData.TryGetEffectEventsByDstWithGUID(p.AgentItem, EffectGUIDs.OldLionsCourtTriBoltSpread, out var tribolt))
@@ -363,6 +370,10 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeNPCCombatReplayActors(target, log, replay);
+        }
         switch (target.ID)
         {
             case (int)TargetID.PrototypeVermilion:
@@ -375,7 +386,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
                     {
                         (long start, long end) lifespan = effect.HasDynamicEndTime ? effect.ComputeDynamicLifespan(log, 30000) : effect.ComputeLifespan(log, 1500);
                         FormDecoration decoration;
-                        if (effect.GUIDEvent.ContentGUID == EffectGUIDs.OldLionsCourtSpaghettificationDoughnutStart)
+                        if (effect.GUIDEvent.GUID == EffectGUIDs.OldLionsCourtSpaghettificationDoughnutStart)
                         {
                             decoration = new DoughnutDecoration(600, 2000, lifespan, Colors.LightOrange, 0.2, new PositionConnector(effect.Position));
                         } 
@@ -392,7 +403,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
                     {
                         (long start, long end) lifespan = effect.ComputeLifespan(log, 1500); // Override 0 duration
                         FormDecoration decoration;
-                        if (effect.GUIDEvent.ContentGUID == EffectGUIDs.OldLionsCourtSpaghettificationDoughnutDetonation)
+                        if (effect.GUIDEvent.GUID == EffectGUIDs.OldLionsCourtSpaghettificationDoughnutDetonation)
                         {
                             decoration = new DoughnutDecoration(600, 2000, lifespan, Colors.Red, 0.2, new PositionConnector(effect.Position));
                         }
@@ -441,7 +452,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
                         foreach (EffectEvent effect in horizonWhite)
                         {
                             (long start, long end) lifespan = effect.ComputeLifespan(log, 4000);
-                            (uint inner, uint outer) = ((uint, uint))(effect.GUIDEvent.ContentGUID == EffectGUIDs.OldLionsCourtDualHorizonWhiteInner ? (300, 340) : (440, 500));
+                            (uint inner, uint outer) = ((uint, uint))(effect.GUIDEvent.GUID == EffectGUIDs.OldLionsCourtDualHorizonWhiteInner ? (300, 340) : (440, 500));
                             replay.Decorations.Add(new DoughnutDecoration(inner, outer, lifespan, Colors.White, 0.2, new PositionConnector(effect.Position)));
                         }
                     }
@@ -570,7 +581,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
                     hasUltimatumIndicators = true;
                     foreach (EffectEvent effect in ultimatumIndicators)
                     {
-                        var flipped = effect.GUIDEvent.ContentGUID == EffectGUIDs.OldLionsCourtThunderingUltimatumFlipCone;
+                        var flipped = effect.GUIDEvent.GUID == EffectGUIDs.OldLionsCourtThunderingUltimatumFlipCone;
                         (long start, long end) lifespan = effect.HasDynamicEndTime ? effect.ComputeDynamicLifespan(log, 30000) : effect.ComputeLifespan(log, 1500);
                         var rotation = new AngleConnector(effect.Rotation.Z - (flipped ? 270 : 90));
                         int openingAngle = flipped ? 120 : 240;
@@ -591,7 +602,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
                         EffectEvent? previousIndicator = ultimatumIndicators.LastOrDefault(x => x.Time <= effect.Time);
                         if (target.TryGetCurrentFacingDirection(log, effect.Time, out var currentRotation) && previousIndicator != null)
                         {
-                            var flipped = previousIndicator.GUIDEvent.ContentGUID == EffectGUIDs.OldLionsCourtThunderingUltimatumFlipCone;
+                            var flipped = previousIndicator.GUIDEvent.GUID == EffectGUIDs.OldLionsCourtThunderingUltimatumFlipCone;
                             var rotationOffset = flipped ? 180 : 0;
                             var rotation = new AngleConnector(currentRotation.GetRoundedZRotationDeg() + rotationOffset);
                             var openingAngle = flipped ? 120 : 240;
@@ -650,7 +661,10 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
 
         // Exhaust Plume - Knight Fall AoE
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.OldLionsCourtExhaustPlumeAoE, out var exhaustPlume))

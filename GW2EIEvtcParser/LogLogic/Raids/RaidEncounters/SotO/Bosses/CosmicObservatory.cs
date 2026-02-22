@@ -89,6 +89,10 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeNPCCombatReplayActors(target, log, replay);
+        }
         (long start, long end) lifespan;
         var casts = target.GetAnimatedCastEvents(log).ToList();
 
@@ -171,7 +175,10 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        base.ComputePlayerCombatReplayActors(p, log, replay);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(p, log, replay);
+        }
 
         // Lost Control
         var lostControls = p.GetBuffStatus(log, CosmicObservatoryLostControlBuff).Where(x => x.Value > 0);
@@ -246,7 +253,10 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
 
         // Demonic Blast - 8 Slices
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.CosmicObservatoryDemonicBlastSliceIndicator, out var demonicBlasts))
@@ -527,7 +537,10 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        base.SetInstanceBuffs(log, instanceBuffs);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
         var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         foreach (var encounterPhase in encounterPhases)
         {

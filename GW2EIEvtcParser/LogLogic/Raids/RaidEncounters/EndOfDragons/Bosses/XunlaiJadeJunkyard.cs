@@ -114,7 +114,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         }
 
         // Health and Transition Phases
-        List<PhaseData> subPhases = GetPhasesByInvul(log, AnkkaPlateformChanging, ankka, true, true);
+        var subPhases = GetSubPhasesByInvul(log, AnkkaPlateformChanging, ankka, true, true);
         for (int i = 0; i < subPhases.Count; i++)
         {
             switch (i)
@@ -142,7 +142,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         }
         phases.AddRange(subPhases);
         // DPS Phases
-        List<PhaseData> dpsPhase = GetPhasesByInvul(log, Determined895, ankka, false, true);
+        var dpsPhase = GetSubPhasesByInvul(log, Determined895, ankka, false, true);
         for (int i = 0; i < dpsPhase.Count; i++)
         {
             dpsPhase[i].Name = $"DPS Phase {i + 1}";
@@ -158,7 +158,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         }
         phases.AddRange(dpsPhase);
         // Necrotic Rituals
-        List<PhaseData> rituals = GetPhasesByInvul(log, NecroticRitual, ankka, true, true);
+        var rituals = GetSubPhasesByInvul(log, NecroticRitual, ankka, true, true);
         for (int i = 0; i < rituals.Count; i++)
         {
             if (i % 2 != 0)
@@ -250,7 +250,10 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        base.SetInstanceBuffs(log, instanceBuffs);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
 
         var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
 
@@ -281,6 +284,10 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeNPCCombatReplayActors(target, log, replay);
+        }
         long castDuration;
         (long start, long end) lifespan;
 
@@ -496,7 +503,10 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        base.ComputePlayerCombatReplayActors(p, log, replay);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(p, log, replay);
+        }
         var xjjPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM).ToList();
         if (p.GetBuffGraphs(log).TryGetValue(DeathsHandSpreadBuff, out var value))
         {
@@ -523,15 +533,22 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         }
         // Tethering Players to Lich
         var lichTethers = GetBuffApplyRemoveSequence(log.CombatData, AnkkaLichHallucinationFixation, p, true, true);
-        replay.Decorations.AddTether(lichTethers, Colors.Teal, 0.5);
+        replay.Decorations.AddTethers(lichTethers, Colors.Teal, 0.5);
 
         // Reanimated Hatred Fixation
         IEnumerable<Segment> hatredFixations = p.GetBuffStatus(log, FixatedAnkkaKainengOverlook).Where(x => x.Value > 0);
         replay.Decorations.AddOverheadIcons(hatredFixations, p, ParserIcons.FixationPurpleOverhead);
         // Reanimated Hatred Tether to player - The buff is applied by Ankka to the player - The Reanimated Hatred spawns before the buff application
-        replay.Decorations.AddTetherByThirdPartySrcBuff(log, p, FixatedAnkkaKainengOverlook, (int)TargetID.Ankka, (int)TargetID.ReanimatedHatred, Colors.Magenta, 0.5);
+        replay.Decorations.AddTethersByThirdPartySrcBuff(log, p, FixatedAnkkaKainengOverlook, (int)TargetID.Ankka, (int)TargetID.ReanimatedHatred, Colors.Magenta, 0.5);
     }
 
+    internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
+    {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
+    }
     private static void AddDeathsHandDecoration(CombatReplay replay, Vector3 position, long start, int delay, uint radius, int duration)
     {
         (long start, long end) lifespan = (start, start + delay);

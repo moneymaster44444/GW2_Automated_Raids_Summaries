@@ -20,11 +20,11 @@ internal class Cairn : BastionOfThePenitent
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulationInitial, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulationFastTrigger], new MechanicPlotlySetting(Symbols.Circle,Colors.DarkGreen), "Std.Green", "Stood in Green Spatial Manipulation Field","Green", 0)
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulationInitial, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulationFastTrigger], new MechanicPlotlySetting(Symbols.Circle,Colors.Green), "Green", "Green Spatial Manipulation Field (lift)","Green (lift)", 0),
+                        new SubMechanic(new MechanicPlotlySetting(Symbols.Circle,Colors.Green), "Green", "Green Spatial Manipulation Field (lift)","Green (lift)", 0),
                         false
                     )
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([SpatialManipulation1, SpatialManipulationInitial, SpatialManipulation2, SpatialManipulation3, SpatialManipulation4, SpatialManipulationFastTrigger], new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Green), "Stab.Green", "Green Spatial Manipulation Field while affected by stability","Stabilized Green", 0),
+                        new SubMechanic(new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Green), "Stab.Green", "Green Spatial Manipulation Field while affected by stability","Stabilized Green", 0),
                         true
                     )
                     .UsingIgnored()
@@ -149,7 +149,7 @@ internal class Cairn : BastionOfThePenitent
                 }
                 // Initial green and dash radius
                 uint radius = 120;
-                var guid = greenEffect.GUIDEvent.ContentGUID;
+                var guid = greenEffect.GUIDEvent.GUID;
                 if (guid == EffectGUIDs.CairnGreen4PlayersOrBigNoCount)
                 {
                     radius = 180;

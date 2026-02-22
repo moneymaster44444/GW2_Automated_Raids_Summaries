@@ -63,13 +63,13 @@ internal class Gorseval : SpiritVale
         TargetID.ChargedSoul,
     ];
 
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor gorseval, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor gorseval, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
-        var phases = GetPhasesByInvul(log, ProtectiveShadow, gorseval, true, true, encounterPhase.Start, encounterPhase.End);
+        var phases = GetSubPhasesByInvul(log, ProtectiveShadow, gorseval, true, true, encounterPhase.Start, encounterPhase.End);
         for (int i = 0; i < phases.Count; i++)
         {
             int index = i + 1;
@@ -374,7 +374,7 @@ internal class Gorseval : SpiritVale
                 // for the explosion
                 lifespan.end += 500;
                 FormDecoration rampage;
-                var contentGUID = ghastlyRampage.GUIDEvent.ContentGUID;
+                var contentGUID = ghastlyRampage.GUIDEvent.GUID;
                 if (contentGUID == EffectGUIDs.GorsevalGhastlyRampageLayer0)
                 {
                     rampage = new CircleDecoration(360, lifespan, Colors.DarkPurpleBlue, 0.25, new PositionConnector(pos));

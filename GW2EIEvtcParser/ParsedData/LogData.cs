@@ -209,8 +209,8 @@ public class LogData
                         return new Adina(id);
                     case TargetID.Sabir:
                         return new Sabir(id);
-                    case TargetID.PeerlessQadim:
-                        return new PeerlessQadim(id);
+                    case TargetID.QadimThePeerless:
+                        return new QadimThePeerless(id);
                     case TargetID.Greer:
                         return new GreerTheBlightbringer(id);
                     case TargetID.Decima:
@@ -250,6 +250,8 @@ public class LogData
                         return new CosmicObservatory(id);
                     case TargetID.Cerus:
                         return new TempleOfFebe(id);
+                    case TargetID.KelaSeneschalOfWaves:
+                        return new GuardiansGlade(id);
                     // Fractals
                     case TargetID.MAMA:
                         return new MAMA(id);

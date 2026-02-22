@@ -184,14 +184,17 @@ public abstract class LogLogic
             }).Max();
             if (emboldenedStacks > 0)
             {
-                instanceBuffs.Add(new(log.Buffs.BuffsByIDs[SkillIDs.Emboldened], emboldenedStacks, mainPhase));
+                instanceBuffs.Add(new(log.Buffs.BuffsByIDs[SkillIDs.Emboldened], emboldenedStacks, encounterPhase));
             }
         }
         // Quickplay
-        var hasQuickplay = log.PlayerList.Any(x => x.HasBuff(log, SkillIDs.QuickplayBoost, log.LogData.LogStart, log.LogData.LogEnd));
-        if (hasQuickplay)
+        if (log.PlayerList.Any(x => x.HasBuff(log, SkillIDs.QuickplayBoost, log.LogData.LogStart, log.LogData.LogEnd)))
         {
             instanceBuffs.Add(new(log.Buffs.BuffsByIDs[SkillIDs.QuickplayBoost], 1, mainPhase));
+        }
+        else if (log.PlayerList.Any(x => x.HasBuff(log, SkillIDs.QuickplayMorale, log.LogData.LogStart, log.LogData.LogEnd)))
+        {
+            instanceBuffs.Add(new(log.Buffs.BuffsByIDs[SkillIDs.QuickplayMorale], 1, mainPhase));
         }
     }
 
@@ -411,7 +414,7 @@ public abstract class LogLogic
             var targets = Targets.Where(x => x.GetHealth(log.CombatData) > 3e6 && x.LastAware - x.FirstAware > MinimumInCombatDuration);
             if (targets.Any())
             {
-                AddPhasesPerTarget(log, phases, targets);
+                AddEncounterPhasesPerTarget(log, phases, targets);
             }
             else
             {

@@ -206,7 +206,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
             return phases;
         }
         // Invul check
-        List<PhaseData> invulnPhases = GetPhasesByInvul(log, InvulnerabilityCerus, cerus, true, true);
+        var invulnPhases = GetSubPhasesByInvul(log, InvulnerabilityCerus, cerus, true, true);
         phases.AddRange(invulnPhases);
         for (int i = 1; i < phases.Count; i++)
         {
@@ -395,6 +395,10 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
 
     internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
     {
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeNPCCombatReplayActors(target, log, replay);
+        }
         var casts = target.GetAnimatedCastEvents(log).ToList();
         (long start, long end) lifespan;
 
@@ -478,7 +482,10 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
 
     internal override void ComputePlayerCombatReplayActors(PlayerActor p, ParsedEvtcLog log, CombatReplay replay)
     {
-        base.ComputePlayerCombatReplayActors(p, log, replay);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputePlayerCombatReplayActors(p, log, replay);
+        }
 
         // Crushing Regret (Green)
         if (log.CombatData.TryGetEffectEventsByDstWithGUID(p.AgentItem, EffectGUIDs.TempleOfFebeCerusGreen, out var crushingRegrets))
@@ -528,12 +535,15 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
 
         // Malicious Intent - Malice Adds Tether
         var maliciousIntent = GetBuffApplyRemoveSequence(log.CombatData, [MaliciousIntentTargetBuff, MaliciousIntentTargetBuffCM], p, true, true);
-        replay.Decorations.AddTether(maliciousIntent, Colors.RedSkin, 0.4, 5, false);
+        replay.Decorations.AddTethers(maliciousIntent, Colors.RedSkin, 0.4, 5, false);
     }
 
     internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations)
     {
-        base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log, environmentDecorations);
+        }
 
         // Crushing Regret (Green) End
         var crushingRegretEnds = new List<(GUID GUID, Color Color)>()
@@ -905,7 +915,10 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
-        base.SetInstanceBuffs(log, instanceBuffs);
+        if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
+        {
+            base.SetInstanceBuffs(log, instanceBuffs);
+        }
 
         var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         var empoweredBuffs = new List<long>()

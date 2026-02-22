@@ -30,7 +30,7 @@ internal class DecimaTheStormsinger : MountBalrior
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic([SeismicCrashNM, SeismicCrashCM, SeismicCrashCM2, SeismicCrashCM3, SeismicCrashCM4, SeismicCrashCM5, SeismicCrashCM6], new MechanicPlotlySetting(Symbols.Hourglass, Colors.White), "SeisCrash.H", "Hit by Seismic Crash (Concentric Rings)", "Seismic Crash Hit", 0)
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([SeismicCrashNM, SeismicCrashCM, SeismicCrashCM2, SeismicCrashCM4, SeismicCrashCM5, SeismicCrashCM6], new MechanicPlotlySetting(Symbols.Hourglass, Colors.DarkWhite), "SeisCrash.CC", "CC by Seismic Crash (Concentric Rings)", "Seismic Crash CC", 0),
+                        new SubMechanic(new MechanicPlotlySetting(Symbols.Hourglass, Colors.DarkWhite), "SeisCrash.CC", "CC by Seismic Crash (Concentric Rings)", "Seismic Crash CC", 0),
                         false
                     ),
                 new PlayerDstHealthDamageMechanic(SeismicCrashHitboxDamage, new MechanicPlotlySetting(Symbols.CircleCross, Colors.LightRed), "SeisCrash.Dwn", "Downed by Seismic Crash (Hitbox)", "Seismic Crash Downed", 0)
@@ -42,14 +42,14 @@ internal class DecimaTheStormsinger : MountBalrior
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic([SeismicReposition_80_50, SeismicReposition_70_40, SeismicReposition_40_TO_10, SeismicReposition_10], new MechanicPlotlySetting(Symbols.HourglassOpen, Colors.White), "SeisRepos.H", "Hit by Seismic Reposition (Concentric Rings Leap)", "Seismic Reposition Hit", 0)
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([SeismicReposition_80_50, SeismicReposition_70_40, SeismicReposition_40_TO_10, SeismicReposition_10], new MechanicPlotlySetting(Symbols.HourglassOpen, Colors.DarkWhite), "SeisRepos.CC", "CC by Seismic Reposition (Concentric Rings Leap)", "Seismic Reposition CC", 0),
+                        new SubMechanic(new MechanicPlotlySetting(Symbols.HourglassOpen, Colors.DarkWhite), "SeisRepos.CC", "CC by Seismic Reposition (Concentric Rings Leap)", "Seismic Reposition CC", 0),
                         false
                     ),
             ]),
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic([EarthrendCastAndOuterRingDamageNM, EarthrendCastAndOuterRingDamageCM], new MechanicPlotlySetting(Symbols.CircleOpen, Colors.Blue), "Earthrend.H", "Hit by Earthrend (Outer Doughnut)", "Earthrend Hit", 0)
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic([EarthrendCastAndOuterRingDamageNM, EarthrendCastAndOuterRingDamageCM], new MechanicPlotlySetting(Symbols.CircleOpen, Colors.DarkBlue), "Earthrend.CC", "CC by Earthrend (Outer Doughnut)", "Earthrend CC", 0),
+                        new SubMechanic(new MechanicPlotlySetting(Symbols.CircleOpen, Colors.DarkBlue), "Earthrend.CC", "CC by Earthrend (Outer Doughnut)", "Earthrend CC", 0),
                         false
                     ),
                 new PlayerDstHealthDamageMechanic(EarthrendInnerHitboxDamageNM, new MechanicPlotlySetting(Symbols.CircleCrossOpen, Colors.LightRed), "Earthrend.Dwn", "Downed by Earthrend (Hitbox)", "Earthrend Downed", 0)
@@ -185,7 +185,7 @@ internal class DecimaTheStormsinger : MountBalrior
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
     }
 
-    private static PhaseData GetBoulderPhase(ParsedEvtcLog log, IEnumerable<SingleActor> boulders, string name, SingleActor decima)
+    private static SubPhasePhaseData GetBoulderPhase(ParsedEvtcLog log, IEnumerable<SingleActor> boulders, string name, SingleActor decima)
     {
         long start = long.MaxValue;
         long end = long.MinValue;
@@ -208,31 +208,33 @@ internal class DecimaTheStormsinger : MountBalrior
         return phase;
     }
 
-    private static IReadOnlyList<PhaseData> GetAroundBoulderPhases(ParsedEvtcLog log, PhaseData boulderPhase, PhaseData boulderMainPhase, SingleActor decima, int index)
+    private static IReadOnlyList<SubPhasePhaseData> GetAroundBoulderPhases(ParsedEvtcLog log, PhaseData boulderPhase, PhaseData boulderMainPhase, SingleActor decima, int index)
     {
-        var preBoulderPhase = new SubPhasePhaseData(boulderMainPhase.Start, boulderPhase.Start, $"Pre-Boulders {index}").WithParentPhase(boulderMainPhase);
+        var preBoulderPhase = new SubPhasePhaseData(boulderMainPhase.Start, boulderPhase.Start, $"Pre-Boulders {index}");
+        preBoulderPhase.AddParentPhase(boulderMainPhase);
         preBoulderPhase.AddTarget(decima, log);
-        var postBoulderPhase = new SubPhasePhaseData(boulderPhase.End, boulderMainPhase.End, $"Post-Boulders {index}").WithParentPhase(boulderMainPhase);
+        var postBoulderPhase = new SubPhasePhaseData(boulderPhase.End, boulderMainPhase.End, $"Post-Boulders {index}");
+        postBoulderPhase.AddParentPhase(boulderMainPhase);
         postBoulderPhase.AddTarget(decima, log);
         return [preBoulderPhase, postBoulderPhase];
     }
 
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor decima, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor decima, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
         bool isCM = encounterPhase.IsCM;
-        var phases = new List<PhaseData>(isCM ? 9 : 5);
+        var phases = new List<SubPhasePhaseData>(isCM ? 9 : 5);
         // Invul check
-        phases.AddRange(GetPhasesByInvul(log, isCM ? NovaShieldCM : NovaShield, decima, true, true, encounterPhase.Start, encounterPhase.End));
-        var mainPhases = new List<PhaseData>(3);
+        phases.AddRange(GetSubPhasesByInvul(log, isCM ? NovaShieldCM : NovaShield, decima, true, true, encounterPhase.Start, encounterPhase.End));
+        var mainPhases = new List<SubPhasePhaseData>(3);
         var currentMainPhase = 1;
         for (int i = 0; i < phases.Count; i++)
         {
             var phaseIndex = i + 1;
-            PhaseData phase = phases[i];
+            var phase = phases[i];
             phase.AddParentPhase(encounterPhase);
             if (phaseIndex % 2 == 0)
             {
@@ -712,11 +714,11 @@ internal class DecimaTheStormsinger : MountBalrior
 
         // Warning indicator of walls spawning between Conduits.
         var wallsWarnings = GetBuffApplyRemoveSequence(log.CombatData, wallWarningBuffID, target, true, true);
-        replay.Decorations.AddTether(wallsWarnings, Colors.Red, 0.2, 30, true);
+        replay.Decorations.AddTethers(wallsWarnings, Colors.Red, 0.2, 30, true);
 
         // Walls connecting Conduits to each other.
         var walls = GetBuffApplyRemoveSequence(log.CombatData, wallBuffID, target, true, true);
-        replay.Decorations.AddTether(walls, Colors.Purple, 0.4, 60, true);
+        replay.Decorations.AddTethers(walls, Colors.Purple, 0.4, 60, true);
     }
 
     private static void AddBeam(ParsedEvtcLog log, CombatReplay replay, uint beamWidth, IEnumerable<BuffEvent> beams, Color color)
@@ -842,13 +844,12 @@ internal class DecimaTheStormsinger : MountBalrior
         {
             if (encounterPhase.Success && encounterPhase.IsCM)
             {
-                var decima = encounterPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.DecimaCM));
-                if (decima != null && !decima.GetBuffStatus(log, ChargeDecima).Any(x => x.Value > 0))
+                if (log.PlayerList.Any(x => x.HasBuff(log, AchievementEligibilityCalmBeforeTheStorm, encounterPhase.End - ServerDelayConstant)))
                 {
                     instanceBuffs.Add(new(log.Buffs.BuffsByIDs[AchievementEligibilityCalmBeforeTheStorm], 1, encounterPhase));
                 }
             }
-        }
+        }       
     }
     internal override void ComputeAchievementEligibilityEvents(ParsedEvtcLog log, Player p, List<AchievementEligibilityEvent> achievementEligibilityEvents)
     {

@@ -38,7 +38,7 @@ internal class UraTheSteamshrieker : MountBalrior
             new MechanicGroup([
                 new PlayerDstHealthDamageHitMechanic(CreateTitanspawnGeyser, new MechanicPlotlySetting(Symbols.CircleXOpen, Colors.Orange), "UraJump.H", "Hit by Create Titanspawn Geyser AoE (Ura jump in place)", "Create Titanspawn Geyser Hit", 0)
                     .WithStabilitySubMechanic(
-                        new PlayerDstHealthDamageHitMechanic(CreateTitanspawnGeyser, new MechanicPlotlySetting(Symbols.CircleXOpen, Colors.LightOrange), "UraJump.CC", "CC by Create Titanspawn Geyser AoE (Ura jump in place)", "Create Titanspawn Geyser CC", 0),
+                        new SubMechanic(new MechanicPlotlySetting(Symbols.CircleXOpen, Colors.LightOrange), "UraJump.CC", "CC by Create Titanspawn Geyser AoE (Ura jump in place)", "Create Titanspawn Geyser CC", 0),
                         false
                     ),
                 new PlayerSrcBuffRemoveFromMechanic(HardenedCrust, new MechanicPlotlySetting(Symbols.CircleX, Colors.White), "Dispel.Titn", "Dispelled Titanspawn Geyser (Removed Hardened Crust)", "Dispelled Titanspawn Geyser", 0)
@@ -106,7 +106,7 @@ internal class UraTheSteamshrieker : MountBalrior
         var crMap = new CombatReplayMap(
                         (1746, 1860),
                         (2550, 6200, 9010, 13082));
-        AddArenaDecorationsPerEncounter(log, arenaDecorations, LogID, CombatReplayUratheSteamshrieker, crMap);
+        AddArenaDecorationsPerEncounter(log, arenaDecorations, LogID, CombatReplayUraTheSteamshrieker, crMap);
         return crMap;
     }
 
@@ -196,7 +196,7 @@ internal class UraTheSteamshrieker : MountBalrior
         if (titanGeyserMarkerGUID != null)
         {
             var titanAgents = combatData
-                .Where(x => x.IsStateChange == StateChange.Marker && x.Value == titanGeyserMarkerGUID.ContentID)
+                .Where(x => x.IsStateChange == StateChange.Marker && x.Value == titanGeyserMarkerGUID.MarkerID)
                 .Select(x => agentData.GetAgent(x.SrcAgent, x.Time))
                 .Where(x => x.Type == AgentItem.AgentType.Gadget)
                 .Distinct();
@@ -216,7 +216,7 @@ internal class UraTheSteamshrieker : MountBalrior
         if (toxicEffectGUID != null)
         {
             var toxicAgents = combatData
-                .Where(x => x.IsEffect && x.SkillID == toxicEffectGUID.ContentID)
+                .Where(x => x.IsEffect && x.SkillID == toxicEffectGUID.EffectID)
                 .Select(x => agentData.GetAgent(x.SrcAgent, x.Time))
                 .Where(x => x.Type == AgentItem.AgentType.Gadget)
                 .Distinct();
@@ -262,7 +262,7 @@ internal class UraTheSteamshrieker : MountBalrior
         if (bloodstoneShardMarkerGUID != null)
         {
             var bloodstoneShardAgents = combatData
-                .Where(x => x.IsStateChange == StateChange.Marker && x.Value == bloodstoneShardMarkerGUID.ContentID)
+                .Where(x => x.IsStateChange == StateChange.Marker && x.Value == bloodstoneShardMarkerGUID.MarkerID)
                 .Select(x => agentData.GetAgent(x.SrcAgent, x.Time))
                 .Where(x => x.Type == AgentItem.AgentType.Gadget)
                 .Distinct();
@@ -302,13 +302,13 @@ internal class UraTheSteamshrieker : MountBalrior
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
         RenameFumarollers(Targets);
     }
-    internal static List<PhaseData> ComputePhases(ParsedEvtcLog log, SingleActor ura, EncounterPhaseData encounterPhase, bool requirePhases)
+    internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor ura, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
         {
             return [];
         }
-        var phases = new List<PhaseData>(6);
+        var phases = new List<SubPhasePhaseData>(6);
         PhaseData parentPhase = encounterPhase;
         bool isCm = encounterPhase.IsCM || encounterPhase.IsLegendaryCM;
         long start = encounterPhase.Start;

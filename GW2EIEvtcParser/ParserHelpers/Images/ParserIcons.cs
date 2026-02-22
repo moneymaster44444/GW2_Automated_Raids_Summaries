@@ -52,7 +52,7 @@ internal static class ParserIcons
     private const string HighResScrapper = "https://i.imgur.com/z5kr00B.png";
     private const string HighResEngineer = "https://i.imgur.com/lV62W3O.png";
     // Thief
-    private const string HighResAntiquary = "https://i.imgur.com/ithzoW0.png";
+    private const string HighResAntiquary = "https://i.imgur.com/iE1RnSs.png";
     private const string HighResSpecter = "https://i.imgur.com/3el5P6G.png";
     private const string HighResDeadeye = "https://i.imgur.com/UOMFo4a.png";
     private const string HighResDaredevil = "https://i.imgur.com/8DzmCRv.png";
@@ -82,7 +82,7 @@ internal static class ParserIcons
     private const string HighResBerserker = "https://i.imgur.com/0ijFUUG.png";
     private const string HighResWarrior = "https://i.imgur.com/j82eNjR.png";
     // Guardian
-    private const string HighResLuminary = "https://i.imgur.com/JTFpGOh.png";
+    private const string HighResLuminary = "https://i.imgur.com/4w7OTH5.png";
     private const string HighResWillbender = "https://i.imgur.com/WhIEbGZ.png";
     private const string HighResFirebrand = "https://i.imgur.com/J5EFywD.png";
     private const string HighResDragonhunter = "https://i.imgur.com/pSVMnVu.png";
@@ -108,7 +108,7 @@ internal static class ParserIcons
     private const string BaseResScrapper = "https://i.imgur.com/Cd9yD43.png";
     private const string BaseResEngineer = "https://i.imgur.com/hckhnZy.png";
     // Thief
-    private const string BaseResAntiquary = "https://i.imgur.com/wJBMKe2.png";
+    private const string BaseResAntiquary = "https://i.imgur.com/R1f6iXn.png";
     private const string BaseResSpecter = "https://i.imgur.com/nVAyYVQ.png";
     private const string BaseResDeadeye = "https://i.imgur.com/kryyJRy.png";
     private const string BaseResDaredevil = "https://i.imgur.com/RiCJalE.png";
@@ -138,7 +138,7 @@ internal static class ParserIcons
     private const string BaseResBerserker = "https://i.imgur.com/dNY6e8n.png";
     private const string BaseResWarrior = "https://i.imgur.com/ejI5STj.png";
     // Guardian
-    private const string BaseResLuminary = "https://i.imgur.com/H9upKPo.png";
+    private const string BaseResLuminary = "https://i.imgur.com/1znO8HP.png";
     private const string BaseResWillbender = "https://i.imgur.com/pIFrNLa.png";
     private const string BaseResFirebrand = "https://i.imgur.com/TOsmJOl.png";
     private const string BaseResDragonhunter = "https://i.imgur.com/GqKocpf.png";
@@ -173,8 +173,8 @@ internal static class ParserIcons
     private const string TargetDeimos = "https://i.imgur.com/mWfxBaO.png";
     private const string TargetDesmina = "https://i.imgur.com/jAiRplg.png";
     private const string TargetBrokenKing = "https://i.imgur.com/FNgUmvL.png";
-    private const string TargetEaterOfSouls = "https://i.imgur.com/Sd6Az8M.png";
-    private const string TargetEyes = "https://i.imgur.com/kAgdoa5.png";
+    private const string TargetEaterOfSouls = "https://i.imgur.com/X5u2ioE.png";
+    private const string TargetEyes = "https://i.imgur.com/SrxpWW6.png";
     private const string TargetDhuum = "https://i.imgur.com/RKaDon5.png";
     private const string TargetConjuredAmalgamate = "https://i.imgur.com/C23rYTl.png";
     private const string TargetCALeftArm = "https://i.imgur.com/qrkQvEY.png";
@@ -185,7 +185,7 @@ internal static class ParserIcons
     private const string TargetFreezie = "https://i.imgur.com/98uyYXk.png";
     private const string TargetAdina = "https://i.imgur.com/or3m1yb.png";
     private const string TargetSabir = "https://i.imgur.com/Q4WUXqw.png";
-    private const string TargetPeerlessQadim = "https://i.imgur.com/47uePpb.png";
+    private const string TargetQadimThePeerless = "https://i.imgur.com/47uePpb.png";
     private const string TargetIcebroodConstruct = "https://i.imgur.com/dpaZFa5.png";
     private const string TargetClawOfTheFallen = "https://i.imgur.com/HF85QpV.png";
     private const string TargetVoiceOfTheFallen = "https://i.imgur.com/BdTGXMU.png";
@@ -234,6 +234,7 @@ internal static class ParserIcons
     private const string Umbriel = "https://i.imgur.com/lE2Dg5a.png";
     private const string Zojja = "https://i.imgur.com/9iSzaTe.png";
     private const string WhisperingShadow = "https://i.imgur.com/ncmbsdG.png";
+    private const string KelaSeneschalOfWaves = "https://i.imgur.com/wSpjlSf.png";
     #endregion
 
     #region Trash
@@ -312,7 +313,7 @@ internal static class ParserIcons
     private const string TrashGuldhem = "https://i.imgur.com/xa7Fefn.png";
     private const string TrashScythe = "https://i.imgur.com/INCGLIK.png";
     private const string TrashSmotheringShadow = "https://i.imgur.com/iOtx7l1.png";
-    private const string TrashMazeMinotaur = "https://i.imgur.com/EMR1lQG.png";
+    private const string TrashMazeMinotaur = "https://i.imgur.com/dsOBD6l.png";
     private const string TrashVoidSaltsprayDragon = "https://i.imgur.com/KuC1xF1.png";
     private const string TrashGenericRedEnemySkull = "https://i.imgur.com/k79t7ZA.png"; // GENERIC ICON
     private const string TrashVoltaicWisp = "https://i.imgur.com/C1mvNGZ.png";
@@ -322,12 +323,12 @@ internal static class ParserIcons
     private const string TrashEntropicDistortion = "https://i.imgur.com/MIpP5pK.png";
     private const string TrashGiantQadimThePeerless = "https://i.imgur.com/qRhJSgR.png";
     private const string TrashSmallJumpyTornado = "https://i.imgur.com/WBJNgp7.png";
-    private const string TrashOrbSpider = "https://i.imgur.com/FB5VM9X.png";
+    private const string TwistedSpirit = "https://i.imgur.com/Dy9QdEm.png";
     private const string TrashSeekers = "https://i.imgur.com/FrPoluz.png";
     private const string TrashBlueGuardian = "https://i.imgur.com/6CefnkP.png";
     private const string TrashGreenGuardian = "https://i.imgur.com/nauDVYP.png";
     private const string TrashRedGuardian = "https://i.imgur.com/73Uj4lG.png";
-    private const string TrashUnderworldReaper = "https://i.imgur.com/Tq6SYVe.png";
+    private const string TrashUnderworldReaper = "https://i.imgur.com/IWNP5hi.png";
     private const string TrashVeteranTorturedWarg = "https://i.imgur.com/NklqOp3.png";
     private const string TrashGenericFriendlyTarget = "https://i.imgur.com/0koP4xB.png"; // GENERIC ICON
     private const string TrashMine = "https://i.imgur.com/A9AxMHG.png";
@@ -463,6 +464,10 @@ internal static class ParserIcons
     private const string TrashHandOfErosion = "https://i.imgur.com/THCasXt.png";
     private const string TrashHandOfEruption = "https://i.imgur.com/pQ0bOT8.png";
     private const string Deathling = "https://i.imgur.com/tnhj5B2.png";
+    private const string ExecutorOfWaves = "https://i.imgur.com/yOzVPFL.png";
+    private const string CrocodilianRazortooth = "https://i.imgur.com/tyLGqy5.png";
+    private const string DownedCrocodilianRazortooth = "https://i.imgur.com/v3Z6ZvX.png";
+    private const string LightThief = "https://i.imgur.com/qJZ9arr.png";
     #endregion
 
     #region Minion
@@ -612,6 +617,7 @@ internal static class ParserIcons
     private const string MinionSpiritOfAnguish = "https://i.imgur.com/DjpbK1o.png";
     private const string MinionSpiritOfWanderlust = "https://i.imgur.com/UKgogUa.png";
     private const string MinionSpiritOfPreservation = "https://i.imgur.com/9nyIxmd.png";
+    private const string MinionInsectSwarm = "https://i.imgur.com/V1yBcfr.png";
     #endregion
 
     #region Marker
@@ -896,7 +902,7 @@ internal static class ParserIcons
         { TargetID.Freezie, TargetFreezie },
         { TargetID.Adina, TargetAdina },
         { TargetID.Sabir, TargetSabir },
-        { TargetID.PeerlessQadim, TargetPeerlessQadim },
+        { TargetID.QadimThePeerless, TargetQadimThePeerless },
         { TargetID.IcebroodConstruct, TargetIcebroodConstruct },
         { TargetID.IcebroodConstructFraenir, TargetIcebroodConstruct },
         { TargetID.ClawOfTheFallen, TargetClawOfTheFallen },
@@ -991,9 +997,9 @@ internal static class ParserIcons
         { TargetID.Drunkard, TrashGamblerDrunkarThief },
         { TargetID.Thief, TrashGamblerDrunkarThief },
         { TargetID.TormentedDead, TrashTormentedDeadMessenger },
-        { TargetID.Messenger, TrashTormentedDeadMessenger },
-        { TargetID.Enforcer, TrashEnforcer },
-        { TargetID.Echo, TrashEcho },
+        { TargetID.DhuumsMessenger, TrashTormentedDeadMessenger },
+        { TargetID.DhuumsEnforcer, TrashEnforcer },
+        { TargetID.EndersEcho, TrashEcho },
         { TargetID.YourSoul, DhuumPlayerSoul },
         { TargetID.KeepConstructCore, TrashKeepConstructCoreExquisiteConjunction },
         { TargetID.ExquisiteConjunction, TrashKeepConstructCoreExquisiteConjunction },
@@ -1015,6 +1021,7 @@ internal static class ParserIcons
         { TargetID.BanditSaboteur, TrashBanditSaboteur },
         { TargetID.NarellaTornado, TrashTornado },
         { TargetID.Cage, TrashCage },
+        { TargetID.InsectSwarms, MinionInsectSwarm },
         { TargetID.Bombs, TrashBombs },
         { TargetID.Tornado, TrashTornado },
         { TargetID.Jade, TrashJade },
@@ -1135,15 +1142,15 @@ internal static class ParserIcons
         { TargetID.GiantQadimThePeerless, TrashGiantQadimThePeerless },
         //{ TargetID.DummyPeerlessQadim, GenericEnemyIcon },
         { TargetID.SmallJumpyTornado, TrashSmallJumpyTornado },
-        { TargetID.OrbSpider, TrashOrbSpider },
+        { TargetID.TwistedSpirit, TwistedSpirit },
         { TargetID.Seekers, TrashSeekers },
         { TargetID.BlueGuardian, TrashBlueGuardian },
         { TargetID.GreenGuardian, TrashGreenGuardian },
         { TargetID.RedGuardian, TrashRedGuardian },
         { TargetID.UnderworldReaper, TrashUnderworldReaper },
         { TargetID.VeteranTorturedWarg, TrashVeteranTorturedWarg },
-        { TargetID.GreenSpirit1, TrashGenericFriendlyTarget },
-        { TargetID.GreenSpirit2, TrashGenericFriendlyTarget },
+        { TargetID.LostSpirit1, TrashGenericFriendlyTarget },
+        { TargetID.LostSpirit2, TrashGenericFriendlyTarget },
         { TargetID.BanditSapper, TrashGenericFriendlyTarget },
         { TargetID.ProjectionArkk, TrashGenericFriendlyTarget },
         { TargetID.PrioryExplorer, TrashGenericFriendlyTarget },
@@ -1231,6 +1238,19 @@ internal static class ParserIcons
         { TargetID.VoidBrandscaleOW1, TrashVoidBrandscale },
         { TargetID.VoidBrandscaleOW2, TrashVoidBrandscale },
         { TargetID.VoidFrostwingOW, TrashVoidFrostwing },
+        { TargetID.HTGreenJormagEast, NoImage },
+        { TargetID.HTGreenJormagSouthEast, NoImage },
+        { TargetID.HTGreenJormagWest, NoImage },
+        { TargetID.HTGreenPrimordusNorth, NoImage },
+        { TargetID.HTGreenPrimordusNorthEast, NoImage },
+        { TargetID.HTGreenPrimordusNorthWest, NoImage },
+        { TargetID.HTGreenZhaitanNorthWest, NoImage },
+        { TargetID.HTGreenZhaitanSouth, NoImage },
+        { TargetID.HTGreenZhatainNorthEast, NoImage },
+        { TargetID.HTGreenSooWonNorthEast, NoImage },
+        { TargetID.HTGreenSooWonSouth, NoImage },
+        { TargetID.HTGreenSooWonSouthEast, NoImage },
+        { TargetID.VoidAmalgamate, NoImage },
         //{ TargetID.CastleFountain, TrashCastleFountain },
         { TargetID.HauntingStatue, TrashHauntingStatue },
         { TargetID.GreenKnight, TrashRGBKnight },
@@ -1348,6 +1368,14 @@ internal static class ParserIcons
         { TargetID.UmbrielHalberdOfHouseAurkus, Umbriel },
         { TargetID.ZojjaNayos, Zojja },
         { TargetID.WhisperingShadow, WhisperingShadow },
+        { TargetID.KelaSeneschalOfWaves, KelaSeneschalOfWaves },
+        { TargetID.VeteranCrocodilianRazortooth, CrocodilianRazortooth },
+        { TargetID.EliteCrocodilianRazortooth, CrocodilianRazortooth },
+        { TargetID.DownedEliteCrocodilianRazortooth, DownedCrocodilianRazortooth },
+        { TargetID.CursedArtifact_NPC, TrashBloodstoneShard },
+        { TargetID.ExecutorOfWaves, ExecutorOfWaves },
+        { TargetID.GuardiansGladeTornado, TrashSmallJumpyTornado },
+        { TargetID.LightThief, LightThief },
     };
 
     /// <summary>
@@ -1597,6 +1625,7 @@ internal static class ParserIcons
         { MinionID.SpiritOfAnguish, MinionSpiritOfAnguish },
         { MinionID.SpiritOfPreservation, MinionSpiritOfPreservation },
         { MinionID.SpiritOfWanderlust, MinionSpiritOfWanderlust },
+        { MinionID.InsectSwarm, MinionInsectSwarm },
     };
 
     /// <summary>
