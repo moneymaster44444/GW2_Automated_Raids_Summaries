@@ -28,8 +28,9 @@ import config_output
 from parser_functions import *
 from output_functions import *
 
-CURRENT_VERSION = "1.4.13"  
+CURRENT_VERSION = "1.6.1"  
 REPO = "Drevarr/GW2_EI_log_combiner"
+LATEST_VERSION = None
 
 def get_latest_github_version(repo: str) -> str | None:
     url = f"https://api.github.com/repos/{repo}/releases/latest"
@@ -39,32 +40,18 @@ def get_latest_github_version(repo: str) -> str | None:
         data = response.json()
         return data.get("tag_name") or data.get("name")
     except Exception as e:
-        print(f"⚠️ Could not check for updates: {e}")
+        print(f"Could not check for updates: {e}")
         return None
 
-def check_for_update(show_popup=False):
-    latest = get_latest_github_version(REPO)
-    if latest is None:
-        return
+def check_for_update():
+	print("Checking for updates...")
+	latest = get_latest_github_version(REPO)
+	if latest is None:
+		return
 
-    if latest.strip().lstrip("v") != CURRENT_VERSION.strip().lstrip("v"):
-        if show_popup:
-            show_update_popup(latest, CURRENT_VERSION, REPO)		
-
-def show_update_popup(latest_version: str, current_version: str, repo: str):
-    message = (
-        f"A newer version of GW2 EI Log Combiner is available.\n\n"
-        f"Current version: {current_version}\n"
-        f"Latest version: {latest_version}\n\n"
-        f"Download it from:\nhttps://github.com/{repo}/releases/latest"
-    )
-
-    ctypes.windll.user32.MessageBoxW(
-        0,
-        message,
-        "Update Available",
-        0x40 | 0x0  # MB_ICONINFORMATION | MB_OK
-    )
+	if latest.strip().lstrip("v") != CURRENT_VERSION.strip().lstrip("v"):
+		print(f"New version available: {latest}")
+		return latest
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(
@@ -165,6 +152,8 @@ if __name__ == '__main__':
 	webhook_url = config_ini.get('DiscordCfg', 'webhook_url', fallback=False)
 	discord_additional_notes = config_ini.get('DiscordCfg', 'discord_additional_notes', fallback=None)
 	
+	LATEST_VERSION = check_for_update()
+
 	# Ensure output directories exist
 	os.makedirs(db_path, exist_ok=True)
 	os.makedirs(excel_path, exist_ok=True)
@@ -210,7 +199,7 @@ if __name__ == '__main__':
 	#create the main tiddler and append to tid_list
 	build_main_tid(tid_date_time, tag_list, guild_name, args.description_append)
 
-	output_tag_summary(tag_data, tid_date_time)
+	output_tag_summary(LATEST_VERSION, tag_data, tid_date_time)
 
 	#create the menu tiddler and append to tid_list
 	build_menu_tid(tid_date_time, db_update)
@@ -353,10 +342,12 @@ if __name__ == '__main__':
 	#get squad comp and output table
 	build_squad_composition(top_stats, tid_date_time, tid_list)
 
-
+	profession_color = config_output.profession_color
 	#get heal stats found and output table
 	build_healing_summary(top_stats, "Heal Stats", tid_date_time)
-
+	#tid_title = f"{tid_date_time}-{stat_category}-{stat_name}-boxplot"
+	render_boxplot_echart(stats_per_fight, "extBarrierStats", "squad_barrier", profession_color, tid_date_time, tid_list)
+	render_boxplot_echart(stats_per_fight, "extHealingStats", "squad_healing", profession_color, tid_date_time, tid_list)
 	#get personal buffs found and output table
 	build_personal_buff_summary(top_stats, buff_data, personal_buff_data, "Personal Buffs", tid_date_time)
 
@@ -404,7 +395,7 @@ if __name__ == '__main__':
 
 	build_mesmer_clone_usage(mesmer_clone_usage, tid_date_time, tid_list)
 
-	profession_color = config_output.profession_color
+	
 	build_support_bubble_chart(top_stats, buff_data, weights, tid_date_time, tid_list, profession_color)
 	build_DPS_bubble_chart(top_stats, tid_date_time, tid_list, profession_color)
 	build_utility_bubble_chart(top_stats, buff_data, weights, tid_date_time, tid_list, profession_color)
@@ -412,7 +403,12 @@ if __name__ == '__main__':
 	build_boon_generation_bar_chart(top_stats, boons, weights, tid_date_time, tid_list)
 	conditions = config_output.buffs_conditions
 	build_condition_generation_bar_chart(top_stats, conditions, weights, tid_date_time, tid_list)
-
+	for stat, stat_category in config_output.support_table.items():
+		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+	for stat, stat_category in config_output.defenses_table.items():
+		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
+	for stat, stat_category in config_output.offensive_table.items():
+		render_boxplot_echart(stats_per_fight, stat_category, stat, profession_color, tid_date_time, tid_list)
 	build_dps_stats_tids(DPSStats, tid_date_time, tid_list)
 	build_dps_stats_menu(tid_date_time)
 
@@ -478,4 +474,4 @@ if __name__ == '__main__':
 		if not webhook_url:
 			print("No webhook URL found")
 
-	check_for_update(show_popup=True)
+	
