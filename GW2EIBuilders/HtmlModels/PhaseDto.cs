@@ -120,6 +120,8 @@ internal class PhaseDto
     public List<int> Targets;
     public List<int> TargetPriorities;
     public bool BreakbarPhase;
+    public double BreakbarRecovered;
+    public double BreakbarStart;
 
     public List<DPSStatDataItem> DpsStats;
     public List<List<DPSStatDataItem>> DpsStatsTargets;
@@ -142,8 +144,8 @@ internal class PhaseDto
     public List<DamageModData> DmgIncModifiersPers;
 
 
-    public List<List<int[]>> MechanicStats;
-    public List<List<int[]>> EnemyMechanicStats;
+    public List<List<double[]>> MechanicStats;
+    public List<List<double[]>> EnemyMechanicStats;
     public List<long> PlayerActiveTimes;
 
     public List<double>? MarkupLines;
@@ -273,6 +275,11 @@ internal class PhaseDto
 
                 MarkupAreas.Add(phaseArea);
             }
+        } 
+        else
+        {
+            BreakbarRecovered = ((BreakbarPhaseData)phase).BreakbarRecovered;
+            BreakbarStart = Start + ((BreakbarPhaseData)phase).Offset / 1000.0;
         }
 
         if (MarkupAreas?.Count == 0)

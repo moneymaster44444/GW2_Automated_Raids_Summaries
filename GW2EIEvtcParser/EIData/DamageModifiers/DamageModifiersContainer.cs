@@ -1,5 +1,6 @@
 ﻿using GW2EIEvtcParser.LogLogic;
 using GW2EIEvtcParser.ParsedData;
+using static GW2EIEvtcParser.ParserHelper;
 
 namespace GW2EIEvtcParser.EIData;
 
@@ -80,17 +81,35 @@ public class DamageModifiersContainer
             currentOutgoingDamageMods.AddRange(modifierDescriptor.Where(x => x.Available(combatData) && x.Keep(parseMode, skillMode, parserSettings)).Select(x => new OutgoingDamageModifier(x)));
         }
         var outDamageModsPerSource = new Dictionary<ParserHelper.Source, List<OutgoingDamageModifier>>();
-        foreach (var incDamageMod in currentOutgoingDamageMods)
+        foreach (var outDamageMod in currentOutgoingDamageMods)
         {
-            foreach (var source in incDamageMod.Srcs)
+            if (outDamageMod.DmgSrc == DamageModifiersUtils.DamageSource.Incoming)
             {
-                if (outDamageModsPerSource.TryGetValue(source, out var list))
+                throw new InvalidDataException("Outgoing damage mods must not have DmgSrc as Incoming");
+            }
+            if (outDamageMod.SpecSpecificShared)
+            {
+                if (outDamageModsPerSource.TryGetValue(Source.Common, out var list))
                 {
-                    list.Add(incDamageMod);
+                    list.Add(outDamageMod);
                 }
                 else
                 {
-                    outDamageModsPerSource[source] = [incDamageMod];
+                    outDamageModsPerSource[Source.Common] = [outDamageMod];
+                }
+            } 
+            else
+            {
+                foreach (var source in outDamageMod.Srcs)
+                {
+                    if (outDamageModsPerSource.TryGetValue(source, out var list))
+                    {
+                        list.Add(outDamageMod);
+                    }
+                    else
+                    {
+                        outDamageModsPerSource[source] = [outDamageMod];
+                    }
                 }
             }
         }
@@ -172,15 +191,33 @@ public class DamageModifiersContainer
         var incDamageModsPerSource = new Dictionary<ParserHelper.Source, List<IncomingDamageModifier>>();
         foreach (var incDamageMod in currentIncomingDamageMods)
         {
-            foreach (var source in incDamageMod.Srcs)
+            if (incDamageMod.DmgSrc != DamageModifiersUtils.DamageSource.Incoming)
             {
-                if (incDamageModsPerSource.TryGetValue(source, out var list))
+                throw new InvalidDataException("Incoming damage mods must have DmgSrc as Incoming");
+            }
+            if (incDamageMod.SpecSpecificShared)
+            {
+                if (incDamageModsPerSource.TryGetValue(Source.Common, out var list))
                 {
                     list.Add(incDamageMod);
                 }
                 else
                 {
-                    incDamageModsPerSource[source] = [incDamageMod];
+                    incDamageModsPerSource[Source.Common] = [incDamageMod];
+                }
+            }
+            else
+            {
+                foreach (var source in incDamageMod.Srcs)
+                {
+                    if (incDamageModsPerSource.TryGetValue(source, out var list))
+                    {
+                        list.Add(incDamageMod);
+                    }
+                    else
+                    {
+                        incDamageModsPerSource[source] = [incDamageMod];
+                    }
                 }
             }
         }
@@ -194,7 +231,7 @@ public class DamageModifiersContainer
         });
     }
 
-    public List<OutgoingDamageModifier> GetOutgoingModifiersPerSpec(ParserHelper.Spec spec)
+    public List<OutgoingDamageModifier> GetPersonalOutgoingModifiersPerSpec(ParserHelper.Spec spec)
     {
         var srcs = ParserHelper.SpecToSources(spec);
         var res = new List<OutgoingDamageModifier>(srcs.Count); //TODO_PERF(Rennorb) @find average complexity
@@ -208,7 +245,7 @@ public class DamageModifiersContainer
         return res;
     }
 
-    public List<IncomingDamageModifier> GetIncomingModifiersPerSpec(ParserHelper.Spec spec)
+    public List<IncomingDamageModifier> GetPersonalIncomingModifiersPerSpec(ParserHelper.Spec spec)
     {
         var srcs = ParserHelper.SpecToSources(spec);
         var res = new List<IncomingDamageModifier>(srcs.Count); //TODO_PERF(Rennorb) @find average complexity
