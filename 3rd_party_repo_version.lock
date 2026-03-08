@@ -4,7 +4,7 @@
       "name": "Elite Insights",
       "repo": "https://github.com/baaron4/GW2-Elite-Insights-Parser.git",
       "prefix": "Resources\\Elite Insights",
-      "ref": "v3.18.1.0",
+      "ref": "v3.19.0.1",
       "squash": true
     },
     {
