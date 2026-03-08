@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
-using System.Numerics;
+﻿using System.Numerics;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using GW2EIGW2API;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -81,8 +81,17 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
         new PlayerDstHealthDamageHitMechanic(ScaldingWave, new MechanicPlotlySetting(Symbols.Star, Colors.Blue), "ScalWave.H", "Hit by Scalding Wave", "Scalding Wave Hit", 0),
         new PlayerDstBuffApplyMechanic(FixatedKela, new MechanicPlotlySetting(Symbols.Star,Colors.Magenta), "Fixated", "Fixated by Kela", "Kela Fixated", 0),
         new PlayerDstBuffApplyMechanic(Hunted, new MechanicPlotlySetting(Symbols.Star, Colors.Red), "Croc.Fix", "Fixated by Crocodilian Razortooth", "Croc Fixated", 0),
-        new PlayerDstBuffApplyMechanic(LooseSand, new MechanicPlotlySetting(Symbols.Bowtie, Colors.LightPurple), "LooSand.A", "Applied Loose Sand", "Loose Sand Applied", 0),
         new PlayerDstBuffApplyMechanic(ShreddedArmor, new MechanicPlotlySetting(Symbols.Octagon, Colors.LightRed), "ShredArmor.A", "Applied Shredded Armor", "Shredded Armor Applied", 0),
+        // Loose Sand
+        new MechanicGroup([
+            new PlayerDstBuffApplyMechanic(LooseSand, new MechanicPlotlySetting(Symbols.Bowtie, Colors.LightPurple), "LooSand.A", "Applied Loose Sand", "Loose Sand Applied", 0),
+            new MechanicGroup([
+                new AchievementEligibilityMechanic(Ach_Surefooted, new MechanicPlotlySetting(Symbols.Bowtie, Colors.DarkPurple), "Achiv.Sand.L", "Achievement Eligibility: Surefooted Lost", "Achiv: Surefooted Lost", 0)
+                    .UsingChecker((evt, log) => evt.Lost),
+                new AchievementEligibilityMechanic(Ach_Surefooted, new MechanicPlotlySetting(Symbols.Bowtie, Colors.Purple), "Achiv.Sand.K", "Achievement Eligibility: Surefooted Kept", "Achiv: Surefooted Kept", 0)
+                    .UsingChecker((evt, log) => !evt.Lost)
+            ]),
+        ]),
         // Biting Swarm
         new MechanicGroup([
             new PlayerDstBuffApplyMechanic(BitingSwarm, new MechanicPlotlySetting(Symbols.Diamond, Colors.Orange), "Bee", "Biting Swarm Application", "Biting Swarm", 0)
@@ -325,7 +334,8 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
 
     internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
-        return LogData.Mode.Normal;
+        SingleActor kela = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KelaSeneschalOfWaves)) ?? throw new MissingKeyActorsException("Kela not found");
+        return (kela.GetHealth(combatData) > 70e6) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)
@@ -431,7 +441,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
                     var tantrumCasts = target.GetAnimatedCastEvents(log).Where(x => x.SkillID == KelaTantrum1 || x.SkillID == KelaTantrum2).ToList();
                     foreach (var cast in tantrumCasts)
                     {
-                        var decoration = new CircleDecoration(1800, (cast.Time, cast.EndTime), Colors.Red, 0.2, new AgentConnector(target)).UsingFilled(false);
+                        var decoration = new CircleDecoration(1800, (cast.Time, cast.EndTime), Colors.DarkRed, 0.8, new AgentConnector(target)).UsingFilled(false);
                         replay.Decorations.Add(decoration);
                     }
                     break;
@@ -496,15 +506,28 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
         }
 
         // Sand
-        foreach (var agent in log.AgentData.GetNPCsByIDs([TargetID.ExecutorOfWaves, TargetID.KelaSeneschalOfWavesSand]))
+        if (log.CombatData.GetGW2BuildEvent().Build >= GW2Builds.February2026GuardiansGladeCMReleaseAndMinorBalance)
         {
-            if (log.CombatData.TryGetEffectEventsBySrcWithGUID(agent, EffectGUIDs.GuardiansGaleSand, out var sands))
+            foreach (var agent in log.AgentData.GetNPCsByIDs([TargetID.ExecutorOfWaves, TargetID.KelaSeneschalOfWavesSand]))
             {
-                AddSandDecorations(log, environmentDecorations, sands, 2500, Colors.Yellow, 0.1, true);
+                if (log.CombatData.TryGetEffectEventsBySrcWithGUID(agent, EffectGUIDs.GuardiansGaleSandBorder, out var borders))
+                {
+                    AddSandDecorations(log, environmentDecorations, borders, 2500, Colors.Yellow, 0.1, true, Colors.Red, 0.2);
+                }
             }
-            if (log.CombatData.TryGetEffectEventsBySrcWithGUID(agent, EffectGUIDs.GuardiansGaleSandBorder, out var borders))
+        } 
+        else
+        {
+            foreach (var agent in log.AgentData.GetNPCsByIDs([TargetID.ExecutorOfWaves, TargetID.KelaSeneschalOfWavesSand]))
             {
-                AddSandDecorations(log, environmentDecorations, borders, 3500, Colors.Red, 0.2, false);
+                if (log.CombatData.TryGetEffectEventsBySrcWithGUID(agent, EffectGUIDs.GuardiansGaleSand, out var sands))
+                {
+                    AddSandDecorations(log, environmentDecorations, sands, 2500, Colors.Yellow, 0.1, true);
+                }
+                if (log.CombatData.TryGetEffectEventsBySrcWithGUID(agent, EffectGUIDs.GuardiansGaleSandBorder, out var borders))
+                {
+                    AddSandDecorations(log, environmentDecorations, borders, 3500, Colors.Red, 0.2, false);
+                }
             }
         }
 
@@ -525,12 +548,26 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
         {
             foreach (var effect in waves)
             {
-                // TODO - Investigate if it's possible to update the behaviour of the wave to be a moving rectangle.
-                // If it's possible, update the indicator above to last since its spawn time until the wave ends.
+                int durationWave = 4666;
+                lifespan = effect.ComputeLifespan(log, durationWave);
+                var rotationAngle = new AngleConnector(effect.Rotation.Z);
+
+                // Background wave
                 var position = new PositionConnector(effect.Position).WithOffset(new Vector3(0f, -0.5f * waveLength, 0f), true);
-                var decoration = new RectangleDecoration(2000, waveLength, effect.ComputeLifespan(log, 4666), Colors.LightBlue, 0.2, position)
-                   .UsingRotationConnector(new AngleConnector(effect.Rotation.Z));
+                var decoration = new RectangleDecoration(2000, waveLength, lifespan, Colors.LightBlue, 0.2, position)
+                   .UsingRotationConnector(rotationAngle);
                 environmentDecorations.Add(decoration);
+
+                // Moving wave
+                int velocity = 1000;
+                uint movingWaveLength = 300;
+                var direction = new Vector3((float)Math.Cos(effect.Orientation.Z + Math.PI / 2), (float)Math.Sin(effect.Orientation.Z + Math.PI / 2), 0);
+                var shiftedStart = effect.Position + direction * movingWaveLength / 2;
+                var initialPosition = new ParametricPoint3D(shiftedStart, lifespan.start);
+                var finalPosition = new ParametricPoint3D(shiftedStart + (velocity * durationWave / 1000.0f) * direction, lifespan.end);
+                var movingWave = new RectangleDecoration(2000, movingWaveLength, lifespan, Colors.CobaltBlue, 0.5, new InterpolationConnector([initialPosition, finalPosition]))
+                   .UsingRotationConnector(rotationAngle);
+                environmentDecorations.Add(movingWave);
             }
         }
 
@@ -561,15 +598,52 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
         {
             base.ComputeAchievementEligibilityEvents(log, p, achievementEligibilityEvents);
         }
+
+        var surefooted = new List<AchievementEligibilityEvent>();
+        var kelaPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+        var sandApplications = log.CombatData.GetBuffApplyDataByIDByDst(LooseSand, p.AgentItem);
+
+        foreach (AbstractBuffApplyEvent apply in sandApplications)
+        {
+            // If the Executor is alive, Loose Sand is applied by the Executor and you lose the eligibility.
+            // If the Executor is dead, Loose Sand is applied by Kela and you do NOT lose the eligibility.
+            // This will require a GW2 build check in case it gets fixed in game.
+            if (apply.By.IsSpecies(TargetID.ExecutorOfWaves))
+            {
+                InsertAchievementEligibityEventAndRemovePhase(kelaPhases, surefooted, apply.Time, Ach_Surefooted, p);
+            }
+        }
+
+        AddSuccessBasedAchievementEligibityEvents(kelaPhases, surefooted, Ach_Surefooted, p);
+        achievementEligibilityEvents.AddRange(surefooted);
     }
+
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)
     {
         if (!log.LogData.IgnoreBaseCallsForCRAndInstanceBuffs)
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
+
+        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var tackleCasts = log.CombatData.GetAnimatedCastData(CrocodilianRazortoothTackle)
+                .Where(x => x.Caster.IsAnySpecies([TargetID.VeteranCrocodilianRazortooth, TargetID.EliteCrocodilianRazortooth])).ToList();
+
+        foreach (var phase in encounterPhases)
+        {
+            if (!phase.Success || !phase.IsCM)
+            {
+                continue;
+            }
+
+            if (!tackleCasts.Any(x => phase.InInterval(x.Time)))
+            {
+                instanceBuffs.Add(new(log.Buffs.BuffsByIDs[AchievementEligibilitySeeYouLaterAlligator], 1, phase));
+            }
+        }
     }
-    private static void AddSandDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer decorations, IReadOnlyList<EffectEvent> effects, long defaultDuration, Color color, double opacity, bool filled)
+
+    private static void AddSandDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer decorations, IReadOnlyList<EffectEvent> effects, long defaultDuration, Color color, double opacity, bool filled, Color? borderColor = null, double borderOpacity = 0)
     {
         const uint maxInterval = 2500; // usually 2s interval
         const uint baseRadius = 240;
@@ -593,7 +667,14 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
             var radius = (uint)(effect.Scale * baseRadius);
             var decoration = new CircleDecoration(radius, (start, end), color, opacity, new PositionConnector(effect.Position))
                 .UsingFilled(filled);
-            decorations.Add(decoration);
+            if (borderColor != null)
+            {
+                decorations.AddWithBorder(decoration, borderColor, borderOpacity);
+            }
+            else
+            {
+                decorations.Add(decoration);
+            }
             mergedStart = long.MaxValue;
         }
     }
