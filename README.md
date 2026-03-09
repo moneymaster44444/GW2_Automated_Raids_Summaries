@@ -1,89 +1,101 @@
-# GW2_Automated_Raids_Summaries
+# GW2 Automated Raids Summaries (.NET Console App)
 
-A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-Elite-Insights-Parser) and [EI Combiner](https://github.com/Drevarr/GW2_EI_log_combiner) log processing for Guild Wars 2 arcdps raid logs.
+This project now uses a **single C# console application** to run the same workflow that was previously spread across batch files:
 
----
-## Before you begin, install the following required tools.
-
-- [Python 3](https://www.python.org/downloads/) (Required to run EI Combiner's python script in `process_logs.bat`)
-  - After installing Python, install xlsxwriter: `pip install requests glicko2 xlsxwriter`
-- [.NET SDK 8](https://dotnet.microsoft.com/en-us/download) (Required by `build_elite_insights.bat` to build `GuildWars2EliteInsights-CLI.exe`)
-- [Node.js](https://nodejs.org/en/download)
-  - After installing Node.js, install tiddlywiki: `npm install -g tiddlywiki`
-    - To automatically load and generate the summary HTML file without having to manually drag and drop the generated JSON file from EI Combiner.
-
----
-## How to Use
-
-### 1. Place your arcDPS logs into:
-   ```
-   Raid_Logs
-   ```
-### 2. Run:
-   ```bat
-   process_logs.bat
-   ```
-   You will find the resulting HTML file in `Raids_Summaries`.
-
-## (Optional) Set Discord webhook URL to automatically post the results to Discord*
-  
-   Create a webhook on a Discord channel of your choice and save the webhook URL to:
-   ```
-   \Resources\Config\Secrets\discord_webhook.txt
-   ```
-  
-   Your summary HTML in `\Raids_Summaries` will post to Discord at the end of the batch run.  
-   <sub>* Note: you must run `process_logs.bat` at least once to find `discord_webhook.txt`</sub>  
-   
----
-## Details: Batch Files Overview
-
-- `establish_config_files.bat`
-  
-  Creates the required config files for Elite Insights and EI Combiner.  
-  This runs automatically in `process_logs.bat` as necessary.
-  
-- `build_elite_insights.bat`
-  
-  Builds the Elite Insights CLI executable at:  
-  ```
-  Resources\Elite Insights\GW2EI.bin\Release\CLI\GuildWars2EliteInsights-CLI.exe
-  ```  
-  This runs automatically in `process_logs.bat` as necessary.
-
-- `process_logs.bat`
-  
-  Processes your arcDPS logs by running them through Elite Insights and EI Combiner.  
-  Produces a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) that can be dragged into:  
-  ```
-  Resources\EI Combiner\Example_Output\Top_Stats_Index.html
-  ```
-
-- `get_latest_ei_and_ei_combiner.bat`
-  
-  This is a development tool to pull the latest releases of Elite Insights and EI Combiner into this repo.  
-  Updates may introduce breaking changes that require adjustments in this repo.  
-  Always test after running it.  
+1. Create real config files from sample templates.
+2. Build the Elite Insights CLI.
+3. Ensure `discord_webhook.txt` exists.
+4. On normal runs, clean intermediate files, parse logs, combine JSON, generate summary HTML with TiddlyWiki, and optionally post to Discord.
 
 ---
 
-## Advanced Use / Development
+## What it does
 
-If you are maintaining this repository and want to update either Elite Insights or EI Combiner:
+The app reproduces the business flow from the original scripts:
 
-- First, update the `3rd_party_repo_version.lock`
-  - Find the latest release version tag names for both EI and EI Combiner projects.
-  - Update the "ref" field with the version tag names.
-  - Commit to local so that your change list is clean before moving to the next step.
-- Run:
-  ```bat
-  get_latest_ei_and_ei_combiner.bat
-  ```
-  - This will pull the release versions of Elite Insights and EI Combiner into `\Resources\Elite Insights` and `\Resources\EI Combiner` respectively.
-  - Make sure your git repo does not have any changes when running this. If you get any error stating that your repo has changes even though it's clean (phantom changes), try running `git restore` in cmd at the root:
-    - ```
-      git restore -s@ -SW -- Resources/"EI Combiner"
+- Reads logs from `Raid_Logs` (`.zevtc` and `.evtc`).
+- Runs Elite Insights CLI to generate JSON in `Raids_Summaries/EI_json_output`.
+- Runs EI Combiner (`tw5_top_stats.py`) to produce `Drag_and_Drop_Log_Summary_*.json`.
+- Loads that JSON into TiddlyWiki in headless mode and builds `index.html`.
+- Writes final summary to `Raids_Summaries/INC_MM-dd-yy.html`.
+- If a webhook URL exists in `Resources/Config/Secrets/discord_webhook.txt`, uploads the summary to Discord (HTML first, ZIP fallback).
 
-      git restore -s@ -SW -- Resources/"Elite Insights"
-      ```
-- After updating, thoroughly test `process_logs.bat` to ensure no breaking changes were introduced before committing and pushing.
+---
+
+## Prerequisites
+
+Install these tools before using the app:
+
+- **.NET SDK 8+**
+- **Python 3**
+  - Install required packages:
+    - `pip install requests glicko2 xlsxwriter`
+- **Node.js**
+  - Install TiddlyWiki globally:
+    - `npm install -g tiddlywiki`
+
+---
+
+## Console App Location
+
+- Project file: `src/Gw2RaidSummaryTool/Gw2RaidSummaryTool.csproj`
+- Entry point: `src/Gw2RaidSummaryTool/Program.cs`
+
+---
+
+## Usage
+
+From repository root:
+
+```bash
+dotnet run --project src/Gw2RaidSummaryTool -- help
+```
+
+### Commands
+
+```bash
+dotnet run --project src/Gw2RaidSummaryTool -- init
+```
+Creates/refreshes:
+- `Resources/Config/EliteInsights.conf` from `sample.eliteinsights.conf`
+- `Resources/Config/top_stats_config.ini` from `sample.top_stats_config.ini`
+- `Resources/Config/Secrets/discord_webhook.txt` (if missing)
+
+```bash
+dotnet run --project src/Gw2RaidSummaryTool -- build
+```
+Builds/publishes Elite Insights CLI to:
+- `Resources/Elite Insights/GW2EI.bin/Release/CLI`
+
+```bash
+dotnet run --project src/Gw2RaidSummaryTool -- run
+```
+Full pipeline (default command if omitted):
+- setup if needed
+- build EI CLI if missing
+- process logs
+- build summary HTML
+- optional Discord upload
+
+---
+
+## Discord setup (optional)
+
+Put your webhook URL as the first non-empty, non-comment line in:
+
+`Resources/Config/Secrets/discord_webhook.txt`
+
+Example:
+
+```text
+# Guild raid summary webhook
+https://discord.com/api/webhooks/...
+```
+
+---
+
+## Notes for maintainers
+
+- The old batch scripts are still in the repository as references to prior behavior.
+- The C# app keeps the flow intentionally simple and readable so entry-level developers can maintain it.
+- If you need to update vendored EI/EI Combiner source trees, continue using `3rd_party_repo_version.lock` + `get_latest_ei_and_ei_combiner.bat`.
