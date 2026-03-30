@@ -823,6 +823,8 @@ def get_stacking_uptime_data(player, damagePS, duration, fight_ticks, blacklist)
 	player_prof_name = f"{player['name']}|{player['profession']}|{get_player_account(player)}"
 	if player["account"] in blacklist:
 		return
+	if player['activeTimes'][0] == 0:
+		return
 	if player_prof_name not in stacking_uptime_Table:
 		stacking_uptime_Table[player_prof_name] = {}
 		stacking_uptime_Table[player_prof_name]["account"] = get_player_account(player)
@@ -1217,12 +1219,19 @@ def get_skills_data(skill_map: dict) -> None:
 		name = skill_map[skill]['name']
 		auto_attack = skill_map[skill]['autoAttack']
 		icon = skill_map[skill].get('icon', 'unknown.png')
+		is_proc = False
+
+		if skill_map[skill].get('isTraitProc', False) or skill_map[skill].get('isGearProc', False) or skill_map[skill].get('isUnconditionalProc', False):
+			is_proc = True
+
 		if skill_id not in skill_data:
 			skill_data[skill_id] = {
 				'name': name,
 				'auto': auto_attack,
+				'isProc': is_proc,
 				'icon': icon
 			}
+			
 		elif skill_data[skill_id]['icon'] in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
 			if icon not in ("https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png", "unknown.png"):
 				skill_data[skill_id]['icon'] = icon
@@ -1522,14 +1531,35 @@ def get_stat_by_target(fight_num: int, player: dict, stat_category: str, name_pr
 	if stat_category not in top_stats['player'][name_prof]:
 		top_stats['player'][name_prof][stat_category] = {}
 
+	fight_totals = {}  
+
 	for target in player[stat_category]:
-		if target[0]:
-			for stat, value in target[0].items():
-				top_stats['player'][name_prof][stat_category][stat] = top_stats['player'][name_prof][stat_category].get(stat, 0) + value
-				top_stats['fight'][fight_num][stat_category][stat] = top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
-				top_stats['overall'][stat_category][stat] = top_stats['overall'][stat_category].get(stat, 0) + value
-			player_value = top_stats['player'][name_prof][stat_category].get(stat, 0)
-			stats_per_fight[stat_category][stat][name_prof].append(round(player_value/player['activeTimes'][0],2) if player['activeTimes'][0] > 0 else 0)
+		if not target[0]:
+			continue
+
+		for stat, value in target[0].items():
+			# player lifetime
+			top_stats['player'][name_prof][stat_category][stat] = \
+				top_stats['player'][name_prof][stat_category].get(stat, 0) + value
+
+			# fight total
+			top_stats['fight'][fight_num][stat_category][stat] = \
+				top_stats['fight'][fight_num][stat_category].get(stat, 0) + value
+
+			# overall
+			top_stats['overall'][stat_category][stat] = \
+				top_stats['overall'][stat_category].get(stat, 0) + value
+
+			# local fight-only
+			fight_totals[stat] = fight_totals.get(stat, 0) + value
+
+	# derive per-fight values from fight_totals
+	active_time = player['activeTimes'][0] / 1000
+	for stat, value in fight_totals.items():
+		stats_per_fight[stat_category][stat][name_prof].append(
+			round(value / active_time, 2) if active_time > 0 else 0
+		)
+
 
 def get_stat_by_skill(fight_num: int, player: dict, stat_category: str, name_prof: str) -> None:
 	"""
@@ -1808,7 +1838,7 @@ def get_buff_generation(fight_num: int, player: dict, stat_category: str, name_p
 				
 		top_stats['player'][name_prof][stat_category][buff_id]['generation'] = top_stats['player'][name_prof][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['player'][name_prof][stat_category][buff_id]['wasted'] = top_stats['player'][name_prof][stat_category][buff_id].get('wasted', 0) + buff_wasted
-		stats_per_fight[stat_category][buff_id][name_prof].append(buff_generation)
+		stats_per_fight[stat_category][buff_id][name_prof].append(round(buff_generation/duration, 2))
 		top_stats['fight'][fight_num][stat_category][buff_id]['generation'] = top_stats['fight'][fight_num][stat_category][buff_id].get('generation', 0) + buff_generation
 		top_stats['fight'][fight_num][stat_category][buff_id]['wasted'] = top_stats['fight'][fight_num][stat_category][buff_id].get('wasted', 0) + buff_wasted
 
@@ -1844,6 +1874,7 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, n
 			'ActiveTime': 0,
 			'total': 0,
 			'total_no_auto': 0,
+			'total_no_auto_no_proc': 0,
 			'account': get_player_account(player),
 			'Skills': {}
 		}
@@ -1855,6 +1886,10 @@ def get_skill_cast_by_prof_role(active_time, player: dict, stat_category: str, n
 		cast_count = len(skill['skills'])
 
 		top_stats['skill_casts_by_role'][profession][name_prof]['total'] += cast_count
+		
+		if not skill_data[skill_id]['auto'] and not skill_data[skill_id]['isProc']:
+			top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto_no_proc'] += cast_count
+
 		if not skill_data[skill_id]['auto']:
 			top_stats['skill_casts_by_role'][profession][name_prof]['total_no_auto'] += cast_count
 			
@@ -3008,6 +3043,8 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 		else:
 			team = None
 		active_time = player['activeTimes'][0]
+		if not active_time:
+			continue
 
 		if name in players_running_healing_addon:
 			if name_prof not in top_stats['players_running_healing_addon']:
@@ -3111,12 +3148,17 @@ def parse_file(file_path, fight_num, guild_data, fight_data_charts, blacklist):
 			# format: player[stat_category][buff][buffData][0][generation]
 			if stat_cat in ['squadBuffs', 'groupBuffs', 'selfBuffs']:
 				get_buff_generation(fight_num, player, stat_cat, name_prof, fight_duration_ms, buff_data, squad_count, group_count)
-			if stat_cat in ['squadBuffsActive', 'groupBuffsActive', 'selfBuffsActive']:                
-				get_buff_generation(fight_num, player, stat_cat, name_prof, active_time, buff_data, squad_count, group_count)
-
+			if stat_cat in ['squadBuffsActive', 'groupBuffsActive', 'selfBuffsActive']:
+				if active_time:
+					get_buff_generation(fight_num, player, stat_cat, name_prof, active_time, buff_data, squad_count, group_count)
+				else:
+					get_buff_generation(fight_num, player, stat_cat, name_prof, fight_duration_ms, buff_data, squad_count, group_count)
 			# format: player[stat_category][skill][skills][casts]
 			if stat_cat == 'rotation' and 'rotation' in player:
-				get_skill_cast_by_prof_role(active_time, player, stat_cat, name_prof)
+				if active_time:
+					get_skill_cast_by_prof_role(active_time, player, stat_cat, name_prof)
+				else:
+					get_skill_cast_by_prof_role(fight_duration_ms, player, stat_cat, name_prof)
 
 			if stat_cat in ['extHealingStats', 'extBarrierStats'] and name in players_running_healing_addon:
 				get_healStats_data(fight_num, player, players, stat_cat, name_prof, fight_duration_ms)
