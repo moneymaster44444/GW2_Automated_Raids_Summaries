@@ -526,5 +526,24 @@ public class CombatReplay
     {
         Hidden.AddRange(actor.GetBuffStatus(log, buffID).Where(x => x.Value > 0));
     }
+
+    internal void AddHideByEncounterPhases(IReadOnlyList<EncounterPhaseData> encounterPhases, ParsedEvtcLog log)
+    {
+        long nextInvisible = log.LogData.EvtcLogStart;
+        for (var i = 0; i < encounterPhases.Count; i++)
+        {
+            if (i == 0)
+            {
+                Hidden.Add(new(log.LogData.EvtcLogStart, encounterPhases[i].Start));
+                nextInvisible = encounterPhases[i].End;
+            }
+            if (i < encounterPhases.Count - 1)
+            {
+                Hidden.Add(new(encounterPhases[i].End, encounterPhases[i + 1].Start));
+                nextInvisible = encounterPhases[i + 1].End;
+            }
+        }
+        Hidden.Add(new(nextInvisible, log.LogData.EvtcLogEnd));
+    }
 }
 

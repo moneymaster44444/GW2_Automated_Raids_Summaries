@@ -220,7 +220,8 @@ public static class AgentManipulationHelper
                     long start = enterCombat.Time;
                     if (originalPlayer.Regrouped.Count > 0)
                     {
-                        var copyFrom = originalPlayer.Regrouped.LastOrNull((in AgentItem.MergedAgentItem x) => x.Merged.InAwareTimes(start));
+
+                        var copyFrom = originalPlayer.Regrouped.LastOrNull((in AgentItem.MergedAgentItem x) => x.Merged.FirstAware <= start && x.Merged.BaseSpec == SpecToBaseSpec(enterCombat.Spec));
                         if (copyFrom != null)
                         {
                             list.Add((start, copyFrom.Value.Merged, enterCombat.Spec, enterCombat.Subgroup, true));
@@ -236,10 +237,6 @@ public static class AgentManipulationHelper
                     }
                 }
             }
-        }
-        foreach (var regrouped in originalPlayer.Regrouped)
-        {
-            list.Add((regrouped.MergeStart, regrouped.Merged, regrouped.Merged.Spec, new Player(regrouped.Merged, false).Group, false));
         }
         list.Sort((x,y) => x.start.CompareTo(y.start));
         var previousPlayerAgent = originalPlayer;
@@ -450,6 +447,47 @@ public static class AgentManipulationHelper
         }
         agentData.SwapMasters(redirectFrom, to);
         to.AddMergeFrom(redirectFrom, redirectFrom.FirstAware, redirectFrom.LastAware);
+    }
+
+    /// <summary>
+    /// Creates an englobed agent matching given interval from originalAgent, if necessary, returns originalAgent otherwise
+    /// </summary>
+    /// <param name="originalAgent"></param>
+    /// <param name="agentData"></param>
+    /// <param name="expectedStart"></param>
+    /// <param name="expectedEnd"></param>
+    /// <returns></returns>
+    internal static AgentItem CreateAgentInIntervalAndDummiesAround(AgentItem originalAgent, AgentData agentData, long expectedStart, long expectedEnd)
+    {
+        AgentItem newAgentItem;
+        if (expectedStart != originalAgent.FirstAware && expectedEnd != originalAgent.LastAware)
+        {
+            var previousDummy = agentData.AddCustomAgentFrom(originalAgent, originalAgent.FirstAware, expectedStart - 1, originalAgent.Spec);
+            previousDummy.SetEnglobingAgentItem(originalAgent, agentData);
+            newAgentItem = agentData.AddCustomAgentFrom(originalAgent, expectedStart, expectedEnd - 1, originalAgent.Spec);
+            newAgentItem.SetEnglobingAgentItem(originalAgent, agentData);
+            var followingDummy = agentData.AddCustomAgentFrom(originalAgent, expectedEnd, originalAgent.LastAware, originalAgent.Spec);
+            followingDummy.SetEnglobingAgentItem(originalAgent, agentData);
+        }
+        else if (expectedStart != originalAgent.FirstAware)
+        {
+            var previousDummy = agentData.AddCustomAgentFrom(originalAgent, originalAgent.FirstAware, expectedStart - 1, originalAgent.Spec);
+            previousDummy.SetEnglobingAgentItem(originalAgent, agentData);
+            newAgentItem = agentData.AddCustomAgentFrom(originalAgent, expectedStart, originalAgent.LastAware, originalAgent.Spec);
+            newAgentItem.SetEnglobingAgentItem(originalAgent, agentData);
+        }
+        else if (expectedEnd != originalAgent.LastAware)
+        {
+            newAgentItem = agentData.AddCustomAgentFrom(originalAgent, originalAgent.FirstAware, expectedEnd - 1, originalAgent.Spec);
+            newAgentItem.SetEnglobingAgentItem(originalAgent, agentData);
+            var followingDummy = agentData.AddCustomAgentFrom(originalAgent, expectedEnd, originalAgent.LastAware, originalAgent.Spec);
+            followingDummy.SetEnglobingAgentItem(originalAgent, agentData);
+        }
+        else
+        {
+            newAgentItem = originalAgent;
+        }
+        return newAgentItem;
     }
 
 }
