@@ -111,7 +111,7 @@ internal class MythwrightGambitInstance : MythwrightGambit
                         success = true;
                     }
                     lowerThreshold = end;
-                    AddInstanceEncounterPhase(log, phases, encounterPhases, [conjuredAmalgamate], [leftArm, rightArm], [], mainPhase, "Conjured Amalgamate", start, end, success, _conjuredAmalgamate, log.CombatData.GetBuffApplyData(SkillIDs.LockedOn).Any(x => x.Time >= start && x.Time <= end) ? LogData.Mode.CM : LogData.Mode.Normal);
+                    AddInstanceEncounterPhase(log, phases, encounterPhases, [conjuredAmalgamate], [leftArm, rightArm], [], mainPhase, "Conjured Amalgamate", start, end, success, _conjuredAmalgamate, log.CombatData.GetBuffApplyData(SkillIDs.LockedOn).Any(x => x.Time >= start && x.Time <= end) ? LogData.Mode.CM : LogData.Mode.Normal, DefaultLogStartStatusChecker([conjuredAmalgamate], start, log.CombatData, 90));
                 }
             }
         }
@@ -208,8 +208,8 @@ internal class MythwrightGambitInstance : MythwrightGambit
             foreach (var caPhase in caPhases)
             {
                 var ca = caPhase.Targets.Keys.First(x => x.IsSpecies(TargetID.ConjuredAmalgamate));
-                var rightArm = caPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.CALeftArm));
-                var leftArm = caPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.CARightArm));
+                var leftArm = caPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.CALeftArm));
+                var rightArm = caPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.CARightArm));
                 phases.AddRange(ConjuredAmalgamate.ComputePhases(log, ca, rightArm, leftArm, caPhase, requirePhases));
             }
         }

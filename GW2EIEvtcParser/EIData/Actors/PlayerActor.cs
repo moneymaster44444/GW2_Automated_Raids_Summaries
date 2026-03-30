@@ -4,7 +4,7 @@ using static GW2EIEvtcParser.ParserHelper;
 
 namespace GW2EIEvtcParser.EIData;
 
-public abstract class PlayerActor : SingleActor
+public abstract partial class PlayerActor : SingleActor
 {
     public bool IsFriendlyPlayer => AgentItem.Type == AgentItem.AgentType.Player || AgentItem.IsNotInSquadFriendlyPlayer;
 
@@ -77,6 +77,6 @@ public abstract class PlayerActor : SingleActor
 
     public override SingleActorCombatReplayDescription GetCombatReplayDescription(CombatReplayMap map, ParsedEvtcLog log)
     {
-        return new PlayerCombatReplayDescription(this, log, map, InitCombatReplay(log));
+        return new PlayerCombatReplayDescription(this, log, map, GetCombatReplay(log));
     }
 }

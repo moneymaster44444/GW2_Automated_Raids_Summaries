@@ -1,5 +1,4 @@
-﻿using GW2EIEvtcParser.LogLogic;
-using GW2EIEvtcParser.Extensions;
+﻿using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
@@ -82,8 +81,9 @@ internal static class GuardianHelper
             .UsingNoAnimatedCastChecker(SymbolOfBlades)
             .UsingNotAccurate()
             .UsingOrigin(InstantCastOrigin.Trait),
-        new EffectCastFinder(LesserSymbolOfResolution, EffectGUIDs.GuardianSymbolOfResolution)
+        new EffectCastFinder(LesserSymbolOfResolution, EffectGUIDs.GuardianSymbolOfResolution_LuminaryLuminousStaffSymbol)
             .UsingNoAnimatedCastChecker(SymbolOfWrath_SymbolOfResolution)
+            .UsingNoAnimatedCastChecker(LuminousStaff)
             .UsingNotAccurate()
             .UsingOrigin(InstantCastOrigin.Trait),
         new EffectCastFinder(LesserSymbolOfResolution, EffectGUIDs.GuardianSymbolOfResolutionLarge)
@@ -356,17 +356,21 @@ internal static class GuardianHelper
         );
 
         // Symbol of Resolution & Lesser Symbol of Resolution
-        AddSymbolDecorationsWithLesserUncertainty(
-            player,
-            log,
-            replay,
-            new SkillModeDescriptor(player, Spec.Guardian, SymbolOfWrath_SymbolOfResolution),
-            new SkillModeDescriptor(player, Spec.Guardian, LesserSymbolOfResolution),
-            new SkillModeDescriptor(player, Spec.Guardian, SymbolOfResolutionOrLesser),
-            (EffectGUIDs.GuardianSymbolOfResolution, EffectGUIDs.GuardianSymbolOfResolutionLarge),
-            4000,
-            EffectImages.EffectSymbolOfResolution
-        );
+        // Collision with Luminous Staff
+        if (player.Spec != Spec.Luminary)
+        {
+            AddSymbolDecorationsWithLesserUncertainty(
+                player,
+                log,
+                replay,
+                new SkillModeDescriptor(player, Spec.Guardian, SymbolOfWrath_SymbolOfResolution),
+                new SkillModeDescriptor(player, Spec.Guardian, LesserSymbolOfResolution),
+                new SkillModeDescriptor(player, Spec.Guardian, SymbolOfResolutionOrLesser),
+                (EffectGUIDs.GuardianSymbolOfResolution_LuminaryLuminousStaffSymbol, EffectGUIDs.GuardianSymbolOfResolutionLarge),
+                4000,
+                EffectImages.EffectSymbolOfResolution
+            );
+        }
 
         // Symbol of Protection & Lesser Symbol of Protection
         AddSymbolDecorationsWithLesserUncertainty(
@@ -553,45 +557,68 @@ internal static class GuardianHelper
         }
     }
 
+    internal static void AddSymbolDecorationsWithLesserUncertainty(List<AnimatedCastEvent> mainSkillCasts, PlayerActor player, ParsedEvtcLog log, CombatReplay replay, SkillModeDescriptor mainSkill, SkillModeDescriptor lesserSkill, SkillModeDescriptor uncertainSkill, GUID effectGUID, uint radius, long duration, string icon)
+    {
+        if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, effectGUID, out var symbols))
+        {
+            var symbolIndex = 0;
+            var candidateMainSymbols = new Dictionary<AnimatedCastEvent, List<EffectEvent>>(mainSkillCasts.Count);
+            foreach (var cast in mainSkillCasts)
+            {
+                for (; symbolIndex < symbols.Count; symbolIndex++)
+                {
+                    var symbolEffect = symbols[symbolIndex];
+                    if (cast.IntersectsExpectedCastWindow(symbolEffect.Time))
+                    {
+                        if (candidateMainSymbols.TryGetValue(cast, out var candidates))
+                        {
+                            candidates.Add(symbolEffect);
+                        }
+                        else
+                        {
+                            candidateMainSymbols[cast] = [symbolEffect];
+                        }
+                    }
+                    // Effect after cast
+                    else if (cast.ExpectedEndTime <= symbolEffect.Time + ServerDelayConstant)
+                    {
+                        break;
+                    }
+                    // Effect before cast
+                    else
+                    {
+                        var skill = lesserSkill;
+                        var lifespan = symbolEffect.ComputeLifespan(log, duration);
+                        AddCircleSkillDecoration(replay, symbolEffect, Colors.Guardian, skill, lifespan, radius, icon);
+                    }
+                }
+            }
+            // All remaining effects are without cast
+            for (; symbolIndex < symbols.Count; ++symbolIndex)
+            {
+                var symbolEffect = symbols[symbolIndex];
+                var skill = lesserSkill;
+                var lifespan = symbolEffect.ComputeLifespan(log, duration);
+                AddCircleSkillDecoration(replay, symbolEffect, Colors.Guardian, skill, lifespan, radius, icon);
+            }
+            foreach (var pair in candidateMainSymbols)
+            {
+                SkillModeDescriptor skill = pair.Value.Count == 1 ? mainSkill : uncertainSkill;
+                foreach (EffectEvent effect in pair.Value)
+                {
+                    var lifespan = effect.ComputeLifespan(log, duration);
+                    AddCircleSkillDecoration(replay, effect, Colors.Guardian, skill, lifespan, radius, icon);
+                }
+
+            }
+        }
+    }
+
     internal static void AddSymbolDecorationsWithLesserUncertainty(PlayerActor player, ParsedEvtcLog log, CombatReplay replay, SkillModeDescriptor mainSkill, SkillModeDescriptor lesserSkill, SkillModeDescriptor uncertainSkill, (GUID regular, GUID large) effects, long duration, string icon)
     {
         var durationLarge = duration + 2000;
-        var mainSkillCasts = player.GetAnimatedCastEvents(log).Where(x => x.SkillID == mainSkill.SkillID).ToList();
-        if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, effects.regular, out var symbols))
-        {
-            foreach (EffectEvent effect in symbols)
-            {
-                var lifespan = effect.ComputeLifespan(log, duration);
-                var mainSkillCastsOnEffect = mainSkillCasts.Where(x => effect.Time - ServerDelayConstant > x.Time && x.EndTime > effect.Time + ServerDelayConstant).ToList();
-                SkillModeDescriptor skill;
-                if (mainSkillCastsOnEffect.Count <= 1)
-                {           
-                    skill = mainSkillCasts.Count == 1 ? mainSkill : lesserSkill;
-                } 
-                else
-                {
-                    skill = uncertainSkill;
-                }
-                AddCircleSkillDecoration(replay, effect, Colors.Guardian, skill, lifespan, 180, icon);
-            }
-        }
-        if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, effects.large, out var symbolsLarge))
-        {
-            foreach (EffectEvent effect in symbolsLarge)
-            {
-                var lifespan = effect.ComputeLifespan(log, durationLarge);
-                var mainSkillCastsOnEffect = mainSkillCasts.Where(x => effect.Time - ServerDelayConstant > x.Time && x.EndTime > effect.Time + ServerDelayConstant).ToList();
-                SkillModeDescriptor skill;
-                if (mainSkillCastsOnEffect.Count <= 1)
-                {
-                    skill = mainSkillCasts.Count == 1 ? mainSkill : lesserSkill;
-                }
-                else
-                {
-                    skill = uncertainSkill;
-                }
-                AddCircleSkillDecoration(replay, effect, Colors.Guardian, skill, lifespan, 240, icon);
-            }
-        }
+        var mainSkillCasts = player.GetAnimatedCastEvents(log).Where(x => x.SkillID == mainSkill.SkillID && !x.IsInterrupted).ToList();
+        AddSymbolDecorationsWithLesserUncertainty(mainSkillCasts, player, log, replay, mainSkill, lesserSkill, uncertainSkill, effects.regular, 180, duration, icon);
+        AddSymbolDecorationsWithLesserUncertainty(mainSkillCasts, player, log, replay, mainSkill, lesserSkill, uncertainSkill, effects.large, 240, duration + 2000, icon);
     }
 }

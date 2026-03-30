@@ -73,6 +73,7 @@ public static class SkillIDs
     public const long SymbolOfBladesOrLesser = -54;
     public const long SymbolOfProtectionOrLesser = -55;
     public const long SymbolOfResolutionOrLesser = -56;
+    public const long SymbolOfResolutionOrLesserOrLuminousStaff= -57;
     #endregion
     #region ArcDPS Hardcoded
     internal const long ArcDPSDodge = 65001;
@@ -4526,6 +4527,7 @@ public static class SkillIDs
     public const long SoothingSplash = 72033;
     public const long MechanicalGeniusRemain = 72040;
     public const long ShatteringStoneBuff = 72046;
+    public const long InspiringWhirl = 72049;
     public const long DeathlyEnervation = 72051;
     public const long FireJurisdictionLevel3 = 72053;
     public const long EchoingErosion = 72062;
@@ -4693,7 +4695,7 @@ public static class SkillIDs
     public const long ElutriateSkill = 73052;
     public const long Focused = 73053;
     public const long EtchingVolcano = 73054;
-    public const long DaybreakingSlash2 = 73055;
+    public const long DaybreakingSlash = 73055;
     public const long AbyssalRaze = 73059;
     public const long LesserDerecho = 73060;
     public const long IceBeam = 73061;

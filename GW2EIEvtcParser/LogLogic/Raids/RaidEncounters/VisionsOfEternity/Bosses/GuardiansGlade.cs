@@ -202,6 +202,9 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
 
         RenameCrocodilianRazortooth(Targets);
 
+        SingleActor kela = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KelaSeneschalOfWaves)) ?? throw new MissingKeyActorsException("Kela not found");
+        SanitizeLastHealthUpdateEvents(kela, combatData);
+
         /*var chest = agentData.GetGadgetsByID(ChestID.GrandRaidKelaChest).FirstOrDefault();
         if (chest != null)
         {
@@ -627,7 +630,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
 
         var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
         var tackleCasts = log.CombatData.GetAnimatedCastData(CrocodilianRazortoothTackle)
-                .Where(x => x.Caster.IsAnySpecies([TargetID.VeteranCrocodilianRazortooth, TargetID.EliteCrocodilianRazortooth])).ToList();
+                .Where(x => x.Caster.IsAnySpecies([TargetID.VeteranCrocodilianRazortooth, TargetID.EliteCrocodilianRazortooth]) && !x.IsInterrupted).ToList();
 
         foreach (var phase in encounterPhases)
         {
