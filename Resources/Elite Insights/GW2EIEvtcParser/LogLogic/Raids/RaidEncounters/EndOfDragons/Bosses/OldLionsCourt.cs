@@ -312,7 +312,7 @@ internal class OldLionsCourt : EndOfDragonsRaidEncounter
     internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         SingleActor target = (Vermilion() ?? Indigo() ?? Arsenite()) ?? throw new MissingKeyActorsException("Main target not found");
-        return target.GetHealth(combatData) > 20e6 ? LogData.Mode.CM : LogData.Mode.Normal;
+        return target.GetHealth(combatData) > 18e6 ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override void SetInstanceBuffs(ParsedEvtcLog log, List<InstanceBuff> instanceBuffs)

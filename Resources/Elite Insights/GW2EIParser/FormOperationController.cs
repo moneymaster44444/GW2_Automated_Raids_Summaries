@@ -138,7 +138,7 @@ internal sealed class FormOperationController : OperationController
         State = OperationState.Complete;
         ButtonText = "Open";
         SetReparseButtonState(true);
-        FinalizeStatus("Parsing Successful - ");
+        FinalizeStatus(true);
         InvalidateDataView();
     }
 
@@ -147,7 +147,7 @@ internal sealed class FormOperationController : OperationController
         State = OperationState.UnComplete;
         ButtonText = "Parse";
         SetReparseButtonState(false);
-        FinalizeStatus("Parsing Failure - ");
+        FinalizeStatus(false);
         InvalidateDataView();
     }
 

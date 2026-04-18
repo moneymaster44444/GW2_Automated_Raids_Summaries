@@ -220,7 +220,8 @@ internal class SpiritValeInstance : SpiritVale
     protected override HashSet<int> IgnoreForAutoNumericalRenaming()
     {
         return [
-            (int)TargetID.ChargedSoul
+            (int)TargetID.ChargedSoul,
+            (int)TargetID.Cannon
         ];
     }
 
@@ -260,7 +261,7 @@ internal class SpiritValeInstance : SpiritVale
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
         SpiritRace.FindEtherealBarriers(agentData, combatData);
-        Sabetha.FindCannonsAndHeavyBombs(agentData, combatData);
+        Sabetha.FindArenaGadgets(agentData, combatData);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
         SpiritRace.RenameEtherealBarriersAndOverrideID(Targets, agentData);
         Gorseval.RenameChargedSouls(Targets, combatData);
@@ -276,12 +277,12 @@ internal class SpiritValeInstance : SpiritVale
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID));
         }
         return res;
     }

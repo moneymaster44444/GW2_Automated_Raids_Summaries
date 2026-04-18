@@ -15,6 +15,11 @@ public class EXTMinionsBarrierHelper : EXTActorBarrierHelper
         _minions = minions;
     }
 
+    protected override AgentItem GetAgentItemForCachingSrc()
+    {
+        return Master.AgentItem;
+    }
+
 
     protected override void InitBarrierEvents(ParsedEvtcLog log)
     {

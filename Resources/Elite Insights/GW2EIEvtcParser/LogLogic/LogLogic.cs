@@ -259,7 +259,7 @@ public abstract class LogLogic
     private void ComputeLogTargets(AgentData agentData, List<CombatItem> combatItems, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
         var ignoredSpeciesForRenaming = IgnoreForAutoNumericalRenaming();
-
+        ignoredSpeciesForRenaming.Add((int)TargetID.DummyTarget);
         // Build targets
         //NOTE(Rennorb): Even though this collection is used for contains tests, it is still faster to just iterate the 5 or so members this can have than
         // to build the hashset and hash the value each time.
@@ -469,7 +469,7 @@ public abstract class LogLogic
         return [ ];
     }
 
-    internal virtual List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal virtual List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         return [ ];
     }

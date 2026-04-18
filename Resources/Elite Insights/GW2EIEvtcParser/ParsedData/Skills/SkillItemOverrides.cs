@@ -13,10 +13,14 @@ public static class SkillItemOverrides
         { Resurrect, "Resurrect" },
         { Resurrect2, "Resurrect" },
         { Bandage, "Bandage" },
+#region ArcDPS
         { ArcDPSDodge, "Dodge" },
         { ArcDPSDodge20220307, "Dodge" },
         { ArcDPSGenericBreakbar, "Generic Breakbar" },
         { ArcDPSGenericBreakbar20220307, "Generic Breakbar" },
+        { ArcDPSGenericGadgetInteract, "Gadget Interaction" },
+        { ArcDPSGenericEmote, "Emote" },
+#endregion
         { WaterBlastCombo1, "Water Blast Combo" },
         { WaterBlastCombo2, "Water Blast Combo" },
         { WaterLeapCombo, "Water Leap Combo" },
@@ -139,6 +143,10 @@ public static class SkillItemOverrides
         { PhantasmalBerserkerProjectileDamage, "Phantasmal Berserker (Greatsword Projectile Hit)" },
         { HealingPrism, "Healing Prism" },
         { SyncopateDelayedWave, "Syncopate (Delay Wave)" },
+        { DeafeningDrumAfterimage, "Deafening Drum (Afterimage)" },
+        { FlusteringFluteAfterimage, "Flustering Flute (Afterimage)" },
+        { LivelyLuteAfterimage, "Lively Lute (Afterimage)" },
+        { HarmoniousHarpAfterimage, "Harmonious Harp (Afterimage)" },
         #endregion Mesmer
         #region Necromancer
         { DesertEmpowerment, "Desert Empowerment" },
@@ -276,6 +284,7 @@ public static class SkillItemOverrides
         { MajorSoulSplit, "Major Soul Split" },
         { ExpelEnergySAK, "Expel Energy" },
         { DeathMarkKnockback, "Death Mark (Knockback)" },
+        { DhuumEtherealSealInteract, "Ethereal Seal Interact" },
         // Conjured Amalgamate
         { ConjuredSlashSAK, "Conjured Slash" },
         // Adina
@@ -707,6 +716,7 @@ public static class SkillItemOverrides
             { HammerOfWisdom, SkillImages.HammerOfWisdom },
             { EffulgentStanceDamage, SkillImages.EffulgentStance },
             { RestorativeGlowHealingBuff, SkillImages.RestorativeGlow },
+            { SovereignOfLight, TraitImages.SovereignOfLight },
 #endregion GuardianIcons
             #region MesmerIcons
             { HealingPrism, TraitImages.HealingPrism },
@@ -759,8 +769,10 @@ public static class SkillItemOverrides
             { PsystrikeClone, SkillImages.Psystrike },
             { PsycutClone, SkillImages.Psycut },
             { MindPierceClone, SkillImages.MindPierce },
-            { DeafeningDrumAfterImage, SkillImages.DeafeningDrum },
-            { FlusteringFluteAfterImage, SkillImages.FlusteringFlute },
+            { DeafeningDrumAfterimage, SkillImages.DeafeningDrum },
+            { FlusteringFluteAfterimage, SkillImages.FlusteringFlute },
+            { LivelyLuteAfterimage, SkillImages.LivelyLute },
+            { HarmoniousHarpAfterimage, SkillImages.HarmoniousHarp },
             #endregion  MesmerIcons
             #region NecromancerIcons
             { LifeFromDeath, TraitImages.LifeFromDeath },

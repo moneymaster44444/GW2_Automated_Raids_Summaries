@@ -14,6 +14,10 @@ internal static class BerserkerHelper
     [
         new DamageCastFinder(KingOfFires, KingOfFires)
             .WithBuilds(GW2Builds.July2019Balance)
+            .UsingDisableWithEffectData()
+            .UsingOrigin(EIData.InstantCastFinder.InstantCastOrigin.Trait),
+        new EffectCastFinder(KingOfFires, EffectGUIDs.BerserkerKingOfFires)
+            .UsingSrcSpecChecker(Spec.Berserker)
             .UsingOrigin(EIData.InstantCastFinder.InstantCastOrigin.Trait),
         new EffectCastFinder(Outrage, EffectGUIDs.BerserkerOutrage)
             .UsingSrcSpecChecker(Spec.Berserker),

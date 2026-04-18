@@ -24,13 +24,14 @@ var searchData=
   ['jsonmechanics_21',['JsonMechanics',['../class_g_w2_e_i_j_s_o_n_1_1_json_mechanics.html',1,'GW2EIJSON']]],
   ['jsonminions_22',['JsonMinions',['../class_g_w2_e_i_j_s_o_n_1_1_json_minions.html',1,'GW2EIJSON']]],
   ['jsonnpc_23',['JsonNPC',['../class_g_w2_e_i_j_s_o_n_1_1_json_n_p_c.html',1,'GW2EIJSON']]],
-  ['jsonphase_24',['JsonPhase',['../class_g_w2_e_i_j_s_o_n_1_1_json_phase.html',1,'GW2EIJSON']]],
-  ['jsonplayer_25',['JsonPlayer',['../class_g_w2_e_i_j_s_o_n_1_1_json_player.html',1,'GW2EIJSON']]],
-  ['jsonplayerbuffoutgoingvolumes_26',['JsonPlayerBuffOutgoingVolumes',['../class_g_w2_e_i_j_s_o_n_1_1_json_player_buff_outgoing_volumes.html',1,'GW2EIJSON']]],
-  ['jsonplayerbuffsgeneration_27',['JsonPlayerBuffsGeneration',['../class_g_w2_e_i_j_s_o_n_1_1_json_player_buffs_generation.html',1,'GW2EIJSON']]],
-  ['jsonplayersupport_28',['JsonPlayerSupport',['../class_g_w2_e_i_j_s_o_n_1_1_json_statistics_1_1_json_player_support.html',1,'GW2EIJSON::JsonStatistics']]],
-  ['jsonrotation_29',['JsonRotation',['../class_g_w2_e_i_j_s_o_n_1_1_json_rotation.html',1,'GW2EIJSON']]],
-  ['jsonskill_30',['JsonSkill',['../class_g_w2_e_i_j_s_o_n_1_1_json_rotation_1_1_json_skill.html',1,'GW2EIJSON::JsonRotation']]],
-  ['jsonstatistics_31',['JsonStatistics',['../class_g_w2_e_i_j_s_o_n_1_1_json_statistics.html',1,'GW2EIJSON']]],
-  ['jsonweaponset_32',['JsonWeaponSet',['../class_g_w2_e_i_j_s_o_n_1_1_json_weapon_set.html',1,'GW2EIJSON']]]
+  ['jsonnpchealthbar_24',['JsonNPCHealthBar',['../class_g_w2_e_i_j_s_o_n_1_1_json_n_p_c_1_1_json_n_p_c_health_bar.html',1,'GW2EIJSON::JsonNPC']]],
+  ['jsonphase_25',['JsonPhase',['../class_g_w2_e_i_j_s_o_n_1_1_json_phase.html',1,'GW2EIJSON']]],
+  ['jsonplayer_26',['JsonPlayer',['../class_g_w2_e_i_j_s_o_n_1_1_json_player.html',1,'GW2EIJSON']]],
+  ['jsonplayerbuffoutgoingvolumes_27',['JsonPlayerBuffOutgoingVolumes',['../class_g_w2_e_i_j_s_o_n_1_1_json_player_buff_outgoing_volumes.html',1,'GW2EIJSON']]],
+  ['jsonplayerbuffsgeneration_28',['JsonPlayerBuffsGeneration',['../class_g_w2_e_i_j_s_o_n_1_1_json_player_buffs_generation.html',1,'GW2EIJSON']]],
+  ['jsonplayersupport_29',['JsonPlayerSupport',['../class_g_w2_e_i_j_s_o_n_1_1_json_statistics_1_1_json_player_support.html',1,'GW2EIJSON::JsonStatistics']]],
+  ['jsonrotation_30',['JsonRotation',['../class_g_w2_e_i_j_s_o_n_1_1_json_rotation.html',1,'GW2EIJSON']]],
+  ['jsonskill_31',['JsonSkill',['../class_g_w2_e_i_j_s_o_n_1_1_json_rotation_1_1_json_skill.html',1,'GW2EIJSON::JsonRotation']]],
+  ['jsonstatistics_32',['JsonStatistics',['../class_g_w2_e_i_j_s_o_n_1_1_json_statistics.html',1,'GW2EIJSON']]],
+  ['jsonweaponset_33',['JsonWeaponSet',['../class_g_w2_e_i_j_s_o_n_1_1_json_weapon_set.html',1,'GW2EIJSON']]]
 ];

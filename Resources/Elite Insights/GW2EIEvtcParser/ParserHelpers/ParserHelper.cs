@@ -637,6 +637,7 @@ public static class ParserHelper
                 res |= ChronomancerHelper.IsKnownMinionID(id);
                 res |= MirageHelper.IsKnownMinionID(id);
                 res |= VirtuosoHelper.IsKnownMinionID(id);
+                res |= TroubadourHelper.IsKnownMinionID(id);
                 break;
             //
             case Spec.Thief:

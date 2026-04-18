@@ -44,72 +44,72 @@ internal class EffectCastFinder : CheckedCastFinder<EffectEvent>
 
     internal EffectCastFinder UsingSrcBaseSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.BaseSpec == spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetBaseSpecAtTime(evt.Time) == spec);
         return this;
     }
 
     internal EffectCastFinder UsingDstBaseSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.BaseSpec == spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.GetBaseSpecAtTime(evt.Time) == spec);
         return this;
     }
 
     internal EffectCastFinder UsingSrcNotBaseSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.BaseSpec != spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetBaseSpecAtTime(evt.Time) != spec);
         return this;
     }
 
     internal EffectCastFinder UsingDstNotBaseSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.BaseSpec != spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.GetBaseSpecAtTime(evt.Time) != spec);
         return this;
     }
 
     internal EffectCastFinder UsingSrcSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.Spec == spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetSpecAtTime(evt.Time) == spec);
         return this;
     }
 
     internal EffectCastFinder UsingSrcNotSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.Spec != spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetSpecAtTime(evt.Time) != spec);
         return this;
     }
 
     internal EffectCastFinder UsingSrcSpecsChecker(HashSet<Spec> specs)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => specs.Contains(evt.Src.Spec));
+        UsingChecker((evt, combatData, agentData, skillData) => specs.Contains(evt.Src.GetSpecAtTime(evt.Time)));
         return this;
     }
     internal EffectCastFinder UsingSrcNotSpecsChecker(HashSet<Spec> specs)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => !specs.Contains(evt.Src.Spec));
+        UsingChecker((evt, combatData, agentData, skillData) => !specs.Contains(evt.Src.GetSpecAtTime(evt.Time)));
         return this;
     }
 
     internal EffectCastFinder UsingDstSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.Spec == spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.GetSpecAtTime(evt.Time) == spec);
         return this;
     }
 
     internal EffectCastFinder UsingDstNotSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.Spec != spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.GetSpecAtTime(evt.Time) != spec);
         return this;
     }
 
     internal EffectCastFinder UsingDstSpecsChecker(HashSet<Spec> specs)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && specs.Contains(evt.Dst.Spec));
+        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && specs.Contains(evt.Dst.GetSpecAtTime(evt.Time)));
         return this;
     }
 
     internal EffectCastFinder UsingDstNotSpecsChecker(HashSet<Spec> specs)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && !specs.Contains(evt.Dst.Spec));
+        UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && !specs.Contains(evt.Dst.GetSpecAtTime(evt.Time)));
         return this;
     }
 

@@ -34,6 +34,9 @@ public abstract class OperationController : ParserController
     /// Status of the parse operation
     /// </summary>
     public string Status { get; protected set; }
+
+    public bool Parsed { get; protected set; }
+
     /// <summary>
     /// Location of the file being parsed
     /// </summary>
@@ -59,12 +62,20 @@ public abstract class OperationController : ParserController
     /// </summary>
     public string? DPSReportLink { get; internal set; }
 
+    public bool DPSReportUploadTentative { get; internal set; }
+    public bool DPSReportUploadFailed { get; internal set; }
+
+    public bool WingmanUploadTentative { get; internal set; }
+    public bool WingmanUploadFailed { get; internal set; }
+
+    public bool WingmanUploadRefused { get; internal set; }
+
     public OperationBasicMetaData? BasicMetaData { get; set; }
 
     /// <summary>
     /// Time elapsed parsing
     /// </summary>
-    public string Elapsed { get; private set; } = "";
+    public long Elapsed { get; private set; } = 0;
 
 
     private readonly Stopwatch _stopWatch = new();
@@ -83,7 +94,12 @@ public abstract class OperationController : ParserController
         BasicMetaData = null;
         DPSReportLink = null;
         OutLocation = null;
-        Elapsed = "";
+        DPSReportUploadTentative = false;
+        DPSReportUploadFailed = false;
+        WingmanUploadTentative = false;
+        WingmanUploadFailed = false;
+        WingmanUploadRefused = false;
+        Elapsed = 0;
         _GeneratedFiles.Clear();
         _OpenableFiles.Clear();
     }
@@ -97,7 +113,7 @@ public abstract class OperationController : ParserController
     public void Stop()
     {
         _stopWatch.Stop();
-        Elapsed = ("Elapsed " + _stopWatch.ElapsedMilliseconds + " ms");
+        Elapsed = _stopWatch.ElapsedMilliseconds;
         _stopWatch.Restart();
     }
 
@@ -112,10 +128,12 @@ public abstract class OperationController : ParserController
         _GeneratedFiles.Add(path);
     }
 
-    public void FinalizeStatus(string prefix)
+    public void FinalizeStatus(bool parsed)
     {
-        StatusList.Insert(0, Elapsed);
+        StatusList.Insert(0, ("Elapsed " + Elapsed + " ms"));
         Status = StatusList.LastOrDefault() ?? "";
+        Parsed = parsed;
+        string prefix = parsed ? "Parsing Successful - " : "Parsing Failure - ";
         foreach (string generatedFile in GeneratedFiles)
         {
             Console.WriteLine("Generated" + $": {generatedFile}" + Environment.NewLine);

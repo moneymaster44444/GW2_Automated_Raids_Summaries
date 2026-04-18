@@ -48,6 +48,7 @@ public static class SpeciesIDs
         BanditArsonist = 15421,
         Cannon = SpeciesIDs.Cannon,
         HeavyBomb = SpeciesIDs.HeavyBomb,
+        SabethaPlatform = SpeciesIDs.SabethaPlatform,
         // - Wing 2
         // - Slothasor
         Slothasor = 16123,
@@ -217,6 +218,7 @@ public static class SpeciesIDs
         UnderworldReaper = 19831,
         DhuumDesmina = 19481,
         YourSoul = SpeciesIDs.YourSoul,
+        EtherealSeal = SpeciesIDs.EtherealSeal,
         // - Wing 6
         // - Conjured Amalgamate
         ConjuredAmalgamate = 43974, // Gadget
@@ -507,7 +509,7 @@ public static class SpeciesIDs
         VoidStormseer = 24677,
         VoidMelter = 24223,
         VoidGoliath = 24761,
-        DragonEnergyOrb = DragonOrb,
+        DragonEnergyOrb = 21941,
         GravityBall = SpeciesIDs.GravityBall,
         JormagMovingFrostBeamCenter = 23747,
         JormagMovingFrostBeamNorth = 24541,
@@ -812,6 +814,11 @@ public static class SpeciesIDs
         IllusionaryAvenger = 15188,
         IllusionarySharpShooter = 26152,
         IllusionaryLancer = 26271,
+        // Troubadour after images
+        LivelyLuteAfterimage = 27021,
+        DeafeningDrumAfterimage = 27022,
+        HarmoniousHarpAfterimage = 27024,
+        FlusteringFluteAfterimage = 27034,
         // Mesmer Clones
         // - Single Weapon
         CloneSword = 8108,
@@ -1151,7 +1158,7 @@ public static class SpeciesIDs
     private const int VentariTablet = -25;
     private const int PoisonMushroom = -26;
     private const int SpearAggressionRevulsion = -27;
-    private const int DragonOrb = -28;
+    // -28 empty
     private const int ChestOfSouls = -29;
     private const int ShackledPrisoner = -30;
     private const int DemonicBond = -31;
@@ -1248,6 +1255,8 @@ public static class SpeciesIDs
     private const int HTGreenSooWonSouth = -121;
     private const int GrandRaidKelaChest = -122;
     private const int InsectSwarms = -123;
+    private const int EtherealSeal = -124;
+    private const int SabethaPlatform = -125;
 
     public const int IgnoredSpecies = int.MinValue;
     public const int NonIdentifiedSpecies = 0;

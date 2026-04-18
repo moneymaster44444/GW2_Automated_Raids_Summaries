@@ -196,7 +196,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
         foreach (var aiAgent in agentData.GetNPCsByID(TargetID.AiKeeperOfThePeak))
         {
             var aiCastEvents = combatData.Where(x => x.StartCasting() && x.SrcMatchesAgent(aiAgent));
-            var china = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.Language && LanguageEvent.GetLanguage(x) == LanguageEvent.LanguageEnum.Chinese) != null;
+            var china = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.Language && LanguageEvent.GetLanguage(x) == LanguageEnum.Chinese) != null;
             CombatItem? darkModePhaseEvent = aiCastEvents.FirstOrDefault(x => x.SkillID == AiDarkPhaseEvent);
             var hasDarkMode = combatData.Exists(x => (china ? x.SkillID == AiHasDarkModeCN_SurgeOfDarkness : x.SkillID == AiHasDarkMode_SurgeOfDarkness) && x.SrcMatchesAgent(aiAgent));
             var hasElementalMode = !hasDarkMode || darkModePhaseEvent != null;
@@ -410,7 +410,7 @@ internal class AiKeeperOfThePeak : SunquaPeak
         }
         if (darkAi != null)
         {
-            var china = log.CombatData.GetLanguageEvent()?.Language == LanguageEvent.LanguageEnum.Chinese;
+            var china = log.CombatData.GetLanguageEvent()?.Language == LanguageEnum.Chinese;
             PhaseData darkPhase = phases[0];
             if (elementalAi != null)
             {

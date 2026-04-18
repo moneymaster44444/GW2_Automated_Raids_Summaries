@@ -196,9 +196,9 @@ internal class MursaatOverseer : BastionOfThePenitent
         return (target.GetHealth(combatData) > 25e6) ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
-        List<CastEvent> res = base.SpecialCastEventProcess(combatData, agentData, skillData);
+        List<CastEvent> res = base.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID);
 
         var claimApply = combatData.GetBuffApplyData(ClaimBuff).OfType<BuffApplyEvent>();
         var dispelApply = combatData.GetBuffApplyData(DispelBuff).OfType<BuffApplyEvent>();

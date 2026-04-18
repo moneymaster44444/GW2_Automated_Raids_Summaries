@@ -1,4 +1,6 @@
-﻿namespace GW2EIJSON;
+﻿using System.Text.Json.Serialization;
+
+namespace GW2EIJSON;
 
 /// <summary>
 /// Class corresponding to a rotation
@@ -30,6 +32,12 @@ public class JsonRotation
         /// Prior arcdps activation update (nov 07 2019) this value can only be 0 or 1
         /// </summary>	
         public double Quickness;
+
+        /// <summary>	
+        /// If true, the EI html will ignore this event when displaying rotations. The cast itself remains relevant for statistical purposes. This is only for visual convenience on rotation display. \n
+        /// </summary>	
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? IgnoreOnRotationRender = null;
     }
 
 

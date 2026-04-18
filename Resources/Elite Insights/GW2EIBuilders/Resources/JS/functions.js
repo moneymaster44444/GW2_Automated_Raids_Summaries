@@ -30,8 +30,13 @@ function computeSliderGradient(color, fillColor, startPercent, endPercent) {
     return template;
 };
 
+const duckify = url => 'https://external-content.duckduckgo.com/iu/?u=' + encodeURIComponent(url);
+
 function _buildFallBackURL(url) {
-    if (!url.includes("render")) {
+    if (replaceImgur && url.startsWith("https://i.imgur.com")) {
+        return duckify(url);
+    }
+    if (!url.includes("render") || apiRenderServiceOkay) {
         // not using API render service
         return url;
     }

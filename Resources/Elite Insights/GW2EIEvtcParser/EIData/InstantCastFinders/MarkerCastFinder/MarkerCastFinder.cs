@@ -34,36 +34,36 @@ internal class MarkerCastFinder : CheckedCastFinder<MarkerEvent>
 
     internal MarkerCastFinder UsingSrcBaseSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.BaseSpec == spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetBaseSpecAtTime(evt.Time) == spec);
         return this;
     }
 
     internal MarkerCastFinder UsingSrcNotBaseSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.BaseSpec != spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetBaseSpecAtTime(evt.Time) != spec);
         return this;
     }
 
     internal MarkerCastFinder UsingSrcSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.Spec == spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetSpecAtTime(evt.Time) == spec);
         return this;
     }
 
     internal MarkerCastFinder UsingSrcNotSpecChecker(Spec spec)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.Spec != spec);
+        UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetSpecAtTime(evt.Time) != spec);
         return this;
     }
 
     internal MarkerCastFinder UsingSrcSpecsChecker(HashSet<Spec> specs)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => specs.Contains(evt.Src.Spec));
+        UsingChecker((evt, combatData, agentData, skillData) => specs.Contains(evt.Src.GetSpecAtTime(evt.Time)));
         return this;
     }
     internal MarkerCastFinder UsingSrcNotSpecsChecker(HashSet<Spec> specs)
     {
-        UsingChecker((evt, combatData, agentData, skillData) => !specs.Contains(evt.Src.Spec));
+        UsingChecker((evt, combatData, agentData, skillData) => !specs.Contains(evt.Src.GetSpecAtTime(evt.Time)));
         return this;
     }
 

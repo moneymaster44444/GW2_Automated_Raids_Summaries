@@ -149,6 +149,14 @@ public class AgentItem
         IsUnknown = true;
     }
 
+    internal bool CouldBeEqual(AgentItem other)
+    {
+        return InstID == other.InstID && ID == other.ID &&
+            Type == other.Type && Unamed == other.Unamed &&
+            Name == other.Name && HitboxWidth == other.HitboxWidth &&
+            HitboxHeight == other.HitboxHeight && Master == other.Master;
+    }
+
     internal void SetInstid(ushort instid)
     {
         InstID = instid;
@@ -627,6 +635,16 @@ public class AgentItem
             return this;
         }
         return EnglobedAgentItems.FirstOrDefault(x => x.InAwareTimes(time)) ?? this;
+    }
+
+    public ParserHelper.Spec GetSpecAtTime(long time)
+    {
+        return FindEnglobedAgentItem(time).Spec;
+    }
+
+    public ParserHelper.Spec GetBaseSpecAtTime(long time)
+    {
+        return FindEnglobedAgentItem(time).BaseSpec;
     }
 }
 

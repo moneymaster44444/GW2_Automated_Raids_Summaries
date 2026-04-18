@@ -21,30 +21,60 @@ internal static class JsonNPCBuilder
         //
         jsonNPC.Id = npc.ID;
         jsonNPC.EnemyPlayer = npc is PlayerNonSquad;
-        double hpLeft = 100.0;
-        double barrierLeft = 0.0;
+        double hpLeftPercent = 100.0;
+        double barrierLeftPercent = 0.0;
         var targetEncounterPhase = log.LogData.GetEncounterPhases(log).FirstOrDefault(x => x.Targets.ContainsKey(npc));
         if (targetEncounterPhase != null && targetEncounterPhase.Success)
         {
-            hpLeft = 0;
+            hpLeftPercent = 0;
         }
         else
         {
             var hpUpdates = npc.GetHealthUpdates(log);
             if (hpUpdates.Count > 0)
             {
-                hpLeft = hpUpdates.Last().Value;
+                hpLeftPercent = hpUpdates.Last().Value;
             }
             var barrierUpdates = npc.GetBarrierUpdates(log);
             if (barrierUpdates.Count > 0)
             {
-                barrierLeft = barrierUpdates.Last().Value;
+                barrierLeftPercent = barrierUpdates.Last().Value;
             }
         }
-        jsonNPC.HealthPercentBurned = 100.0 - hpLeft;
-        jsonNPC.BarrierPercent = barrierLeft;
-        jsonNPC.FinalHealth = npc.GetCurrentHealth(log, hpLeft);
-        jsonNPC.FinalBarrier = npc.GetCurrentBarrier(log, barrierLeft, log.LogData.LogEnd);
+        jsonNPC.HealthPercentBurned = 100.0 - hpLeftPercent;
+        var healthBars = npc.GetHealthBars();
+        if (healthBars != null)
+        {
+            jsonNPC.TotalHealth = 0;
+            var hpBars = new List<JsonNPC.JsonNPCHealthBar>(healthBars.Count);
+            bool activeFound = false;
+            foreach (var (maxPercent, minPercent, hpValue, active) in healthBars)
+            {
+                jsonNPC.TotalHealth += (int)(hpValue * (maxPercent - minPercent) / 100);
+                if (active)
+                {
+                    activeFound = true;
+                    jsonNPC.FinalHealth += (int)(hpValue * Math.Max(hpLeftPercent - minPercent, 0.0) / 100);
+                }
+                else if (activeFound)
+                {
+                    jsonNPC.FinalHealth += (int)(hpValue * (maxPercent - minPercent) / 100);
+                }
+                hpBars.Add(new JsonNPC.JsonNPCHealthBar()
+                {
+                    MinPercent = minPercent,
+                    MaxPercent = maxPercent,
+                    Active = active,
+                    Health = hpValue,
+                });
+            }
+        } 
+        else
+        {
+            jsonNPC.FinalHealth = npc.GetCurrentHealth(log, hpLeftPercent);
+        }
+        jsonNPC.BarrierPercent = barrierLeftPercent;
+        jsonNPC.FinalBarrier = npc.GetCurrentBarrier(log, barrierLeftPercent, log.LogData.LogEnd);
         //
         jsonNPC.Buffs = GetNPCJsonBuffsUptime(npc, log, settings, buffMap);
         jsonNPC.BuffVolumes = GetNPCJsonBuffVolumes(npc, log, buffMap);

@@ -52,7 +52,7 @@ public class CombatItem
         || IsStateChange == StateChange.GWBuild || IsStateChange == StateChange.InstanceStart 
         || IsStateChange == StateChange.LogNPCUpdate || IsStateChange == StateChange.FractalScale 
         || IsStateChange == StateChange.Language || IsStateChange == StateChange.MapID 
-        || IsStateChange == StateChange.RuleSet || IsStateChange == StateChange.ShardID 
+        || IsStateChange == StateChange.RuleSet
         || IsStateChange == StateChange.SquadCombatEnd || IsStateChange == StateChange.SquadCombatStart 
         || IsStateChange == StateChange.TickRate;
 
@@ -351,7 +351,7 @@ public class CombatItem
         {
             return false;
         }
-        return IsActivation == Activation.CancelFire || IsActivation == Activation.Reset || IsActivation == Activation.CancelCancel;
+        return IsActivation == Activation.CancelFire || IsActivation == Activation.Reset || IsActivation == Activation.CancelCancel || IsActivation == Activation.NoData;
     }
 
     ///

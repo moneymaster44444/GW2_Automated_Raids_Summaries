@@ -185,7 +185,7 @@ internal class SunquaPeakInstance : SunquaPeak
     internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
     {
         List<PhaseData> phases = GetInitialPhase(log);
-        var china = log.CombatData.GetLanguageEvent()?.Language == LanguageEvent.LanguageEnum.Chinese;
+        var china = log.CombatData.GetLanguageEvent()?.Language == LanguageEnum.Chinese;
         var targetsByIDs = Targets.GroupBy(x => x.ID).ToDictionary(x => x.Key, x => x.ToList());
         {
             var fullAiPhases = HandleFullAiPhases(targetsByIDs, log, phases);
@@ -268,9 +268,9 @@ internal class SunquaPeakInstance : SunquaPeak
         return _aiKeeperOfThePeak.SpecialBuffEventProcess(combatData, skillData);
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
-        return _aiKeeperOfThePeak.SpecialCastEventProcess(combatData, agentData, skillData);
+        return _aiKeeperOfThePeak.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID);
     }
 
     internal override List<HealthDamageEvent> SpecialDamageEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)

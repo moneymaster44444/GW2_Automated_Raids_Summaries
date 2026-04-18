@@ -3,6 +3,7 @@ using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParserHelpers;
+using GW2EIGW2API;
 using Tracing;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.ParserHelper;
@@ -19,7 +20,6 @@ public partial class CombatData
     //private List<CombatItem> _healingReceivedData;
     private readonly StatusEventsContainer _statusEvents = new();
     private readonly MetaEventsContainer _metaDataEvents = new();
-    private readonly HashSet<long> _skillIDs;
 
     private readonly Dictionary<long, List<BuffEvent>> _buffData;
     private readonly Dictionary<AgentItem, List<BuffEvent>> _buffDataByDst;
@@ -59,6 +59,13 @@ public partial class CombatData
     private readonly Dictionary<AgentItem, List<AnimatedCastEvent>> _animatedCastData;
     private readonly Dictionary<long, List<AnimatedCastEvent>> _animatedCastDataByID;
 
+    private readonly Dictionary<AgentItem, List<EmoteEvent>> _emoteCastData;
+    private readonly Dictionary<long, List<EmoteEvent>> _emoteCastDataByEmoteID;
+
+    private readonly Dictionary<AgentItem, List<GadgetInteractEvent>> _gadgetInteractCastData;
+    private readonly Dictionary<long, List<GadgetInteractEvent>> _gadgetInteractCastDataBySpeciesID;
+    private readonly Dictionary<AgentItem, List<GadgetInteractEvent>> _gadgetInteractCastDataByGadget;
+
     private readonly Dictionary<AgentItem, List<InstantCastEvent>> _instantCastData;
     private readonly Dictionary<long, List<InstantCastEvent>> _instantCastDataByID;
 
@@ -79,6 +86,8 @@ public partial class CombatData
     public readonly bool HasCrowdControlData = false;
     public readonly bool HasEffectData = false;
     public readonly bool HasMarkerData = false;
+    public readonly bool HasEmoteData = false;
+    public readonly bool HasGadgetInteractData = false;
     public readonly bool HasSpeciesAndSkillGUIDs = false;
     public readonly bool HasMissileData = false;
 
@@ -218,9 +227,9 @@ public partial class CombatData
         return res;
     }
 
-    private void EICastParse(IReadOnlyList<AgentItem> players, SkillData skillData, LogData logData, AgentData agentData)
+    private void EICastParse(IReadOnlyList<AgentItem> players, SkillData skillData, LogData logData, AgentData agentData, EvtcVersionEvent evtcVersion)
     {
-        List<CastEvent> toAdd = logData.Logic.SpecialCastEventProcess(this, agentData, skillData);
+        List<CastEvent> toAdd = logData.Logic.SpecialCastEventProcess(this, agentData, skillData, _animatedCastDataByID);
         ulong gw2Build = GetGW2BuildEvent().Build;
         // Redirections
         {
@@ -231,6 +240,9 @@ public partial class CombatData
         {
             switch (p.Spec)
             {
+                case Spec.Luminary:
+                    LuminaryHelper.FlagLuminaryRadiantForgeWeaponSwapEvents(GetAnimatedCastData(p), GetWeaponSwapData(p), evtcVersion);
+                    break;
                 case Spec.Willbender:
                     toAdd.AddRange(ProfHelper.ComputeEndWithBuffApplyCastEvents(p, this, skillData, FlowingResolveSkill, 440, 500, FlowingResolveBuff));
                     break;
@@ -427,7 +439,7 @@ public partial class CombatData
         operation.UpdateProgressWithCancellationCheck("Parsing: Creating Custom Damage Events");
         EIDamageParse(skillData, agentData, logData);
         operation.UpdateProgressWithCancellationCheck("Parsing: Creating Custom Cast Events");
-        EICastParse(players, skillData, logData, agentData);
+        EICastParse(players, skillData, logData, agentData, evtcVersion);
         operation.UpdateProgressWithCancellationCheck("Parsing: Creating Custom Status Events");
         EIMetaAndStatusParse(logData, agentData, evtcVersion);
     }
@@ -495,7 +507,7 @@ public partial class CombatData
         }
     }
 
-    internal CombatData(IReadOnlyList<CombatItem> allCombatItems, LogData logData, AgentData agentData, SkillData skillData, IReadOnlyList<Player> players, ParserController operation, IReadOnlyDictionary<uint, ExtensionHandler> extensions, EvtcVersionEvent evtcVersion, EvtcParserSettings settings)
+    internal CombatData(IReadOnlyList<CombatItem> allCombatItems, LogData logData, AgentData agentData, SkillData skillData, IReadOnlyList<Player> players, ParserController operation, IReadOnlyDictionary<uint, ExtensionHandler> extensions, EvtcVersionEvent evtcVersion, EvtcParserSettings settings, GW2APIController apiController)
     {
         using var _t = new AutoTrace("CombatData");
         _metaDataEvents.EvtcVersionEvent = evtcVersion;
@@ -504,7 +516,6 @@ public partial class CombatData
         combatEvents.SortByTime();
 
         //TODO_PERF(Rennorb): find average complexity
-        _skillIDs = new HashSet<long>(combatEvents.Count / 2);
         var castCombatEvents = new Dictionary<ulong, List<CombatItem>>(combatEvents.Count / 5);
         var buffEvents = new List<BuffEvent>(combatEvents.Count / 2);
         var wepSwaps = new List<WeaponSwapEvent>(combatEvents.Count / 50);
@@ -519,12 +530,11 @@ public partial class CombatData
         {
             if (combatItem.IsEssentialMetadata)
             {
-                CombatEventFactory.AddStateChangeEvent(logData.EvtcLogOffset, combatItem, agentData, skillData, _metaDataEvents, _statusEvents, _rewardEvents, wepSwaps, buffEvents, evtcVersion, settings);
+                CombatEventFactory.AddStateChangeEvent(logData.EvtcLogOffset, combatItem, agentData, skillData, _metaDataEvents, _statusEvents, _rewardEvents, wepSwaps, buffEvents, evtcVersion, settings, apiController);
             }
         }
         foreach (CombatItem combatItem in combatEvents)
         {
-            bool insertToSkillIDs = false;
             if (combatItem.IsStateChange != StateChange.None)
             {
                 if (combatItem.IsEssentialMetadata)
@@ -535,30 +545,25 @@ public partial class CombatData
                 {
                     if (extensions.TryGetValue(combatItem.Pad, out var handler))
                     {
-                        insertToSkillIDs = handler.IsSkillID(combatItem);
                         handler.InsertEIExtensionEvent(combatItem, agentData, skillData);
                     }
                 }
                 else
                 {
-                    insertToSkillIDs = combatItem.IsStateChange == StateChange.BuffInitial;
-                    CombatEventFactory.AddStateChangeEvent(logData.EvtcLogOffset, combatItem, agentData, skillData, _metaDataEvents, _statusEvents, _rewardEvents, wepSwaps, buffEvents, evtcVersion, settings);
+                    CombatEventFactory.AddStateChangeEvent(logData.EvtcLogOffset, combatItem, agentData, skillData, _metaDataEvents, _statusEvents, _rewardEvents, wepSwaps, buffEvents, evtcVersion, settings, apiController);
                 }
 
             }
             else if (combatItem.IsActivation != Activation.None)
             {
-                insertToSkillIDs = true;
                 castCombatEvents.AddToList(combatItem.SrcAgent, combatItem);
             }
             else if (combatItem.IsBuffRemove != BuffRemove.None)
             {
-                insertToSkillIDs = true;
                 CombatEventFactory.AddBuffRemoveEvent(combatItem, buffEvents, agentData, skillData);
             }
             else
             {
-                insertToSkillIDs = true;
                 if (combatItem.IsBuff != 0 && combatItem.BuffDmg == 0 && combatItem.Value > 0)
                 {
                     CombatEventFactory.AddBuffApplyEvent(combatItem, buffEvents, agentData, skillData, evtcVersion);
@@ -571,11 +576,6 @@ public partial class CombatData
                 {
                     CombatEventFactory.AddIndirectDamageEvent(combatItem, damageData, agentData, skillData);
                 }
-            }
-
-            if (insertToSkillIDs)
-            {
-                _skillIDs.Add(combatItem.SkillID);
             }
         }
 
@@ -593,14 +593,41 @@ public partial class CombatData
         skillData.CombineWithSkillInfo(_metaDataEvents.SkillInfoEvents);
         
         operation.UpdateProgressWithCancellationCheck("Parsing: Creating Cast Events");
-        List<AnimatedCastEvent> animatedCastData = CombatEventFactory.CreateCastEvents(castCombatEvents, agentData, skillData, logData);
+        List<AnimatedCastEvent> animatedCastData = CombatEventFactory.CreateCastEvents(evtcVersion, castCombatEvents, agentData, skillData, logData, _metaDataEvents.EmoteGUIDEventsByEmoteID);
         _weaponSwapData = wepSwaps.GroupBy(x => x.Caster).ToDictionary(x => x.Key, x => x.ToList());
         _animatedCastData = animatedCastData.GroupBy(x => x.Caster).ToDictionary(x => x.Key, x => x.ToList());
         //TODO_PERF(Rennorb)
         _instantCastData = [];
         _instantCastDataByID = [];
         _animatedCastDataByID = animatedCastData.GroupBy(x => x.SkillID).ToDictionary(x => x.Key, x => x.ToList());
-        
+        if (evtcVersion.Build >= ArcDPSBuilds.EmoteAndGadgetInteractionAdded && _animatedCastDataByID.TryGetValue(ArcDPSGenericEmote, out var emoteCasts))
+        {
+            operation.UpdateProgressWithCancellationCheck("Parsing: Creating Emote Events");
+            var emotes = emoteCasts.OfType<EmoteEvent>().ToList();
+            HasEmoteData = emotes.Count > 0;
+            _emoteCastData = emotes.GroupBy(x => x.Caster).ToDictionary(x => x.Key, x => x.ToList());
+            _emoteCastDataByEmoteID = emotes.GroupBy(x => x.EmoteID).ToDictionary(x => x.Key, x => x.ToList());
+        } 
+        else
+        {
+            _emoteCastData = [];
+            _emoteCastDataByEmoteID = [];
+        }
+        if (evtcVersion.Build >= ArcDPSBuilds.EmoteAndGadgetInteractionAdded && _animatedCastDataByID.TryGetValue(ArcDPSGenericGadgetInteract, out var gadgetInteractCasts))
+        {
+            operation.UpdateProgressWithCancellationCheck("Parsing: Creating Gadget Iteract Events");
+            var gadgetInteracts = gadgetInteractCasts.OfType<GadgetInteractEvent>().ToList();
+            HasGadgetInteractData = gadgetInteracts.Count > 0;
+            _gadgetInteractCastData = gadgetInteracts.GroupBy(x => x.Caster).ToDictionary(x => x.Key, x => x.ToList());
+            _gadgetInteractCastDataByGadget = gadgetInteracts.GroupBy(x => x.Gadget).ToDictionary(x => x.Key, x => x.ToList());
+            _gadgetInteractCastDataBySpeciesID = gadgetInteracts.GroupBy(x => (long)x.Gadget.ID).ToDictionary(x => x.Key, x => x.ToList());
+        }
+        else
+        {
+            _gadgetInteractCastData = [];
+            _gadgetInteractCastDataByGadget = [];
+            _gadgetInteractCastDataBySpeciesID = [];
+        }
         operation.UpdateProgressWithCancellationCheck("Parsing: Creating Buff Events");
         _buffDataByDst = buffEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
         _buffDataBySrc = buffEvents.Where(x => x is not BuffExtensionEvent).GroupBy(x => x.By).ToDictionary(x => x.Key, x => x.ToList());

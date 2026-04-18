@@ -380,11 +380,11 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
     {
         SingleActor cerus = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Cerus)) ?? throw new MissingKeyActorsException("Cerus not found");
         var cerusHP = cerus.GetHealth(combatData);
-        if (cerusHP > 130e6)
+        if (cerusHP > 115e6)
         {
             return LogData.Mode.LegendaryCM;
         }
-        return (cerusHP > 100e6) ? LogData.Mode.CM : LogData.Mode.Normal;
+        return (cerusHP > 80e6) ? LogData.Mode.CM : LogData.Mode.Normal;
 
     }
 

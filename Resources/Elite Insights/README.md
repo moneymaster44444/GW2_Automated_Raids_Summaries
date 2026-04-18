@@ -58,6 +58,30 @@ You can update EI to its latest version using the -update option.
 ```
 GuildWars2EliteInsights-CLI.exe -c [config path] [logs]
 ```
+
+For every input, CLI will consistently output a JSON like object, preceded by "Processed - ". The object will contain the following attributes:
+
+-__fileName__: string, name of the file that was parsed.
+
+-__parsed__: boolean, set to true if parsing was successful.
+
+-__status__: string, as displayed on the application on UI mode once processing is done.
+
+-__generatedFiles__: array of string, full name of all created files.
+
+-__dpsReportUploadTentative__: boolean, if true, the application tried to upload to dps.report.
+
+-__dpsReportUploadFailed__: boolean, if true, the application could not upload to dps.report.
+
+-__dpsReportLink__: string, dps.report URL of the log, if applicable.
+
+-__wingmanUploadTentative__: boolean, if true, the application tried to upload to wingman.
+
+-__wingmanUploadRefused__: boolean, if true, wingman refused to accept the file.
+
+-__wingmanUploadFailed__: boolean, if true, wingman accepted the file but the upload failed.
+
+
 ### For UI
 
 ```

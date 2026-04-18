@@ -244,5 +244,8 @@ public static class GW2Builds
     // https://wiki.guildwars2.com/wiki/Game_updates/2026-02-24
     public const ulong February2026GuardiansGladeCMReleaseAndMinorBalance = 196063;
 
+    // https://wiki.guildwars2.com/wiki/Game_updates/2026-04-14
+    public const ulong April2026Balancepocalypse = 198816;
+
     public const ulong EndOfLife = ulong.MaxValue;
 }

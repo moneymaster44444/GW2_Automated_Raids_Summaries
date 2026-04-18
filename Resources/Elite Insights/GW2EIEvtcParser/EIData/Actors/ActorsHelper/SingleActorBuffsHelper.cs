@@ -56,7 +56,7 @@ partial class SingleActor
             var allBuffApplies = log.CombatData.GetBuffApplyDataByDst(AgentItem);
             PresentApplyOnBuffIDs = [.. allBuffApplies.Select(x => x.BuffID)];
         }
-        _buffApplyByIDAccelerator ??= new CachingCollectionWithAgentTarget<Dictionary<long, List<AbstractBuffApplyEvent>>>(log);
+        _buffApplyByIDAccelerator ??= new (AgentItem, log);
         var creditedByAgentItem = creditedBy?.AgentItem;
         if (!_buffApplyByIDAccelerator.TryGetValue(start, end, creditedByAgentItem, out var dict))
         {
@@ -139,7 +139,7 @@ partial class SingleActor
             var allBuffRemoves = log.CombatData.GetBuffRemoveAllDataBySrc(AgentItem);
             PresentRemovedByBuffIDs = [.. allBuffRemoves.Select(x => x.BuffID)];
         }
-        _buffRemoveAllByByIDAccelerator ??= new CachingCollectionWithAgentTarget<Dictionary<long, List<BuffRemoveAllEvent>>>(log);
+        _buffRemoveAllByByIDAccelerator ??= new (AgentItem, log);
         var removedFromAgentItem = removedFrom?.AgentItem;
         if (!_buffRemoveAllByByIDAccelerator.TryGetValue(start, end, removedFromAgentItem, out var dict))
         {
@@ -230,7 +230,7 @@ partial class SingleActor
             var allBuffRemoves = log.CombatData.GetBuffRemoveAllDataByDst(AgentItem);
             PresentRemovedFromBuffIDs = [.. allBuffRemoves.Select(x => x.BuffID)];
         }
-        _buffRemoveAllFromByIDAccelerator ??= new CachingCollectionWithAgentTarget<Dictionary<long, List<BuffRemoveAllEvent>>>(log);
+        _buffRemoveAllFromByIDAccelerator ??= new (AgentItem, log);
         var removedByAgentItem = removedBy?.AgentItem;
         if (!_buffRemoveAllFromByIDAccelerator.TryGetValue(start, end, removedByAgentItem, out var dict))
         {
@@ -932,8 +932,8 @@ partial class SingleActor
         {
             log.FindActor(EnglobingAgentItem).SimulateBuffsAndComputeGraphs(log);
             _buffGraphs = [];
-            _buffDistribution = new CachingCollection<BuffDistribution>(log);
-            _buffPresenceBy = new CachingCollectionWithTarget<IReadOnlyDictionary<long, long>>(log);
+            _buffDistribution = new (log);
+            _buffPresenceBy = new (AgentItem, log);
             _buffSimulators = [];
             return;
         }
@@ -954,7 +954,7 @@ partial class SingleActor
 
         // Init status
         _buffDistribution = new(log);
-        _buffPresenceBy   = new(log);
+        _buffPresenceBy   = new(AgentItem, log);
         _buffSimulators   = new(trackedBuffs.Count * 2);
         var buffStackItemPool = new BuffStackItemPool();
         foreach (Buff buff in trackedBuffs)

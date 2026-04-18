@@ -44,6 +44,7 @@ var class_g_w2_e_i_j_s_o_n_1_1_json_log =
     [ "PresentInstanceBuffs", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#a3fce7d07b3909695f61d83701f9a668c", null ],
     [ "RecordedAccountBy", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#a61d15ea407f226226ff285437311ea03", null ],
     [ "RecordedBy", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#aa6198c1dc2545988041a3c065e16bdc4", null ],
+    [ "Region", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#a6d97466ad0ce00437f5c8379a909ae7c", null ],
     [ "SkillMap", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#ad098dd22fd0d4b2fbe7075bc6e826221", null ],
     [ "Success", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#ad3a5ec959a120ce2016a7463dd447742", null ],
     [ "Targetless", "class_g_w2_e_i_j_s_o_n_1_1_json_log.html#ada6d7484a510b238f8a3a86fdc0328ae", null ],

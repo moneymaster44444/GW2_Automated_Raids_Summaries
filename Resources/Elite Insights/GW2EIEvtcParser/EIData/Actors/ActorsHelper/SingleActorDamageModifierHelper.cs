@@ -54,8 +54,8 @@ partial class SingleActor
 
         if (_outgoingDamageModifierStatsPerTargets == null)
         {
-            _outgoingDamageModifierStatsPerTargets = new CachingCollectionWithTarget<Dictionary<int, DamageModifierStat>>(log);
-            _outgoingDamageModifierEventsPerTargets = new CachingCollectionWithTarget<Dictionary<int, List<DamageModifierEvent>>>(log);
+            _outgoingDamageModifierStatsPerTargets = new (AgentItem, log);
+            _outgoingDamageModifierEventsPerTargets = new (AgentItem, log);
         }
 
         if (_outgoingDamageModifierStatsPerTargets.TryGetValue(start, end, target, out var res))
@@ -172,8 +172,8 @@ partial class SingleActor
 
         if (_incomingDamageModifierStatsPerTargets == null)
         {
-            _incomingDamageModifierStatsPerTargets = new CachingCollectionWithTarget<Dictionary<int, DamageModifierStat>>(log);
-            _incomingDamageModifierEventsPerTargets = new CachingCollectionWithTarget<Dictionary<int, List<DamageModifierEvent>>>(log);
+            _incomingDamageModifierStatsPerTargets = new (AgentItem, log);
+            _incomingDamageModifierEventsPerTargets = new (AgentItem, log);
         }
 
         if (_incomingDamageModifierStatsPerTargets.TryGetValue(start, end, target, out var res))

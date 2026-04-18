@@ -124,6 +124,7 @@
             <div v-if="getLogData().instanceStart">
                 Instance Start: {{getLogData().instanceStart}} 
                 {{ getLogData().instanceIP ? ' | Instance IP: ' + getLogData().instanceIP : '' }}
+                {{ getLogData().region ? ' | Region: ' + getLogData().region : '' }}
             </div>
             <div>
                 ARC: {{getLogData().arcVersion}} | 

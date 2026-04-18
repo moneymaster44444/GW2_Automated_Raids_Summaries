@@ -22,13 +22,16 @@ public abstract class CastEvent : TimeCombatEvent
     public int SavedDuration { get; protected set; }
 
     public int ExpectedDuration { get; protected set; }
+    public int ExpectedScaledDuration => (int)(ExpectedDuration * AcceleratedToNonAcceleratedRatio);
 
     public int ActualDuration { get; protected set; }
 
     public long EndTime => Time + ActualDuration;
     public long ExpectedEndTime => Time + ExpectedDuration;
+    public long ExpectedScaledEndTime => Time + ExpectedScaledDuration;
 
     public double Acceleration { get; protected set; } = 0;
+    public double AcceleratedToNonAcceleratedRatio = 1.0;
 
     internal CastEvent(CombatItem baseItem, AgentData agentData, SkillData skillData) : base(baseItem.Time)
     {
@@ -54,6 +57,8 @@ public abstract class CastEvent : TimeCombatEvent
     {
         Skill = skill;
     }
+
+    public abstract bool IgnoreOnRotationRender();
 }
 
 public static partial class ListExt

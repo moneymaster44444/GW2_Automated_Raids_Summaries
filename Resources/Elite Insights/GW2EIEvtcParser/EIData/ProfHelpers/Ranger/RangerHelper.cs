@@ -370,7 +370,7 @@ internal static class RangerHelper
             .WithBuilds(GW2Builds.February2025Balance),
         // - Predator's Onslaught
         new BuffOnFoeDamageModifier(Mod_PredatorsOnslaught, [Stun, Taunt, Daze, Crippled, Fear, Immobile, Chilled], "Predator's Onslaught", "15% to disabled or movement-impaired foes", DamageSource.All, 15.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.PredatorsOnslaught, DamageModifierMode.All)
-            .UsingChecker((x, log) => IsJuvenilePet(x.From) || x.From.BaseSpec == Spec.Ranger)
+            .UsingChecker((x, log) => IsJuvenilePet(x.From) || x.From.GetBaseSpecAtTime(x.Time) == Spec.Ranger)
             .UsingApproximate(),
         new BuffOnFoeDamageModifier(Mod_Wolfsong, Vulnerability, "Wolfsong", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.Wolfsong, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.April2025Balance),
@@ -405,7 +405,12 @@ internal static class RangerHelper
 
         // Beastmastery
         // - Beastly Warden
-        new DamageLogDamageModifier(Mod_BeastlyWarden_Pet, "Beastly Warden (Pets)", "20% for Ursine and Porcine pets", DamageSource.PetsOnly, 20.0, DamageType.All, DamageType.All, Source.Ranger, TraitImages.BeastlyWarden, (x, log) => IsJuvenileUrsinePet(x.From) || IsJuvenilePorcinePet(x.From), DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_BeastlyWarden_Pet, "Beastly Warden (Pets)", "20% for Ursine and Porcine pets", DamageSource.PetsOnly, 20.0, DamageType.All, DamageType.All, Source.Ranger, TraitImages.BeastlyWarden, (x, log) => IsJuvenileUrsinePet(x.From) || IsJuvenilePorcinePet(x.From), DamageModifierMode.sPvPWvW)
+            .UsingEarlyExit((a, log) => {
+                return !a.GetMinions(log).Any(x => IsJuvenileUrsinePet(x.ReferenceAgentItem) || IsJuvenilePorcinePet(x.ReferenceAgentItem));
+            })
+            .WithBuilds(GW2Builds.April2025Balance),
+        new DamageLogDamageModifier(Mod_BeastlyWarden_Pet, "Beastly Warden (Pets)", "100% for Ursine and Porcine pets", DamageSource.PetsOnly, 100.0, DamageType.All, DamageType.All, Source.Ranger, TraitImages.BeastlyWarden, (x, log) => IsJuvenileUrsinePet(x.From) || IsJuvenilePorcinePet(x.From), DamageModifierMode.PvE)
             .UsingEarlyExit((a, log) => {
                 return !a.GetMinions(log).Any(x => IsJuvenileUrsinePet(x.ReferenceAgentItem) || IsJuvenilePorcinePet(x.ReferenceAgentItem));
             })
