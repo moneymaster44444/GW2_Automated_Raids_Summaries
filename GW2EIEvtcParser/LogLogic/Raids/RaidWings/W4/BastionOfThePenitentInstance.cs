@@ -372,12 +372,12 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID));
         }
         return res;
     }
@@ -450,7 +450,7 @@ internal class BastionOfThePenitentInstance : BastionOfThePenitent
     {
        foreach (var deimos in Targets.Where(x => x.IsSpecies(TargetID.Deimos)))
         {
-            Deimos.AdjustDeimosHP(deimos, deimos.GetHealth(combatData) > 40e6);
+            Deimos.AdjustDeimosHP(deimos, deimos.GetHealth(combatData) > 40e6, deimos.AgentItem.Merges.FirstOrNull((in AgentItem.MergedAgentItem x) => x.Merged.Is(deimos.AgentItem)) != null);
         }
         return base.GetLogMode(combatData, agentData, logData);
     }

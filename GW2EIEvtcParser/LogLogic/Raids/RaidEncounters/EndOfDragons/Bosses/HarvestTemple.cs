@@ -536,7 +536,7 @@ internal class HarvestTemple : EndOfDragonsRaidEncounter
         ];
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         List<CastEvent> res = [];
         foreach (var target in Targets)
@@ -806,7 +806,7 @@ internal class HarvestTemple : EndOfDragonsRaidEncounter
                 double lastHPUpdate = 1e6;
                 AgentItem extra = agentData.AddCustomNPCAgent(start, end, dragonVoid.Name, dragonVoid.Spec, id, false, dragonVoid.Toughness, dragonVoid.Healing, dragonVoid.Condition, dragonVoid.Concentration, atAgent.HitboxWidth > 0 ? atAgent.HitboxWidth : 800, atAgent.HitboxHeight);
                 lastLastAware = extra.LastAware;
-                AgentManipulationHelper.RedirectNPCEventsAndCopyPreviousStates(combatData, extensions, agentData, dragonVoid, copyEventsFrom, extra, true,
+                AgentManipulationHelper.RedirectNPCEventsAndCopyPreviousStates(combatData, extensions, agentData, dragonVoid, copyEventsFrom, extra, extra.FirstAware, true,
                     (evt, from, to) =>
                     {
                         if (evt.IsStateChange == StateChange.HealthUpdate)
@@ -1308,7 +1308,9 @@ internal class HarvestTemple : EndOfDragonsRaidEncounter
             .Select(x => new MaxHealthUpdateEvent(x, agentData))
             .GroupBy(x => x.MaxHealth).ToDictionary(x => x.Key);
         //
-        if (maxHPEvents.TryGetValue(491550, out var dragonOrbMaxHPs))
+        var dragonOrbs = agentData.GetNPCsByID(TargetID.DragonEnergyOrb);
+        // For old logs
+        if (dragonOrbs.Count == 0 && maxHPEvents.TryGetValue(491550, out var dragonOrbMaxHPs))
         {
             foreach (MaxHealthUpdateEvent dragonOrbMaxHP in dragonOrbMaxHPs)
             {
@@ -1318,6 +1320,13 @@ internal class HarvestTemple : EndOfDragonsRaidEncounter
                     dragonOrb.OverrideName("Dragon Orb");
                     dragonOrb.OverrideID(TargetID.DragonEnergyOrb, agentData);
                 }
+            }
+        } 
+        else if (dragonOrbs.Count > 0)
+        {
+            foreach (var dragonOrb in dragonOrbs)
+            {
+                dragonOrb.OverrideName("Dragon Orb");
             }
         }
         //
@@ -2844,7 +2853,7 @@ internal class HarvestTemple : EndOfDragonsRaidEncounter
             (int)TargetID.TheDragonVoidPrimordus,
             (int)TargetID.TheDragonVoidZhaitan,
         ];
-        if (Targets.Where(x => targetIDs.Contains(x.ID)).Any(x => x.GetHealth(combatData) > 16000000))
+        if (Targets.Where(x => targetIDs.Contains(x.ID)).Any(x => x.GetHealth(combatData) > 10000000))
         {
             return LogData.Mode.CM;
         }

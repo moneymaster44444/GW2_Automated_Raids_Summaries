@@ -82,6 +82,7 @@ internal class LogDataDto
     public string RecordedBy;
     public string RecordedAccountBy;
     public int FractalScale;
+    public string? Region;
     public List<string> UploadLinks;
     public List<string>? UsedExtensions;
     public List<List<string>>? PlayersRunningExtensions;
@@ -112,6 +113,15 @@ internal class LogDataDto
         RecordedAccountBy = log.LogMetadata.PoVAccount;
         var fractaleScaleEvent = log.CombatData.GetFractalScaleEvent();
         FractalScale = fractaleScaleEvent != null ? fractaleScaleEvent.Scale : 0;
+        var shardEvent = log.CombatData.GetShardEvents().FirstOrDefault();
+        if (shardEvent != null)
+        {
+            var region = shardEvent.RegionToString();
+            if (region != null)
+            {
+                Region = region;
+            }
+        }
         UploadLinks = [uploadLinks.DPSReportEILink];
         if (log.LogMetadata.UsedExtensions.Any())
         {

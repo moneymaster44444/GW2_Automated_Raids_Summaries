@@ -15,6 +15,11 @@ public class EXTMinionsHealingHelper : EXTActorHealingHelper
         _minions = minions;
     }
 
+    protected override AgentItem GetAgentItemForCachingSrc()
+    {
+        return Master.AgentItem;
+    }
+
     protected override void InitHealEvents(ParsedEvtcLog log)
     {
         if (HealEventsByDst == null)

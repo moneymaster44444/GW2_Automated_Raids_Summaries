@@ -5,6 +5,7 @@ using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
+using static GW2EIEvtcParser.AchievementEligibilityIDs;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicTimeUtils;
@@ -13,7 +14,6 @@ using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
-using static GW2EIEvtcParser.AchievementEligibilityIDs;
 
 namespace GW2EIEvtcParser.LogLogic;
 
@@ -76,7 +76,8 @@ internal class UraTheSteamshrieker : MountBalrior
             ]),
             // Dispel
             new MechanicGroup([
-                new PlayerDstBuffApplyMechanic(Deterrence, new MechanicPlotlySetting(Symbols.Diamond, Colors.LightRed), "Pick-up Shard", "Picked up the Bloodstone Shard", "Bloodstone Shard Pick-up", 0),
+                new PlayerDstBuffApplyMechanic(Deterrence, new MechanicPlotlySetting(Symbols.Diamond, Colors.LightRed), "Pick-up Shard", "Picked up the Bloodstone Shard", "Bloodstone Shard Pick-up", 0)
+                    .UsingTimeClamper((time, log, encounterPhase) => Math.Max(encounterPhase.Start, time)),
                 new PlayerDstBuffApplyMechanic(BloodstoneSaturation, new MechanicPlotlySetting(Symbols.Diamond, Colors.DarkPurple), "Dispel", "Used Dispel (SAK)", "Used Dispel", 0),
             ]),
             // Fumaroller
@@ -300,7 +301,26 @@ internal class UraTheSteamshrieker : MountBalrior
             }
         }
     }
-
+    internal static void AdjustUraHP(SingleActor ura, int health, bool phased, ulong gw2build)
+    {
+        if (health > 70e6)
+        {
+            if (health > 100e6)
+            {
+                ura.SetHealthBars([
+                   (100, 1, health, !phased),
+                    (gw2build >= GW2Builds.June2025Balance ? 31 : 41, 0, health, phased),
+                ]);
+            }
+            else
+            {
+                ura.SetHealthBars([
+                   (100, 1, health, !phased),
+                    (16, 0, health, phased),
+                ]);
+            }
+        }
+    }
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
         FindGeysers(evtcVersion, agentData, combatData);
@@ -308,6 +328,12 @@ internal class UraTheSteamshrieker : MountBalrior
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
         RenameFumarollers(Targets);
     }
+
+    internal static BuffEvent? GetHealedPhaseStartEvent(CombatData combatData, SingleActor ura, long start, long end)
+    {
+        return combatData.GetBuffData(Determined895).FirstOrDefault(x => x is BuffApplyEvent && x.To.Is(ura.AgentItem) && x.Time >= start && x.Time <= end);
+    }
+
     internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor ura, EncounterPhaseData encounterPhase, bool requirePhases)
     {
         if (!requirePhases)
@@ -320,7 +346,7 @@ internal class UraTheSteamshrieker : MountBalrior
         long start = encounterPhase.Start;
         long end = encounterPhase.End;
 
-        var hp1 = log.CombatData.GetBuffData(Determined895).FirstOrDefault(x => x is BuffApplyEvent && x.To.Is(ura.AgentItem) && encounterPhase.InInterval(x.Time));
+        var hp1 = GetHealedPhaseStartEvent(log.CombatData, ura, encounterPhase.Start, encounterPhase.End);
         // Healed CM
         if (hp1 != null)
         {
@@ -716,8 +742,9 @@ internal class UraTheSteamshrieker : MountBalrior
         var uraHP = target.GetHealth(combatData);
         if (uraHP > 70e6)
         {
+            AdjustUraHP(target, uraHP, GetHealedPhaseStartEvent(combatData, target, logData.LogStart, logData.LogEnd) != null, combatData.GetGW2BuildEvent().Build);
             target.OverrideName("Godscream Ura");
-            return uraHP > 100e6 ? LogData.Mode.LegendaryCM : LogData.Mode.CMNoName;
+            return uraHP > 90e6 ? LogData.Mode.LegendaryCM : LogData.Mode.CMNoName;
         }
         target.OverrideName("Ura, the Steamshrieker");
         return LogData.Mode.Normal;

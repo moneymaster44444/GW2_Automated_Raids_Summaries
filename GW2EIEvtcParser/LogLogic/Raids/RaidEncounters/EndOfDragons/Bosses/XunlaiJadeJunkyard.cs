@@ -232,7 +232,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         {
             return LogData.Mode.Story;
         }
-        return ankka.GetHealth(combatData) > 50e6 ? LogData.Mode.CM : LogData.Mode.Normal;
+        return ankka.GetHealth(combatData) > 40e6 ? LogData.Mode.CM : LogData.Mode.Normal;
     }
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)

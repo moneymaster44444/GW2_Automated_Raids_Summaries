@@ -207,11 +207,13 @@ public sealed class ProgramHelper : IDisposable
         string[] uploadresult = ["", ""];
         if (Settings.UploadToDPSReports)
         {
+            originalController.DPSReportUploadTentative = true;
             originalController.UpdateProgressWithCancellationCheck("DPSReport: Uploading");
             DPSReportUploadObject? response = DPSReportController.UploadUsingEI(fInfo, str => originalController.UpdateProgress("DPSReport: " + str), Settings.DPSReportUserToken,
             originalLog.ParserSettings.AnonymousPlayers,
             originalLog.ParserSettings.DetailedWvWParse);
             uploadresult[0] = response != null ? response.Permalink ?? "Upload process failed" : "Upload process failed";
+            originalController.DPSReportUploadFailed = response != null && response.Permalink != null;
             originalController.UpdateProgressWithCancellationCheck("DPSReport: " + uploadresult[0]);
             /*
             if (Properties.Settings.Default.UploadToWingman)
@@ -230,8 +232,10 @@ public sealed class ProgramHelper : IDisposable
         }
         if (Settings.UploadToWingman)
         {
+            originalController.WingmanUploadTentative = true;
             if (originalLog.ParserSettings.AnonymousPlayers)
             {
+                originalController.WingmanUploadRefused = true;
                 originalController.UpdateProgressWithCancellationCheck("Wingman: players and accounts have been anonymized, log not supported");
             } 
             else
@@ -293,16 +297,18 @@ public sealed class ProgramHelper : IDisposable
                         originalController.UpdateProgressWithCancellationCheck("Wingman: Preparing upload");
 
                         string result = logToUse.LogData.GetMainPhase(logToUse).Success ? "kill" : "fail";
-                        WingmanController.UploadProcessed(fInfo, accName, jsonFile, htmlFile, $"_{logToUse.LogData.Logic.Extension}_{result}", str => originalController.UpdateProgress("Wingman: " + str), ParserVersion);
+                        originalController.WingmanUploadFailed = !WingmanController.UploadProcessed(fInfo, accName, jsonFile, htmlFile, $"_{logToUse.LogData.Logic.Extension}_{result}", str => originalController.UpdateProgress("Wingman: " + str), ParserVersion);
                     }
                     catch (Exception e)
                     {
+                        originalController.WingmanUploadFailed = true;
                         originalController.UpdateProgressWithCancellationCheck("Wingman: Operation failed " + e.Message);
                     }
 #endif
                 }
                 else
                 {
+                    originalController.WingmanUploadRefused = true;
                     originalController.UpdateProgressWithCancellationCheck("Wingman: Upload is not possible, unsupported log, log already uploaded or wingman is down");
                 }
             }
@@ -360,7 +366,7 @@ public sealed class ProgramHelper : IDisposable
                         operation.UpdateProgressWithCancellationCheck("Webhook: " + message);
                     }
                 }
-            }
+            } 
             //Creating File
             GenerateFiles(log!, operation, uploadStrings, fInfo);
         }

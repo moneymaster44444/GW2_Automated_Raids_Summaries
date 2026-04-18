@@ -96,10 +96,10 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
         return encounterPhases;
     }
 
-    private List<EncounterPhaseData> HandleTwistedCastlePhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
+    private List<EncounterPhaseData> HandleTwistedCastlePhases(IReadOnlyDictionary<int, List<SingleActor>> targetsByIDs, IReadOnlyDictionary<int, List<NPC>> trashMobsByIDs, ParsedEvtcLog log, List<PhaseData> phases)
     {
         var encounterPhases = new List<EncounterPhaseData>();
-        if (targetsByIDs.TryGetValue((int)TargetID.HauntingStatue, out var statues) && targetsByIDs.TryGetValue((int)TargetID.DummyTarget, out var dummies))
+        if (trashMobsByIDs.TryGetValue((int)TargetID.HauntingStatue, out var statues) && targetsByIDs.TryGetValue((int)TargetID.DummyTarget, out var dummies))
         {
             var dummy = dummies.FirstOrDefault(x => x.Character == "Twisted Castle");
             if (dummy == null)
@@ -230,6 +230,7 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
     {
         List<PhaseData> phases = GetInitialPhase(log);
         var targetsByIDs = Targets.GroupBy(x => x.ID).ToDictionary(x => x.Key, x => x.ToList());
+        var trashMobsByIDs = TrashMobs.GroupBy(x => x.ID).ToDictionary(x => x.Key, x => x.ToList());
         {
             var escortPhases = HandleEscortPhases(targetsByIDs, NonSquadFriendlies.Where(x => x.IsSpecies(TargetID.Glenna)).ToList(), log, phases);
             foreach (var escortPhase in escortPhases)
@@ -246,12 +247,12 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
                 phases.AddRange(KeepConstruct.ComputePhases(log, keepConstruct, Targets, kcPhase, requirePhases));
             }
         }
-        HandleTwistedCastlePhases(targetsByIDs, log, phases);
+        HandleTwistedCastlePhases(targetsByIDs, trashMobsByIDs, log, phases);
         {
             var xeraPhases = HandleXeraPhases(targetsByIDs, log, phases);
             foreach (var xeraPhase in xeraPhases)
             {
-                var xera = xeraPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.KeepConstruct));
+                var xera = xeraPhase.Targets.Keys.FirstOrDefault(x => x.IsSpecies(TargetID.Xera));
                 phases.AddRange(Xera.ComputePhases(log, xera, Targets, xeraPhase, requirePhases));
             }
         }
@@ -312,8 +313,7 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
             var attachedXera = xeras.LastOrDefault(x => x.FirstAware < xera2.FirstAware && x.FirstAware >= start);
             if (attachedXera != null)
             {
-                attachedXera.OverrideAwareTimes(attachedXera.FirstAware, xera2.LastAware);
-                AgentManipulationHelper.RedirectAllEvents(combatData, extensions, agentData, xera2, attachedXera);
+                Xera.MergeSecondXeraToFirstXera(attachedXera, xera2, agentData, combatData, extensions);
             }
             start = xera2.LastAware;
         }
@@ -336,7 +336,7 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
         {
             if (target.IsSpecies(TargetID.Xera))
             {
-                Xera.SetManualHPForXera(target);
+                Xera.AdjustXeraHP(target, Xera.GetXera2Merge(target.AgentItem) != null);
             }
         }
     }
@@ -351,12 +351,12 @@ internal class StrongholdOfTheFaithfulInstance : StrongholdOfTheFaithful
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID));
         }
         return res;
     }

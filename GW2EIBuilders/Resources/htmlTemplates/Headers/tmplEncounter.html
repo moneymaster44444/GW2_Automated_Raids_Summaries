@@ -36,11 +36,20 @@
                         <div class="small text-center">
                             {{target.name}}
                         </div>
-                        <div :data-original-title="healthRemaining(target)">
-                            <div class="health-bar" :style="{'background': getGradient(target)}">
+                        <div :data-original-title="healthRemaining(target, !!target.hpBars)">
+                            <div v-if="!!target.hpBars">
+                                <div v-for="hpBar in target.hpBars" class="mt-1">
+                                    <div class="health-bar" :style="{'background': getGradient(target, hpBar)}"></div>
+                                    <div v-if="target.health > 0" class="super-small text-center">
+                                        {{ targetHealthValues(target, hpBar) }}
+                                    </div>
+                                </div>
                             </div>
-                            <div v-if="target.health > 0" class="super-small text-center">
-                                {{ targetHealthValues(target) }}
+                            <div v-if="!target.hpBars">
+                                <div class="health-bar" :style="{'background': getGradient(target, null)}"></div>
+                                <div v-if="target.health > 0" class="super-small text-center">
+                                    {{ targetHealthValues(target, null) }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -63,6 +72,17 @@
 </template>
 
 <script>
+
+    function hpBarIsConsumed(hpBar) {
+        return hpBar[3] === 0;
+    }
+    function hpBarIsActive(hpBar) {
+        return hpBar[3] === 1;
+    }
+    function hpBarIsUntouched(hpBar) {
+        return hpBar[3] === 2;
+    }
+
     Vue.component("encounter-component", {
         props: ["light", "encounters"],
         template: `${template}`,
@@ -92,7 +112,7 @@
                 this.encounters[encounterIndex].active = true;
                 const index = reactiveLogdata.activeEncounterPhaseData[encounterIndex].phase;
                 // Select phase
-                for (var i = 0; i < reactiveLogdata.phases.length; i++) {
+                for (let i = 0; i < reactiveLogdata.phases.length; i++) {
                     reactiveLogdata.phases[i].active = false;
                 }
                 reactiveLogdata.phases[index].active = true;   
@@ -132,42 +152,79 @@
                     reactiveLogdata.activeEncounterPhaseData[encounterIndex].player = selectedPlayerIndex;
                 }
             },
-            getGradient: function (target) {
-                var hpLeftPercent = target.hpLeftPercent;
-                var healthAndBarrier = hpLeftPercent + target.barrierLeftPercent;
-                if (healthAndBarrier > 100) {
-                    // So that barrier remains fully visible like in game
-                    hpLeftPercent -= healthAndBarrier - 100;
-                    healthAndBarrier = 100;
+            getGradient: function (target, hpBar) {
+                const minPercent = hpBar ? hpBar[0] : 0;
+                const maxPercent = hpBar ? hpBar[1] : 100;
+                let hpLeftPercent = target.hpLeftPercent;
+                const barrierLeftPercent = hpBar && hpBarIsActive(hpBar) ? target.barrierLeftPercent : 0;
+                if (hpBar) {
+                    if (hpBarIsConsumed(hpBar)) {
+                        hpLeftPercent = minPercent;
+                    } else if (hpBarIsUntouched(hpBar)) {
+                        hpLeftPercent = maxPercent;
+                    }
                 }
-                var red = "red " + hpLeftPercent + "%";
-                var yellow = "yellow " + hpLeftPercent + "% " + healthAndBarrier + "%";
-                var green = "green " + healthAndBarrier + "%";        
-                var template = `linear-gradient(to right, ${red}, ${yellow}, ${green})`;
+                let healthAndBarrier = hpLeftPercent + barrierLeftPercent;
+                if (healthAndBarrier > maxPercent) {
+                    // So that barrier remains fully visible like in game
+                    hpLeftPercent -= healthAndBarrier - maxPercent;
+                    healthAndBarrier = maxPercent;
+                }
+                const greyLowStart = "grey  " + 0 + "%";
+                const greyLowEnd = "grey  " + minPercent + "%";
+                const redStart = "red " + minPercent + "%";
+                const red = "red " + hpLeftPercent + "%";
+                const yellow = "yellow " + hpLeftPercent + "% " + healthAndBarrier + "%";
+                const green = "green " + healthAndBarrier + "%";      
+                const greenEnd = "green " + maxPercent + "%";  
+                const greyHighStart = "grey  " + maxPercent + "%"; 
+                const greyHighEnd = "grey  " + 100 + "%";
+                const template = `linear-gradient(to right, 
+                        ${greyLowStart}, ${greyLowEnd}, 
+                        ${redStart}, ${red}, 
+                        ${yellow}, 
+                        ${green}, ${greenEnd}, 
+                        ${greyHighStart}, ${greyHighEnd}
+                )`;
                 return template;
             },
-            healthRemaining: function (target) {
-                var hpLeft = target.hpLeft;
-                var barrierLeft = target.barrierLeft;
+            healthRemaining: function (target, showTotalHP) {
+                const hpLeft = target.hpLeft;
+                const barrierLeft = target.barrierLeft;
+                let res = null;
+                let linebreak = "";
+                if (showTotalHP) {
+                    res = "Total Health: " + target.health;
+                    linebreak = "<br>";
+                }
                 if (hpLeft > 0 && barrierLeft > 0) {
-                    return 'Remaining:<br>Health: ' + hpLeft + '<br>Barrier: ' + barrierLeft;
+                    res += linebreak + 'Remaining:<br>Health: ' + hpLeft + '<br>Barrier: ' + barrierLeft;
                 }
                 else if (hpLeft > 0 && barrierLeft == 0) {
-                    return 'Remaining:<br>Health: ' + hpLeft;
+                    res += linebreak + 'Remaining Health: ' + hpLeft;
                 }
                 else if (barrierLeft > 0) {
-                    return 'Remaining:<br>Barrier: ' + barrierLeft;
+                    res += linebreak + 'Remaining Barrier: ' + barrierLeft;
                 }
-                return false;
+                return res;
             },
-            targetHealthValues: function (target) {
-                var health = target.health;
-                var hpLeft = target.hpLeftPercent;
-                var barrierLeft = target.barrierLeftPercent;
-                if ((hpLeft > 0 && barrierLeft > 0) || (hpLeft == 0 && barrierLeft > 0)) { // If only barrier is left, show 0 + x.y barrier
+            targetHealthValues: function (target, hpBar) {
+                const minPercent = hpBar ? hpBar[0] : 0;
+                const maxPercent = hpBar ? hpBar[1] : 100;
+                const health = hpBar ? hpBar[2] : target.health;
+                let hpLeft = target.hpLeftPercent;
+                if (hpBar) {
+                    if (hpBarIsConsumed(hpBar)) {
+                        hpLeft = minPercent;
+                    } else if (hpBarIsUntouched(hpBar)) {
+                        hpLeft = maxPercent;
+                    }
+                }
+                const barrierLeft = hpBar && hpBarIsActive(hpBar) ? target.barrierLeftPercent : 0;
+                if ((hpLeft > minPercent && barrierLeft > 0) || (hpLeft == minPercent && barrierLeft > 0)) { // If only barrier is left, show 0 + x.y barrier
                     return health + " HP (" + hpLeft + "% + " + barrierLeft + "%)";
                 }
-                else if (hpLeft > 0 && barrierLeft == 0) {
+                else if (hpLeft > minPercent && barrierLeft == 0) {
                     return health + " HP (" + hpLeft + "%)";
                 }
                 return health + " HP";
@@ -232,7 +289,7 @@
                         nameNoMode: phase == logData.phases[0] ? logData.logName : phase.nameNoMode,
                         name: phase == logData.phases[0] ? logData.logName : phase.name,
                         success: phase.success,
-                        icon: phase.icon,
+                        icon: _buildFallBackURL(phase.icon),
                         duration: phase.encounterDuration,
                         targets: targets,
                         targetCount: targetCount,

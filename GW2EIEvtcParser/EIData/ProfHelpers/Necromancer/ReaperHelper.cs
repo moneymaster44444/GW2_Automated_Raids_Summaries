@@ -29,7 +29,7 @@ internal static class ReaperHelper
         new EffectCastFinder(Suffer, EffectGUIDs.ReaperSuffer)
             .UsingSrcSpecChecker(Spec.Reaper),
         new MinionSpawnCastFinder(Rise, (int)MinionID.ShamblingHorror)
-            .UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetFinalMaster().Spec == Spec.Reaper),
+            .UsingChecker((evt, combatData, agentData, skillData) => evt.Src.GetFinalMaster().GetSpecAtTime(evt.Time) == Spec.Reaper),
         new DamageCastFinder(ChillingNova, ChillingNova)
             .UsingOrigin(EIData.InstantCastFinder.InstantCastOrigin.Trait),
     ];

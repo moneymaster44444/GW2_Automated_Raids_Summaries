@@ -217,7 +217,7 @@ internal class Skorvald : ShatteredObservatory
                 SolarBoltCM,
                 //SupernovaCM,
             };
-            if (combatData.GetSkills().Intersect(cmSkills).Any() ||
+            if (cmSkills.Any(x => combatData.GetAnimatedCastData(x).Count > 0 || combatData.GetDamageData(x).Count > 0) ||
                 agentData.GetNPCsByID(TargetID.FluxAnomalyCM1).Any(x => x.FirstAware >= target.FirstAware) ||
                 agentData.GetNPCsByID(TargetID.FluxAnomalyCM2).Any(x => x.FirstAware >= target.FirstAware) ||
                 agentData.GetNPCsByID(TargetID.FluxAnomalyCM3).Any(x => x.FirstAware >= target.FirstAware) ||

@@ -72,7 +72,8 @@ internal class Eparch : LonelyTower
     internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
     {
         ulong build = combatData.GetGW2BuildEvent().Build;
-        int healthCMRelease = build >= GW2Builds.June2024Balance ? 22_833_236 : 32_618_906;
+        int healthCMRelease = build >= GW2Builds.April2026Balancepocalypse ? 16_961_832 : 
+            build >= GW2Builds.June2024Balance ? 22_833_236 : 32_618_906;
         int healthThreshold = (int)(0.95 * healthCMRelease); // fractals lose hp as their scale lowers
         SingleActor eparch = GetEparchActor();
         if (build >= GW2Builds.June2024LonelyTowerCMRelease && eparch.GetHealth(combatData) >= healthThreshold)

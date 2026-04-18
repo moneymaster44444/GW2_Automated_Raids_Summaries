@@ -307,12 +307,12 @@ internal class MountBalriorInstance : MountBalrior
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID));
         }
         return res;
     }
@@ -380,5 +380,15 @@ internal class MountBalriorInstance : MountBalrior
             offset = AddSortIDWithOffset(sortIDs, logic.GetTargetsSortIDs(), offset);
         }
         return sortIDs;
+    }
+
+    internal override LogData.Mode GetLogMode(CombatData combatData, AgentData agentData, LogData logData)
+    {
+        foreach (var ura in Targets.Where(x => x.IsSpecies(TargetID.Ura)))
+        {
+            UraTheSteamshrieker.AdjustUraHP(ura, ura.GetHealth(combatData), 
+                UraTheSteamshrieker.GetHealedPhaseStartEvent(combatData, ura, logData.LogStart, logData.LogEnd) != null, combatData.GetGW2BuildEvent().Build);
+        }
+        return base.GetLogMode(combatData, agentData, logData);
     }
 }

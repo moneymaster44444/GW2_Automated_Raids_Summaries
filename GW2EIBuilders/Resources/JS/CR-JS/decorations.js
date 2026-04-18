@@ -115,7 +115,7 @@ class ArenaMetadata extends GenericAttachedMetadata {
         super(params);
         this.imageUrl = params.image;
         this.image = new Image();
-        this.image.src = this.imageUrl;
+        this.image.src = _buildFallBackURL(this.imageUrl);
         this.image.onload = () => {
             animator.needBGUpdate = true;
             animateCanvas(noUpdateTime);
@@ -130,7 +130,7 @@ class GenericIconMetadata extends GenericAttachedMetadata{
         super(params);
         this.imageUrl = params.image;
         this.image = new Image();
-        this.image.src = this.imageUrl;
+        this.image.src = _buildFallBackURL(this.imageUrl);
         this.image.onload = () => animateCanvas(noUpdateTime);
         this.pixelSize = params.pixelSize;
         this.worldSize = InchToPixel * params.worldSize;
@@ -167,7 +167,7 @@ class MovingPlatformMetadata extends BackgroundMetadata{
         super(params);
         this.imageUrl = params.image;
         this.image = new Image();
-        this.image.src = this.imageUrl;
+        this.image.src = _buildFallBackURL(this.imageUrl);
         this.image.onload = () => animateCanvas(noUpdateTime);
         this.width = InchToPixel * params.width;
         this.height = InchToPixel * params.height;

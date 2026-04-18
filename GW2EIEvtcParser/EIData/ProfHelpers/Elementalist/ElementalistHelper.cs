@@ -30,8 +30,11 @@ internal static class ElementalistHelper
         new BuffGainCastFinder(GlyphOfElementalPowerEarthSkill, GlyphOfElementalPowerEarthBuff),
         // Arcane
         new DamageCastFinder(ArcaneBlast, ArcaneBlast),
-        new BuffGiveCastFinder(ArcanePowerSkill, ArcanePowerBuff),
+        new BuffGiveCastFinder(ArcanePower_ArcaneEcho_Skill, ArcanePowerBuff)
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.June2025Balance),
         new BuffGainCastFinder(ArcaneShieldSkill, ArcaneShieldBuff),
+        new BuffGainCastFinder(ArcanePower_ArcaneEcho_Skill, ArcaneEchoBuff)
+            .WithBuilds(GW2Builds.June2025Balance),
         new DamageCastFinder(ArcaneWave, ArcaneWave),
         // Cantrips
         new EffectCastFinderByDst(CleansingFire, EffectGUIDs.ElementalistCleansingFire1)
@@ -251,8 +254,10 @@ internal static class ElementalistHelper
         new Buff("Lesser Earth Elemental Summoned", LesserEarthElementalSummoned, Source.Elementalist, BuffStackType.StackingConditionalLoss, 5, BuffClassification.Other, SkillImages.GlyphOfLesserElementalsEarth),
         new Buff("Earth Elemental Summoned", EarthElementalSummoned, Source.Elementalist, BuffClassification.Other, SkillImages.GlyphOfElementalsEarth),
         // Skills
-        new Buff("Arcane Power", ArcanePowerBuff, Source.Elementalist, BuffStackType.Stacking, 6, BuffClassification.Other, SkillImages.ArcanePower),
-        new Buff("Arcane Power (Ferocity)", ArcanePowerFerocityBuff, Source.Elementalist, BuffClassification.Other, SkillImages.ArcanePower),
+        new Buff("Arcane Power", ArcanePowerBuff, Source.Elementalist, BuffStackType.Stacking, 6, BuffClassification.Other, SkillImages.ArcanePower_ArcaneEcho)
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.June2025Balance),
+        new Buff("Arcane Echo", ArcaneEchoBuff, Source.Elementalist, BuffClassification.Other, SkillImages.ArcanePower_ArcaneEcho),
+        new Buff("Arcane Power (Ferocity)", ArcanePowerFerocityBuff, Source.Elementalist, BuffClassification.Other, SkillImages.ArcanePower_ArcaneEcho),
         new Buff("Arcane Shield", ArcaneShieldBuff, Source.Elementalist, BuffStackType.Stacking, 25, BuffClassification.Other, SkillImages.ArcaneShield),
         new Buff("Renewal of Fire", RenewalOfFire, Source.Elementalist, BuffClassification.Other, SkillImages.RenewalOfFire),
         new Buff("Rock Barrier", RockBarrier, Source.Elementalist, BuffClassification.Other, SkillImages.RockBarrier),

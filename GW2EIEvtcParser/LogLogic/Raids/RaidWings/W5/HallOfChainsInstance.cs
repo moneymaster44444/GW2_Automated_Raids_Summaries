@@ -335,6 +335,7 @@ internal class HallOfChainsInstance : HallOfChains
     {
         agentData.AddCustomNPCAgent(logData.LogStart, logData.LogEnd, "River of Souls", Spec.NPC, (int)TargetID.DummyTarget, true);
         Dhuum.HandleYourSouls(agentData, combatData);
+        Dhuum.HandleEtherealSeals(agentData, combatData);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
         foreach (var target in Targets)
         {
@@ -359,12 +360,12 @@ internal class HallOfChainsInstance : HallOfChains
         return res;
     }
 
-    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData)
+    internal override List<CastEvent> SpecialCastEventProcess(CombatData combatData, AgentData agentData, SkillData skillData, Dictionary<long, List<AnimatedCastEvent>> animatedCastDataByID)
     {
         var res = new List<CastEvent>();
         foreach (var subLogic in _subLogics)
         {
-            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData));
+            res.AddRange(subLogic.SpecialCastEventProcess(combatData, agentData, skillData, animatedCastDataByID));
         }
         return res;
     }

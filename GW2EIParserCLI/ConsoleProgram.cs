@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text.Json;
 using GW2EIEvtcParser;
 using GW2EIParserCommons;
 using GW2EIParserCommons.Exceptions;
@@ -46,7 +47,6 @@ static class ConsoleProgram
                 ParseLog(file, programHelper);
             }
         }
-
         return 0;
     }
 
@@ -82,7 +82,7 @@ static class ConsoleProgram
         try
         {
             programHelper.DoWork(operation);
-            operation.FinalizeStatus("Parsing Successful - ");
+            operation.FinalizeStatus(true);
         }
         catch (ProgramException ex)
         {
@@ -91,16 +91,17 @@ static class ConsoleProgram
             operation.UpdateProgress("Program: " + finalException.StackTrace);
             operation.UpdateProgress("Program: " + finalException.TargetSite);
             operation.UpdateProgress("Program: " + finalException.Message);
-            operation.FinalizeStatus("Parsing Failure - ");
+            operation.FinalizeStatus(false);
         }
         catch (Exception)
         {
             operation.UpdateProgress("Program: something terrible has happened");
-            operation.FinalizeStatus("Parsing Failure - ");
+            operation.FinalizeStatus(false);
         }
         finally
         {
             programHelper.GenerateTraceFile(operation);
         }
+        Console.WriteLine("Processed - " + JsonSerializer.Serialize(new ConsoleResultObject(operation), ConsoleResultObject.Serializer));
     }
 }

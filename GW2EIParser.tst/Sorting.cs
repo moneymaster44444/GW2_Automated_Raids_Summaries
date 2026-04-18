@@ -84,6 +84,11 @@ sealed class Sorting
     {
         public int Order = order;
 
+        public override bool IgnoreOnRotationRender()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString()
         {
             return $"({Time} {Skill.IsSwap} {Order})";

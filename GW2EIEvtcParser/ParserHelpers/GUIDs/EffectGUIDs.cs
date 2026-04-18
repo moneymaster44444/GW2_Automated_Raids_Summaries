@@ -268,6 +268,7 @@ public static class EffectGUIDs
     public static readonly GUID SpellbreakerWindsOfDisenchantment = new("926917599B6B6E498AD62B812001B823");
     public static readonly GUID BladeswornDragonspikeMine = new("B5BE541DBF290E4AA381E1E52A2A3525");
     public static readonly GUID BerserkerOutrage = new("AC32B7F7BB281B4D94713F180C44F322");
+    public static readonly GUID BerserkerKingOfFires = new("5E77D6C93F3D0747B0B81169C7C0E506"); // duration 500
     public static readonly GUID ParagonNeverSurrenderInitial = new("CB237E7C35B61E47A67663B95CB6E094");
     public static readonly GUID ParagonNeverSurrenderEcho = new("82EF409FBC174B409BD21ACB509031DB");
     #endregion
@@ -392,6 +393,8 @@ public static class EffectGUIDs
     public static readonly GUID LuminaryRadiantCourage1 = new("03850757F14FD44A9998D4CAD71CC589");
     public static readonly GUID LuminaryRadiantCourage2 = new("08E6D231507CDD458EDECF67D264228C");
     public static readonly GUID LuminaryLuminousStaffSymbolLarge = new("41824DFFE1D01C499C58BCAE2CF57984");
+    public static readonly GUID LuminarySovereignOfLightAudio = new("D23CB7F8A2755F4FA2A68A6834ABAD98"); // duration 2500
+    public static readonly GUID LuminarySovereignOfLightModel = new("FB066A1F03294D4D850D22B26650FFA9"); // duration 500
     #endregion
 
     #region Engineer

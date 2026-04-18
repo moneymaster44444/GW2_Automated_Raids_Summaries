@@ -329,13 +329,28 @@ internal class Xera : StrongholdOfTheFaithful
         }
     }
 
-    internal static void SetManualHPForXera(SingleActor Xera)
+    internal static void AdjustXeraHP(SingleActor xera, bool phased)
     {
-        Xera.SetManualHealth(24085950, new List<(long hpValue, double percent)>()
+        xera.SetManualHealth(24085950, new List<(int hpValue, double percent)>()
         {
             (22611300, 100),
             (25560600, 50)
         });
+        xera.SetHealthBars([
+           (100, 50, 22611300, !phased),
+           (50, 0, 25560600, phased),
+        ]);
+    }
+
+    internal static void MergeSecondXeraToFirstXera(AgentItem firstXera, AgentItem secondXera, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
+    {
+        firstXera.AddMergeFrom(firstXera, firstXera.FirstAware, firstXera.LastAware);
+        // Add custom spawn and despawn event
+        combatData.Add(new CombatItem(firstXera.FirstAware, firstXera.Agent, 0, 0, 0, 0, 0, firstXera.InstID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)StateChange.Spawn, 0, 0, 0, 0));
+        combatData.Add(new CombatItem(firstXera.LastAware, firstXera.Agent, 0, 0, 0, 0, 0, firstXera.InstID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)StateChange.Despawn, 0, 0, 0, 0));
+        //
+        firstXera.OverrideAwareTimes(firstXera.FirstAware, secondXera.LastAware);
+        AgentManipulationHelper.RedirectAllEvents(combatData, extensions, agentData, secondXera, firstXera);
     }
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
@@ -353,13 +368,13 @@ internal class Xera : StrongholdOfTheFaithful
         // find split
         if (agentData.TryGetFirstAgentItem(TargetID.Xera2, out var secondXera))
         {
-            firstXera.OverrideAwareTimes(firstXera.FirstAware, secondXera.LastAware);
-            AgentManipulationHelper.RedirectAllEvents(combatData, extensions, agentData, secondXera, firstXera);
+            MergeSecondXeraToFirstXera(firstXera, secondXera, agentData, combatData, extensions);
         }
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
         RenameBloodStones(Targets);
         // Xera gains hp at 50%, total hp of the encounter is not the initial hp of Xera
-        SetManualHPForXera(GetMainTarget());
+        var xera = GetMainTarget();
+        AdjustXeraHP(xera, GetXera2Merge(xera.AgentItem) != null);
     }
 
     internal override LogData.StartStatus GetLogStartStatus(CombatData combatData, AgentData agentData, LogData logData)

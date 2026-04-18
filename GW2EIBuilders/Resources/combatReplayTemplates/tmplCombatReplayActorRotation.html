@@ -67,6 +67,10 @@
                 } else {
                     return tooltip + ` for ${cast.duration}ms`;
                 }
+            },
+            drawItem(skillCast, time) {
+                return skillCast[0] <= time &&
+                        time <= skillCast[0] + this.getSkillDuration(skillCast);
             }
         },
         computed: {
@@ -120,23 +124,20 @@
                 let item = noInstantItem;
                 let id = idNoInstant;
                 if (instantItem) {
-                    if (!item ||
-                        item[0] > instantItem[0] ||
-                        (instantItem[0] <= time &&
-                        time <= instantItem[0] + this.getSkillDuration(instantItem))
+                    // If instant item to be rendered or If instant item before animated item and instant time after current time, it comes before in the order
+                    if (this.drawItem(instantItem, time) ||
+                        (instantItem[0] < item[0] &&
+                            instantItem[0] >= time
+                        )
                     ) {
                         item = instantItem;
                         id = idInstant;
                     }
                 }
-                const itemTime = item[0];
-                let drawItem = false;
-                if (itemTime <= time && time <= itemTime + this.getSkillDuration(item)) {
-                    drawItem = true;
-                }
+                let drawItem = this.drawItem(item, time);
                 if (drawItem) {
                     res.current = {
-                        time: itemTime,
+                        time: item[0],
                         skill: findSkill(false, item[1]),
                         duration: item[2],
                         type: item[3]

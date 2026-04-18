@@ -1,10 +1,8 @@
 ﻿using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
-using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.ParserHelper;
-using static GW2EIEvtcParser.SpeciesIDs;
 
 namespace GW2EIEvtcParser;
 
@@ -61,7 +59,7 @@ public static class AgentManipulationHelper
     /// <param name="to">AgentItem the events need to be redirected to</param>
     /// <param name="copyPositionalDataFromAttackTarget">If true, "to" will get the positional data from attack targets, if possible</param>
     /// <param name="extraRedirections">function to handle special conditions, given event either src or dst matches from</param>
-    internal static void RedirectNPCEventsAndCopyPreviousStates(List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions, AgentData agentData, AgentItem redirectFrom, List<AgentItem> stateCopyFroms, AgentItem to, bool copyPositionalDataFromAttackTarget, ExtraRedirection? extraRedirections = null, StateEventProcessing? stateEventProcessing = null)
+    internal static void RedirectNPCEventsAndCopyPreviousStates(List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions, AgentData agentData, AgentItem redirectFrom, List<AgentItem> stateCopyFroms, AgentItem to, long redirectionStart, bool copyPositionalDataFromAttackTarget, ExtraRedirection? extraRedirections = null, StateEventProcessing? stateEventProcessing = null)
     {
         if (!(redirectFrom.IsNPC && to.IsNPC))
         {
@@ -70,7 +68,7 @@ public static class AgentManipulationHelper
         // Redirect combat events
         foreach (CombatItem evt in combatData)
         {
-            if (to.InAwareTimes(evt.Time))
+            if (to.InAwareTimes(evt.Time) && evt.Time >= redirectionStart)
             {
                 var srcMatchesAgent = evt.SrcMatchesAgent(redirectFrom, extensions);
                 var dstMatchesAgent = evt.DstMatchesAgent(redirectFrom, extensions);
@@ -97,7 +95,7 @@ public static class AgentManipulationHelper
         foreach (CombatItem c in attackTargetsToCopy)
         {
             var cExtra = new CombatItem(c);
-            cExtra.OverrideTime(to.FirstAware - 1); // To make sure they are put before all actual agent events
+            cExtra.OverrideTime(redirectionStart - 1); // To make sure they are put before all actual agent events
             cExtra.OverrideDstAgent(to);
             combatData.Add(cExtra);
             copied.Add(cExtra);
@@ -128,7 +126,7 @@ public static class AgentManipulationHelper
         }
         foreach (Func<CombatItem, bool> stateChangeCopyCondition in stateChangeCopyFromAgentConditions)
         {
-            CombatItem? stateToCopy = combatData.LastOrDefault(x => stateChangeCopyCondition(x) && canCopyFromAgent(x) && x.Time <= to.FirstAware);
+            CombatItem? stateToCopy = combatData.LastOrDefault(x => stateChangeCopyCondition(x) && canCopyFromAgent(x) && x.Time <= redirectionStart);
             if (stateToCopy != null)
             {
                 stateEventsToCopy.Add(stateToCopy);
@@ -146,7 +144,7 @@ public static class AgentManipulationHelper
             };
             foreach (Func<CombatItem, bool> stateChangeCopyCondition in stateChangeCopyFromAttackTargetConditions)
             {
-                CombatItem? stateToCopy = combatData.LastOrDefault(x => stateChangeCopyCondition(x) && canCopyFromAttackTarget(x) && x.Time <= to.FirstAware);
+                CombatItem? stateToCopy = combatData.LastOrDefault(x => stateChangeCopyCondition(x) && canCopyFromAttackTarget(x) && x.Time <= redirectionStart);
                 if (stateToCopy != null)
                 {
                     stateEventsToCopy.Add(stateToCopy);
@@ -158,7 +156,7 @@ public static class AgentManipulationHelper
             foreach (CombatItem c in stateEventsToCopy)
             {
                 var cExtra = new CombatItem(c);
-                cExtra.OverrideTime(to.FirstAware-1); // To make sure they are put before all actual agent events
+                cExtra.OverrideTime(redirectionStart - 1); // To make sure they are put before all actual agent events
                 cExtra.OverrideSrcAgent(to);
                 combatData.Add(cExtra);
                 copied.Add(cExtra);
@@ -169,7 +167,7 @@ public static class AgentManipulationHelper
             combatData.SortByTime();
             foreach (CombatItem c in copied)
             {
-                c.OverrideTime(to.FirstAware);
+                c.OverrideTime(redirectionStart);
                 if (stateEventProcessing != null)
                 {
                     combatData.SortByTime();
@@ -194,7 +192,7 @@ public static class AgentManipulationHelper
             }
         }
 
-        to.AddMergeFrom(redirectFrom, to.FirstAware, to.LastAware);
+        to.AddMergeFrom(redirectFrom, redirectionStart, to.LastAware);
     }
 
     internal static void SplitPlayerPerSpecSubgroupAndSwap(IReadOnlyList<EnterCombatEvent> enterCombatEvents, IReadOnlyList<ExitCombatEvent> exitCombatEvents, IReadOnlyDictionary<uint, ExtensionHandler> extensions, AgentData agentData, AgentItem originalPlayer, bool splitByEnterCombat)
@@ -312,38 +310,95 @@ public static class AgentManipulationHelper
             .Where(x => x.IsStateChange == StateChange.SquadCombatStart || x.IsStateChange == StateChange.SquadCombatEnd)
             .Select(x => x.Time));
         squadCombatStartCombatEnds.Add(long.MaxValue);
-        var combatDataDict = combatItems.Where(x => x.SrcIsAgent(extensions) || x.DstIsAgent(extensions));
+        var combatDataDict = combatItems.Where(x => x.SrcIsAgent(extensions) || x.DstIsAgent(extensions)).ToList();
+        var positionEvents = combatDataDict
+                .Where(x => x.IsStateChange == StateChange.Position)
+                .GroupBy(x => agentData.GetAgent(x.SrcAgent, x.Time))
+                .ToDictionary(x => x.Key, x => x.Select(x => MovementEvent.GetPoint3D(x)).LastOrDefault());
+        var pov = combatDataDict.FirstOrDefault(x => x.IsStateChange == StateChange.PointOfView);
+        AgentItem? povAgent = null;
+        var povPositions = new List<ParametricPoint3D>();
+        if (pov != null)
+        {
+            povAgent = agentData.GetAgent(pov.SrcAgent, pov.Time);
+            povPositions = combatDataDict
+                .Where(x => x.SrcMatchesAgent(povAgent) && x.IsStateChange == StateChange.Position)
+                .Select(x => new ParametricPoint3D(MovementEvent.GetPoint3D(x), x.Time)).ToList();
+        }
         var srcCombatDataDict = combatDataDict.Where(x => x.SrcIsAgent(extensions)).GroupBy(x => agentData.GetAgent(x.SrcAgent, x.Time)).ToDictionary(x => x.Key, x => x.ToList());
         var dstCombatDataDict = combatDataDict.Where(x => x.DstIsAgent(extensions)).GroupBy(x => agentData.GetAgent(x.DstAgent, x.Time)).ToDictionary(x => x.Key, x => x.ToList());
         // NPCs
         {
-            var npcsByInstIDs = agentData.GetAgentByType(AgentItem.AgentType.NPC).Where(x => !x.IsNonIdentifiedSpecies()).GroupBy(x => x.InstID).ToDictionary(x => x.Key, x => x.ToList());
-            foreach (var npcsByInstdID in npcsByInstIDs)
+            var npcsByInstIDs = agentData.GetAgentByType(AgentItem.AgentType.NPC).GroupBy(x => x.InstID).ToDictionary(x => x.Key, x => x.ToList());
+            if (povAgent == null || povPositions.Count == 0)
             {
-                var agentToRegroup = new List<AgentItem>(5);
-                var previousAgent = npcsByInstdID.Value[0];
-                var previousStateTime = squadCombatStartCombatEnds[0];
-                foreach (var curAgent in npcsByInstdID.Value)
+                foreach (var npcsByInstdID in npcsByInstIDs)
                 {
-                    var curStateTime = squadCombatStartCombatEnds.Last(x => x <= curAgent.HalfAware);
-                    if (previousAgent.ID == curAgent.ID && curAgent.Master == previousAgent.Master && curStateTime == previousStateTime)
+                    var agentToRegroup = new List<AgentItem>(5);
+                    var previousAgent = npcsByInstdID.Value[0];
+                    var previousStateTime = squadCombatStartCombatEnds[0];
+                    foreach (var curAgent in npcsByInstdID.Value)
                     {
-                        agentToRegroup.Add(curAgent);
-                    } 
-                    else
-                    {
-                        if (agentToRegroup.Count > 1)
+                        var curStateTime = squadCombatStartCombatEnds.Last(x => x <= curAgent.HalfAware);
+                        if (curAgent.CouldBeEqual(previousAgent) && curStateTime == previousStateTime && !curAgent.GetFinalMaster().IsPlayer)
                         {
-                            RegroupAgents(agentData, agentToRegroup, srcCombatDataDict, dstCombatDataDict, toAdd, toRemove);
+                            agentToRegroup.Add(curAgent);
+                        } 
+                        else
+                        {
+                            if (agentToRegroup.Count > 1)
+                            {
+                                RegroupAgents(agentData, agentToRegroup, srcCombatDataDict, dstCombatDataDict, toAdd, toRemove);
+                            }
+                            agentToRegroup = new List<AgentItem>(5) { curAgent };
+                            previousStateTime = curStateTime;
                         }
-                        agentToRegroup = new List<AgentItem>(5) { curAgent };
                         previousAgent = curAgent;
-                        previousStateTime = curStateTime;
+                    }
+                    if (agentToRegroup.Count > 1)
+                    {
+                        RegroupAgents(agentData, agentToRegroup, srcCombatDataDict, dstCombatDataDict, toAdd, toRemove);
                     }
                 }
-                if (agentToRegroup.Count > 1)
+            } 
+            else
+            {
+                foreach (var npcsByInstdID in npcsByInstIDs)
                 {
-                    RegroupAgents(agentData, agentToRegroup, srcCombatDataDict, dstCombatDataDict, toAdd, toRemove);
+                    var agentToRegroup = new List<AgentItem>(5);
+                    var previousAgent = npcsByInstdID.Value[0];
+                    var previousStateTime = squadCombatStartCombatEnds[0];
+                    foreach (var curAgent in npcsByInstdID.Value)
+                    {
+                        var curStateTime = squadCombatStartCombatEnds.Last(x => x <= curAgent.HalfAware);
+                        bool goNext = true;
+                        if (curAgent.CouldBeEqual(previousAgent) && curStateTime == previousStateTime)
+                        {
+                            if (positionEvents.TryGetValue(previousAgent, out var agentPosition))
+                            {
+                                var nextPovPosition = povPositions.FirstOrNull((in ParametricPoint3D x) => x.Time > previousAgent.LastAware);
+                                if (nextPovPosition != null && (nextPovPosition.Value.XYZ - agentPosition).Length() > 5000)
+                                {
+                                    goNext = false;
+                                    agentToRegroup.Add(curAgent);
+                                }
+                            }
+                        }
+                        if (goNext)
+                        {
+                            if (agentToRegroup.Count > 1)
+                            {
+                                RegroupAgents(agentData, agentToRegroup, srcCombatDataDict, dstCombatDataDict, toAdd, toRemove);
+                            }
+                            agentToRegroup = new List<AgentItem>(5) { curAgent };
+                            previousStateTime = curStateTime;
+                        }
+                        previousAgent = curAgent;
+                    }
+                    if (agentToRegroup.Count > 1)
+                    {
+                        RegroupAgents(agentData, agentToRegroup, srcCombatDataDict, dstCombatDataDict, toAdd, toRemove);
+                    }
                 }
             }
         }

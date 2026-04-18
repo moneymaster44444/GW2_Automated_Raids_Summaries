@@ -12,11 +12,10 @@ public class StatisticsHelper
 {
     internal StatisticsHelper(CombatData combatData, IReadOnlyList<Player> players, BuffsContainer buffs)
     {
-        IReadOnlyCollection<long> skillIDs = combatData.GetSkills();
         // Main boons
         foreach (Buff boon in buffs.BuffsByClassification[BuffClassification.Boon])
         {
-            if (skillIDs.Contains(boon.ID))
+            if (combatData.GetBuffData(boon.ID).Count > 0)
             {
                 _presentBoons.Add(boon);
             }
@@ -24,7 +23,7 @@ public class StatisticsHelper
         // Main Conditions
         foreach (Buff condition in buffs.BuffsByClassification[BuffClassification.Condition])
         {
-            if (skillIDs.Contains(condition.ID))
+            if (combatData.GetBuffData(condition.ID).Count > 0)
             {
                 _presentConditions.Add(condition);
             }
@@ -33,7 +32,7 @@ public class StatisticsHelper
         // Important class specific boons
         foreach (Buff offensiveBuff in buffs.BuffsByClassification[BuffClassification.Offensive])
         {
-            if (skillIDs.Contains(offensiveBuff.ID))
+            if (combatData.GetBuffData(offensiveBuff.ID).Count > 0)
             {
                 _presentOffbuffs.Add(offensiveBuff);
             }
@@ -41,7 +40,7 @@ public class StatisticsHelper
 
         foreach (Buff supportBuff in buffs.BuffsByClassification[BuffClassification.Support])
         {
-            if (skillIDs.Contains(supportBuff.ID))
+            if (combatData.GetBuffData(supportBuff.ID).Count > 0)
             {
                 _presentSupbuffs.Add(supportBuff);
             }
@@ -49,7 +48,7 @@ public class StatisticsHelper
 
         foreach (Buff defensiveBuff in buffs.BuffsByClassification[BuffClassification.Defensive])
         {
-            if (skillIDs.Contains(defensiveBuff.ID))
+            if (combatData.GetBuffData(defensiveBuff.ID).Count > 0)
             {
                 _presentDefbuffs.Add(defensiveBuff);
             }
@@ -58,7 +57,7 @@ public class StatisticsHelper
 
         foreach (Buff gearBuff in buffs.BuffsByClassification[BuffClassification.Gear])
         {
-            if (skillIDs.Contains(gearBuff.ID))
+            if (combatData.GetBuffData(gearBuff.ID).Count > 0)
             {
                 _presentGearbuffs.Add(gearBuff);
             }
@@ -67,7 +66,7 @@ public class StatisticsHelper
 
         foreach (Buff debuff in buffs.BuffsByClassification[BuffClassification.Debuff])
         {
-            if (skillIDs.Contains(debuff.ID))
+            if (combatData.GetBuffData(debuff.ID).Count > 0)
             {
                 _presentDebuffs.Add(debuff);
             }
@@ -76,7 +75,7 @@ public class StatisticsHelper
 
         foreach (Buff nourishment in buffs.BuffsByClassification[BuffClassification.Nourishment])
         {
-            if (skillIDs.Contains(nourishment.ID))
+            if (combatData.GetBuffData(nourishment.ID).Count > 0)
             {
                 _presentNourishments.Add(nourishment);
             }
@@ -85,7 +84,7 @@ public class StatisticsHelper
 
         foreach (Buff enhancement in buffs.BuffsByClassification[BuffClassification.Enhancement])
         {
-            if (skillIDs.Contains(enhancement.ID))
+            if (combatData.GetBuffData(enhancement.ID).Count > 0)
             {
                 _presentEnhancements.Add(enhancement);
             }
@@ -94,7 +93,7 @@ public class StatisticsHelper
 
         foreach (Buff otherConsumable in buffs.BuffsByClassification[BuffClassification.OtherConsumable])
         {
-            if (skillIDs.Contains(otherConsumable.ID))
+            if (combatData.GetBuffData(otherConsumable.ID).Count > 0)
             {
                 _presentOtherConsumables.Add(otherConsumable);
             }

@@ -294,6 +294,14 @@ public class JsonLog
     public int FractalScale;
 
     /// <summary>
+    /// Region on which the PoV is located. \n
+    /// Unknown if missing. \n
+    /// China is not currently tested.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Region;
+
+    /// <summary>
     /// ID of the language
     /// </summary>
     public byte LanguageID;

@@ -85,6 +85,10 @@ internal class SkillDto : IDItemDto
         var list = new List<SkillCastDto>(casting.Count);
         foreach (CastEvent cl in casting)
         {
+            if (cl.IgnoreOnRotationRender())
+            {
+                continue;
+            }
             if (!usedSkills.ContainsKey(cl.SkillID))
             {
                 usedSkills.Add(cl.SkillID, cl.Skill);

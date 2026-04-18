@@ -109,7 +109,7 @@ internal class Deimos : BastionOfThePenitent
     {
         foreach (AgentItem gadget in gadgets)
         {
-            AgentManipulationHelper.RedirectNPCEventsAndCopyPreviousStates(combatData, extensions, agentData, gadget, [gadget], deimos, false,
+            AgentManipulationHelper.RedirectNPCEventsAndCopyPreviousStates(combatData, extensions, agentData, gadget, [gadget], deimos, upperTimeThreshold, false,
                 (evt, from, to) =>
                 {
                     // Only keep damage events from arms
@@ -126,13 +126,10 @@ internal class Deimos : BastionOfThePenitent
                 },
                 (evt, from, to) =>
                 {
-                    if (evt.IsStateChange == StateChange.MaxHealthUpdate)
+                    // Discard non damage events from arms
+                    if (from != mainBody || evt.IsStateChange == StateChange.MaxHealthUpdate)
                     {
                         evt.OverrideSrcAgent(_unknownAgent);
-                    }
-                    if (evt.IsGeographical && evt.Time < upperTimeThreshold)
-                    {
-                        evt.OverrideTime(upperTimeThreshold);
                     }
                 }
             );
@@ -361,13 +358,23 @@ internal class Deimos : BastionOfThePenitent
         CombatItem? invulApp = combatData.FirstOrDefault(x => x.DstMatchesAgent(deimos.AgentItem) && x.IsBuffApply() && x.SkillID == Determined762);
         invulApp?.OverrideValue((int)(deimos.LastAware - invulApp.Time));
         deimos.OverrideName("Deimos");
+        var originalLastAware = deimos.AgentItem.LastAware;
+        var originalDeimosSpawnRelatedEvents = combatData.Where(x => x.SrcMatchesAgent(deimos.AgentItem) && (x.IsStateChange == StateChange.Spawn || x.IsStateChange == StateChange.Despawn)).ToList();
         deimos.AgentItem.OverrideAwareTimes(deimos.FirstAware, lastAware);
         if (deimosStructBody != null)
         {
             deimos.AgentItem.AddMergeFrom(deimos.AgentItem, deimos.FirstAware, structStartTime);
             MergeWithGadgets(deimos.AgentItem, structStartTime, gadgetAgents, deimosStructBody, combatData, agentData, extensions);
             // Add custom spawn event
-            combatData.Add(new CombatItem(structStartTime, deimos.AgentItem.Agent, 0, 0, 0, 0, 0, deimos.AgentItem.InstID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0));
+            if (!originalDeimosSpawnRelatedEvents.Any(x => x.IsStateChange == StateChange.Spawn))
+            {
+                combatData.Add(new CombatItem(deimos.FirstAware, deimos.AgentItem.Agent, 0, 0, 0, 0, 0, deimos.AgentItem.InstID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)StateChange.Spawn, 0, 0, 0, 0));
+            }
+            if (!originalDeimosSpawnRelatedEvents.Any(x => x.IsStateChange == StateChange.Despawn))
+            {
+                combatData.Add(new CombatItem(originalLastAware, deimos.AgentItem.Agent, 0, 0, 0, 0, 0, deimos.AgentItem.InstID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)StateChange.Despawn, 0, 0, 0, 0));
+            }
+            combatData.Add(new CombatItem(structStartTime, deimos.AgentItem.Agent, 0, 0, 0, 0, 0, deimos.AgentItem.InstID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (byte)StateChange.Spawn, 0, 0, 0, 0));
             combatData.SortByTime();
         }
     }
@@ -545,7 +552,7 @@ internal class Deimos : BastionOfThePenitent
         }
     }
 
-    private static void AddBurstPhases(List<SubPhasePhaseData> phases, ParsedEvtcLog log, SingleActor mainTarget, List<PhaseData> parentPhases, EncounterPhaseData encounterPhase)
+    private static void AddBurstPhases(List<SubPhasePhaseData> phases, ParsedEvtcLog log, SingleActor mainTarget, List<PhaseData?> parentPhases, EncounterPhaseData encounterPhase)
     {
         var signets = mainTarget.GetBuffStatus(log, UnnaturalSignet).Where(x => x.Value > 0);
         int burstID = 1;
@@ -828,25 +835,35 @@ internal class Deimos : BastionOfThePenitent
         }
     }
 
-    internal static void AdjustDeimosHP(SingleActor deimos, bool isCM)
+    internal static void AdjustDeimosHP(SingleActor deimos, bool isCM, bool phased)
     {
         // Deimos gains additional health during the last 10% so the max-health needs to be corrected
         // done here because this method will get called during the creation of the ParsedEvtcLog and the ParsedEvtcLog should contain complete and correct values after creation
         if (isCM)
         {
-            deimos.SetManualHealth(42804900, new List<(long hpValue, double percent)>()
+            deimos.SetManualHealth(42804900, new List<(int hpValue, double percent)>()
                 {
                     (42000000 , 100),
                     (50049000, 10)
                 });
+
+            deimos.SetHealthBars([
+               (100, 10, 42000000, !phased),
+               (10, 0, 50049000, phased),
+            ]);
         }
         else
         {
-            deimos.SetManualHealth(37388210, new List<(long hpValue, double percent)>()
+            deimos.SetManualHealth(37388210, new List<(int hpValue, double percent)>()
                 {
                     (35981456 , 100),
                     (50049000, 10)
                 });
+
+            deimos.SetHealthBars([
+               (100, 10, 35981456, !phased),
+               (10, 0, 50049000, phased),
+            ]);
         }
     }
 
@@ -854,7 +871,7 @@ internal class Deimos : BastionOfThePenitent
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Deimos)) ?? throw new MissingKeyActorsException("Deimos not found");
         LogData.Mode cmStatus = (target.GetHealth(combatData) > 40e6) ? LogData.Mode.CM : LogData.Mode.Normal;
-        AdjustDeimosHP(target, cmStatus == LogData.Mode.CM);
+        AdjustDeimosHP(target, cmStatus == LogData.Mode.CM, target.AgentItem.Merges.FirstOrNull((in AgentItem.MergedAgentItem x) => x.Merged.Is(target.AgentItem)) != null);
 
         return cmStatus;
     }

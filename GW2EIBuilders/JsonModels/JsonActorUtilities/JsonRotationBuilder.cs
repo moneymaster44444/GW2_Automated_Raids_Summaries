@@ -19,6 +19,10 @@ internal static class JsonRotationBuilder
             TimeGained = cl.SavedDuration,
             Quickness = cl.Acceleration
         };
+        if (cl.IgnoreOnRotationRender())
+        {
+            jsonSkill.IgnoreOnRotationRender = true;
+        }
         return jsonSkill;
     }
     private static JsonRotation BuildJsonRotation(ParsedEvtcLog log, long skillID, List<CastEvent> skillCasts, Dictionary<long, SkillItem> skillMap)

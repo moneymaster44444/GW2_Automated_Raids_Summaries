@@ -26,7 +26,7 @@ internal static class GearDamageModifiers
             .WithBuilds(GW2Builds.June2023BalanceAndSOTOBetaAndSilentSurfNM, GW2Builds.SOTOReleaseAndBalance),
         new BuffOnActorDamageModifier(Mod_StrengthRune, Might, "Strength Rune", "5% under might", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfStrength, DamageModifierMode.All)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.SOTOReleaseAndBalance),
-        new BuffOnActorDamageModifier(Mod_FireRune, FireAura, "Fire Rune", "10% under fire aura", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfFire, DamageModifierMode.All)
+        new BuffOnActorDamageModifier(Mod_FireRune, FireAura, "Fire Rune", "10% under fire aura", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfTheFire, DamageModifierMode.All)
             .WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
         new BuffOnFoeDamageModifier(Mod_FlameLegionRune, Burning, "Flame Legion Rune", "7% on burning target", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfTheFlameLegion, DamageModifierMode.All)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.SOTOReleaseAndBalance),
@@ -63,8 +63,8 @@ internal static class GearDamageModifiers
         new BuffOnActorDamageModifier(Mod_RelicOfTheWeaver, RelicOfTheWeaver, "Relic of the Weaver", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfTheWeaver, DamageModifierMode.All),
         new BuffOnActorDamageModifier(Mod_RelicOfNourys, NouryssHungerDamageBuff, "Relic of Nourys", "25%", DamageSource.NoPets, 25.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfNourys, DamageModifierMode.PvE),
         new BuffOnActorDamageModifier(Mod_RelicOfNourys, NouryssHungerDamageBuff, "Relic of Nourys", "15%", DamageSource.NoPets, 15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfNourys, DamageModifierMode.sPvPWvW),
-        new BuffOnActorDamageModifier(Mod_RelicOfTheClaw, RelicOfTheClaw, "Relic of the Claw", "7% after disabling a foe", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfTheClaw, DamageModifierMode.All),
-        new BuffOnActorDamageModifier(Mod_RelicOfMountBalrior, RelicOfMountBalrior, "Relic of Mount Balrior", "15%", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Gear, ByPresence, ItemImages.RelicOfMountBalrior, DamageModifierMode.All),
+        new BuffOnActorDamageModifier(Mod_RelicOfTheClaw, RelicOfTheClaw, "Relic of the Claw", "7% after disabling a foe", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfTheClaw, DamageModifierMode.All),
+        new BuffOnActorDamageModifier(Mod_RelicOfMountBalrior, RelicOfMountBalrior, "Relic of Mount Balrior", "15%", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfMountBalrior, DamageModifierMode.All),
         new BuffOnActorDamageModifier(Mod_RelicOfFire, FireAura, "Relic of Fire", "10% under fire aura", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfFire, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.March2025W8CMReleaseAndNewCoreRelics),
         new BuffOnActorDamageModifier(Mod_RelicOfFire, FireAura, "Relic of Fire", "7% under fire aura", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Gear, ByPresence, ItemImages.RelicOfFire, DamageModifierMode.PvE)

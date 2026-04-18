@@ -29,12 +29,12 @@ internal abstract class BuffSourceFinder
 
     protected static bool IsSoulbeast(AgentItem agent, long time)
     {
-        return agent.FindEnglobedAgentItem(time).Spec == ParserHelper.Spec.Soulbeast;
+        return agent.GetSpecAtTime(time) == ParserHelper.Spec.Soulbeast;
     }
 
     protected static bool IsRanger(AgentItem agent, long time)
     {
-        return agent.FindEnglobedAgentItem(time).BaseSpec == ParserHelper.Spec.Ranger;
+        return agent.GetBaseSpecAtTime(time) == ParserHelper.Spec.Ranger;
     }
 
     private IEnumerable<CastEvent> GetExtensionSkills(ParsedEvtcLog log, long time, HashSet<long> idsToKeep)

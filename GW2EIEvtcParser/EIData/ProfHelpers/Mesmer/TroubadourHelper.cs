@@ -1,10 +1,12 @@
-﻿using GW2EIEvtcParser.ParserHelpers;
+﻿using GW2EIEvtcParser.ParsedData;
+using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.DamageModifierIDs;
 using static GW2EIEvtcParser.EIData.Buff;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
+using static GW2EIEvtcParser.SpeciesIDs;
 
 namespace GW2EIEvtcParser.EIData;
 
@@ -65,4 +67,37 @@ internal static class TroubadourHelper
         new Buff("Lute Playing", LutePlaying, Source.Troubadour, BuffClassification.Other, SkillImages.LivelyLute),
         new Buff("Altered Chord", AlteredChord, Source.Troubadour, BuffClassification.Other, TraitImages.AlteredChord),
     ];
+
+    private static readonly HashSet<int> _afterImages =
+    [
+        (int)MinionID.LivelyLuteAfterimage,
+        (int)MinionID.DeafeningDrumAfterimage,
+        (int)MinionID.FlusteringFluteAfterimage,
+        (int)MinionID.HarmoniousHarpAfterimage,
+    ];
+
+    internal static bool IsKnownMinionID(int id)
+    {
+        return _afterImages.Contains(id);
+    }
+    internal static void AdjustMinionName(AgentItem minion)
+    {
+        switch (minion.ID)
+        {
+            case (int)MinionID.LivelyLuteAfterimage:
+                minion.OverrideName("Lively Lute " + minion.Name);
+                break;
+            case (int)MinionID.DeafeningDrumAfterimage:
+                minion.OverrideName("Deafening Drum " + minion.Name);
+                break;
+            case (int)MinionID.FlusteringFluteAfterimage:
+                minion.OverrideName("Flustering Flute " + minion.Name);
+                break;
+            case (int)MinionID.HarmoniousHarpAfterimage:
+                minion.OverrideName("Harmonious Harp " + minion.Name);
+                break;
+            default:
+                break;
+        }
+    }
 }
