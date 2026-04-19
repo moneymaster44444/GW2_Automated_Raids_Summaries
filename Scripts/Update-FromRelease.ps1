@@ -14,8 +14,8 @@ $InstallRoot = $InstallRoot.TrimEnd('\', '/')
 $PreservePrefixes = @(
     'Raid_Logs',
     'Raids_Summaries',
-    'Resources\Config\Secrets\discord_webhook.txt',
-    'Resources\Config\.webhook_skipworktree_applied'
+    'discord_webhook.txt',
+    '.webhook_skipworktree_applied'
 )
 
 $WholesaleReplace = @(

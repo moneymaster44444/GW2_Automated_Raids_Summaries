@@ -41,7 +41,7 @@ Desktop.ini
 
 /Resources/Config/EliteInsights.conf
 /Resources/Config/top_stats_config.ini
-/Resources/Config/.webhook_skipworktree_applied
+/.webhook_skipworktree_applied
 /Top_Stats_Html
 *.json
 *.html
