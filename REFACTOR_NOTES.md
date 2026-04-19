@@ -89,3 +89,49 @@ Resources/Config/
   `discord_webhook.txt` and confirm `git status` shows no pending change.
 - Discord skip: leave `discord_webhook.txt` empty and confirm the pipeline finishes
   with `Discord notification skipped (reason: No webhook URL set)` and exit 0.
+
+## Self-updater
+
+End users install from tagged release zips (no git clone). The app version lives
+in a single-line `VERSION` file at the repo root (e.g. `v0.1.11`), bumped per
+release tag. Split of concerns:
+
+- **Check** — `process_logs.bat` appends a silent-on-failure block at the very
+  end that calls `Scripts/Check-Latest-Release.ps1` and, if a newer tag exists,
+  prints one `[UPDATE] New release … available. Run update.bat to upgrade.`
+  line. Network/API failures exit 0 with no output so the pipeline summary is
+  unchanged for offline users.
+- **Apply** — `update.bat` is a terse wrapper around
+  `Scripts/Update-FromRelease.ps1`. The PowerShell script downloads the latest
+  release zipball to `%TEMP%`, validates the extracted shape (single top-level
+  folder, contains `process_logs.bat` and `VERSION`), then mutates the install.
+  Batch files can't cleanly self-update mid-run; keeping the wrapper to three
+  lines means cmd.exe's buffered read won't care if `update.bat` is overwritten.
+
+Update semantics:
+
+- **Preserve** (never touched): `Raid_Logs/`, `Raids_Summaries/`,
+  `Resources/Config/Secrets/discord_webhook.txt`,
+  `Resources/Config/.webhook_skipworktree_applied`.
+- **Wholesale replace** (deleted before copy): `Resources/Elite Insights/`,
+  `Resources/EI Combiner/`. This drops the built EI CLI at
+  `Resources/Elite Insights/GW2EI.bin/`; the next `process_logs.bat` run detects
+  the missing exe and invokes `build_elite_insights.bat` to rebuild it. This is
+  intentional — the EI binary always matches the subtree source committed at
+  that tag.
+- **Regenerate** (deleted after copy): `Resources/Config/EliteInsights.conf`
+  and `Resources/Config/top_stats_config.ini` are removed so the next run's
+  `establish_config_files.bat` step rebuilds them from the (possibly updated)
+  sample templates.
+- **Overwrite** everything else (the app code, `Scripts/`, `VERSION`, etc.).
+
+Version comparison uses strict `v\d+\.\d+\.\d+` numeric compare per part;
+anything not matching falls back to string inequality so unrecognised tags
+still trigger an update notice.
+
+**Known limitation.** Only the two subtree folders are wholesale-replaced.
+App-code files (anything under the repo root outside `Resources/Elite Insights/`
+and `Resources/EI Combiner/`) are copy-over-only — files removed upstream
+remain in the local install until a user deletes them manually. If this becomes
+a problem, a manifest-based delete pass driven by the release tarball's file
+listing is the natural follow-up.
