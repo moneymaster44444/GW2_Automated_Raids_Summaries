@@ -34,6 +34,28 @@ function Test-PreservePath {
     return $false
 }
 
+function ConvertTo-VersionParts {
+    param([string]$Tag)
+    if ($null -eq $Tag) { return $null }
+    $m = [regex]::Match($Tag, '^v(\d+)\.(\d+)\.(\d+)$')
+    if (-not $m.Success) { return $null }
+    return ,([int]$m.Groups[1].Value, [int]$m.Groups[2].Value, [int]$m.Groups[3].Value)
+}
+
+function Test-UpgradeAvailable {
+    param([string]$Current, [string]$Latest)
+    $curParts = ConvertTo-VersionParts $Current
+    $latParts = ConvertTo-VersionParts $Latest
+    if ($null -ne $curParts -and $null -ne $latParts) {
+        for ($i = 0; $i -lt 3; $i++) {
+            if ($latParts[$i] -gt $curParts[$i]) { return $true }
+            if ($latParts[$i] -lt $curParts[$i]) { return $false }
+        }
+        return $false
+    }
+    return ($Current -ne $Latest)
+}
+
 $staging = $null
 try {
     $headers = @{ 'User-Agent' = 'gw2-raids-updater' }
@@ -58,12 +80,16 @@ try {
         }
     }
 
-    if ($current -eq $tag) {
-        Write-Host "[OK] Already at $tag."
+    if (-not (Test-UpgradeAvailable -Current $current -Latest $tag)) {
+        if ($current -eq $tag) {
+            Write-Host "[OK] Already at $tag."
+        } else {
+            Write-Host "[OK] Already at $current (latest release: $tag). No upgrade needed."
+        }
         exit 0
     }
 
-    Write-Host "[INFO] From: $current  To: $tag"
+    Write-Host "[INFO] Upgrading from $current to $tag"
     if (-not $Yes) {
         $resp = Read-Host 'Proceed? [y/N]'
         if ($resp -ne 'y' -and $resp -ne 'Y') {
