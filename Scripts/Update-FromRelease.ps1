@@ -7,6 +7,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$InstallRoot = $InstallRoot.Trim().TrimEnd('"').TrimEnd('\', '/')
 $InstallRoot = (Resolve-Path -LiteralPath $InstallRoot).Path
 $InstallRoot = $InstallRoot.TrimEnd('\', '/')
 
