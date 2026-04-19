@@ -334,6 +334,27 @@ if "%DISCORD_POSTED%"=="1" (
 )
 
 echo ==========================================
+
+rem --- Update check (silent on failure) ---
+if exist "%ROOT%VERSION" (
+  set "CURRENT_VERSION="
+  for /f "usebackq delims=" %%V in ("%ROOT%VERSION") do if not defined CURRENT_VERSION set "CURRENT_VERSION=%%V"
+  if defined CURRENT_VERSION (
+    set "UPD_TMPOUT=%TEMP%\gw2_update_check_%RANDOM%_%RANDOM%.out"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Check-Latest-Release.ps1" -CurrentVersion "!CURRENT_VERSION!" > "!UPD_TMPOUT!" 2>nul
+    set "UPD_LATEST="
+    set "UPD_AVAIL="
+    for /f "usebackq tokens=1,* delims==" %%A in ("!UPD_TMPOUT!") do (
+      if /i "%%A"=="LATEST" set "UPD_LATEST=%%B"
+      if /i "%%A"=="UPDATE_AVAILABLE" set "UPD_AVAIL=%%B"
+    )
+    del /q "!UPD_TMPOUT!" >nul 2>&1
+    if "!UPD_AVAIL!"=="1" (
+      echo.
+      echo [UPDATE] New release !UPD_LATEST! available ^(current: !CURRENT_VERSION!^). Run update.bat to upgrade.
+    )
+  )
+)
 exit /b 0
 
 :fail

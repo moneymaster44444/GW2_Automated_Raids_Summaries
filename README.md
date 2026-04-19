@@ -25,6 +25,19 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
    ```
    You will find the resulting HTML file in `Raids_Summaries`.
 
+## Updating
+
+To pull the latest release:
+```bat
+update.bat
+```
+`process_logs.bat` prints a notice at the end of each run when a newer release
+is available. Your logs, summaries, and Discord webhook URL are preserved. The
+Elite Insights and EI Combiner folders are replaced wholesale from the release
+zip, and the built EI CLI rebuilds automatically on the next `process_logs.bat`
+run. Config files (`EliteInsights.conf`, `top_stats_config.ini`) regenerate from
+the updated sample templates on the next run.
+
 ## (Optional) Discord webhook
 
    To automatically post the summary HTML to a Discord channel at the end of each run,
