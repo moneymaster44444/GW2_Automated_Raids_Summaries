@@ -48,12 +48,13 @@ The main pipeline flow (lines 1–337) is ~23% shorter than before.
    some environment we haven't considered, a single `where powershell` check at the
    top can be added.
 
-4. **`discord_webhook.txt` is now committed empty**, not generated on first run.
-   On the first run after pulling this change, `process_logs.bat` calls
-   `git update-index --skip-worktree` on it so local edits don't show as pending
-   changes. A marker file at `Resources/Config/.webhook_skipworktree_applied`
-   prevents re-running the git call. Both are silently skipped if git isn't
-   installed or the working directory isn't a git checkout.
+4. **`discord_webhook.txt` lives at the repo root and is committed empty**, not
+   generated on first run. On the first run after pulling this change,
+   `process_logs.bat` calls `git update-index --skip-worktree` on it so local
+   edits don't show as pending changes. A marker file at
+   `.webhook_skipworktree_applied` (repo root, gitignored) prevents re-running
+   the git call. Both are silently skipped if git isn't installed or the working
+   directory isn't a git checkout.
 
    **Upgrade note for existing installs:** users who already have a populated
    `discord_webhook.txt` locally (as an untracked file, since it was previously in
@@ -61,8 +62,7 @@ The main pipeline flow (lines 1–337) is ~23% shorter than before.
    the file aside, pull, then run `process_logs.bat` and paste the URL back in.
 
 5. **`establish_config_files.bat` no longer creates `discord_webhook.txt`.** The
-   file is committed to the repo so the create-if-missing block was removed. The
-   secrets-directory `mkdir` is still there defensively.
+   file is committed to the repo so the create-if-missing block was removed.
 
 6. **Label and comment style standardized.** All labels are now `:snake_case` with
    no leading underscore (`:run_ei`, `:fail`, `:notify_discord`, etc). All inline
@@ -75,10 +75,8 @@ Scripts/
   Get-DateTag.ps1           # prints MM-dd-yy
   Establish-Configs.ps1     # sample.* -> real config files with token replacement
   Post-DiscordSummary.ps1   # uploads HTML attachment; falls back to ZIP internally
-Resources/Config/Secrets/
-  discord_webhook.txt       # committed empty; local edits are skip-worktree'd
-Resources/Config/
-  .webhook_skipworktree_applied   # (gitignored) marker; presence = don't re-apply
+discord_webhook.txt         # (repo root) committed empty; local edits skip-worktree'd
+.webhook_skipworktree_applied  # (repo root, gitignored) marker; presence = don't re-apply
 ```
 
 ## Verifying
@@ -111,8 +109,7 @@ release tag. Split of concerns:
 Update semantics:
 
 - **Preserve** (never touched): `Raid_Logs/`, `Raids_Summaries/`,
-  `Resources/Config/Secrets/discord_webhook.txt`,
-  `Resources/Config/.webhook_skipworktree_applied`.
+  `discord_webhook.txt`, `.webhook_skipworktree_applied`.
 - **Wholesale replace** (deleted before copy): `Resources/Elite Insights/`,
   `Resources/EI Combiner/`. This drops the built EI CLI at
   `Resources/Elite Insights/GW2EI.bin/`; the next `process_logs.bat` run detects

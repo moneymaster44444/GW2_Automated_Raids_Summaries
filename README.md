@@ -43,17 +43,17 @@ the updated sample templates on the next run.
    To automatically post the summary HTML to a Discord channel at the end of each run,
    paste the channel's webhook URL into:
    ```
-   \Resources\Config\Secrets\discord_webhook.txt
+   discord_webhook.txt
    ```
-   This file is committed empty. On your first run, `process_logs.bat` marks it
-   `--skip-worktree` in git so your local edit never appears in `git status` or gets
-   committed accidentally. If the file is empty or whitespace-only, the Discord step
-   is silently skipped.
+   (at the repo root) This file is committed empty. On your first run,
+   `process_logs.bat` marks it `--skip-worktree` in git so your local edit never
+   appears in `git status` or gets committed accidentally. If the file is empty or
+   whitespace-only, the Discord step is silently skipped.
 
    To undo the skip-worktree flag (for example, if you actually want to commit a change
    to the tracked copy):
    ```
-   git update-index --no-skip-worktree "Resources/Config/Secrets/discord_webhook.txt"
+   git update-index --no-skip-worktree "discord_webhook.txt"
    ```
    
 ---

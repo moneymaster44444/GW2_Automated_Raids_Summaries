@@ -37,12 +37,6 @@ if errorlevel 1 (
   exit /b 1
 )
 
-rem Ensure the secrets directory exists. The webhook file itself is committed
-rem (empty) to the repo; fresh clones already have it. This mkdir is defensive
-rem for any checkout that predates the commit.
-set "SECRETS_DIR=%ROOT%Resources\Config\Secrets"
-if not exist "%SECRETS_DIR%" mkdir "%SECRETS_DIR%"
-
 echo.
 echo Generated:
 echo   %REAL_EI%

@@ -29,8 +29,8 @@ set "PYTHON_EXE=python"
 set "COMBINER_PY=%ROOT%Resources\EI Combiner\tw5_top_stats.py"
 
 rem --- Discord webhook (first non-empty, non-# line of the file is used) ---
-set "DISCORD_WEBHOOKS_FILE=%ROOT%Resources\Config\Secrets\discord_webhook.txt"
-set "SKIPWT_MARKER=%ROOT%Resources\Config\.webhook_skipworktree_applied"
+set "DISCORD_WEBHOOKS_FILE=%ROOT%discord_webhook.txt"
+set "SKIPWT_MARKER=%ROOT%.webhook_skipworktree_applied"
 set "DISCORD_POSTED=0"
 set "DISCORD_REASON="
 set "DISCORD_POSTED_NAME="
@@ -387,7 +387,7 @@ if errorlevel 1 (
   popd >nul 2>&1
   goto :eof
 )
-git update-index --skip-worktree "Resources/Config/Secrets/discord_webhook.txt" >nul 2>&1
+git update-index --skip-worktree "discord_webhook.txt" >nul 2>&1
 if not errorlevel 1 > "%SKIPWT_MARKER%" echo applied
 popd >nul 2>&1
 goto :eof
