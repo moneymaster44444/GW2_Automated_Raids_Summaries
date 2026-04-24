@@ -32,30 +32,27 @@ To pull the latest release:
 update.bat
 ```
 `process_logs.bat` prints a notice at the end of each run when a newer release
-is available. Your logs, summaries, and Discord webhook URL are preserved. The
+is available. Your logs, summaries, and `config.txt` are preserved. The
 Elite Insights and EI Combiner folders are replaced wholesale from the release
 zip, and the built EI CLI rebuilds automatically on the next `process_logs.bat`
 run. Config files (`EliteInsights.conf`, `top_stats_config.ini`) regenerate from
 the updated sample templates on the next run.
 
-## (Optional) Discord webhook
+## Configuration
 
-   To automatically post the summary HTML to a Discord channel at the end of each run,
-   paste the channel's webhook URL into:
-   ```
-   discord_webhook.txt
-   ```
-   (at the repo root) This file is committed empty. On your first run,
-   `process_logs.bat` marks it `--skip-worktree` in git so your local edit never
-   appears in `git status` or gets committed accidentally. If the file is empty or
-   whitespace-only, the Discord step is silently skipped.
+On your first run, `process_logs.bat` creates `config.txt` at the repo root
+from `sample.config.txt`. Edit `config.txt` to set:
 
-   To undo the skip-worktree flag (for example, if you actually want to commit a change
-   to the tracked copy):
-   ```
-   git update-index --no-skip-worktree "discord_webhook.txt"
-   ```
-   
+- `GUILD_TAG=` — prefix for the generated summary HTML. Output files are
+  named `<GUILD_TAG>_<date>.html`. Defaults to `OnLY`.
+- `DISCORD_WEBHOOK_URL=` — optional. Paste a Discord channel webhook URL
+  to auto-post the summary HTML at the end of each run. Leave blank to
+  skip the Discord step.
+
+`config.txt` is gitignored, so your local edits never appear in
+`git status` or risk accidental commits. If a future release adds new
+fields to `sample.config.txt`, copy them into your `config.txt` manually.
+
 ---
 ## Details: Batch Files Overview
 
