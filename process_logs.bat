@@ -28,9 +28,14 @@ rem --- EI Combiner (Python) ---
 set "PYTHON_EXE=python"
 set "COMBINER_PY=%ROOT%Resources\EI Combiner\tw5_top_stats.py"
 
-rem --- Discord webhook (first non-empty, non-# line of the file is used) ---
-set "DISCORD_WEBHOOKS_FILE=%ROOT%discord_webhook.txt"
-set "SKIPWT_MARKER=%ROOT%.webhook_skipworktree_applied"
+rem --- User config (NAME=VALUE pairs; lines starting with # are ignored) ---
+set "CONFIG_FILE=%ROOT%config.txt"
+set "SKIPWT_MARKER=%ROOT%.config_skipworktree_applied"
+set "GUILD_TAG="
+set "DISCORD_WEBHOOK_URL="
+call :load_config
+if not defined GUILD_TAG set "GUILD_TAG=OnLY"
+
 set "DISCORD_POSTED=0"
 set "DISCORD_REASON="
 set "DISCORD_POSTED_NAME="
@@ -271,7 +276,7 @@ if exist "%TW_OUT%" (
   if not defined DATE_TAG set "DATE_TAG=unknown"
   echo [INFO] Using date tag: !DATE_TAG!
 
-  set "TW_FINAL=%DROP_DIR%\INC_!DATE_TAG!.html"
+  set "TW_FINAL=%DROP_DIR%\!GUILD_TAG!_!DATE_TAG!.html"
 
   copy /y "%TW_OUT%" "!TW_FINAL!" >nul
   if errorlevel 1 (
@@ -283,7 +288,7 @@ if exist "%TW_OUT%" (
       echo [OK] Final HTML written to:
       echo      !TW_FINAL!
 
-      call :notify_discord "!TW_FINAL!" "%DISCORD_WEBHOOKS_FILE%"
+      call :notify_discord "!TW_FINAL!" "!DISCORD_WEBHOOK_URL!"
 
       if exist "%TW_BUILD_DIR%" (
         echo [CLEANUP] Removing intermediate TiddlyWiki build folder...
@@ -373,21 +378,38 @@ echo     -^> "%~nx1"
 if errorlevel 1 echo     [WARN] EI returned non-zero for %~nx1
 goto :eof
 
+:load_config
+rem Parse NAME=VALUE pairs from CONFIG_FILE. Lines starting with # are ignored.
+if not exist "%CONFIG_FILE%" goto :eof
+for /f "usebackq tokens=* delims=" %%L in ("%CONFIG_FILE%") do (
+  set "CFG_LINE=%%L"
+  call :parse_config_line
+)
+set "CFG_LINE="
+goto :eof
+
+:parse_config_line
+if not defined CFG_LINE goto :eof
+if "%CFG_LINE:~0,1%"=="#" goto :eof
+if /i "%CFG_LINE:~0,10%"=="GUILD_TAG="           set "GUILD_TAG=%CFG_LINE:~10%"
+if /i "%CFG_LINE:~0,20%"=="DISCORD_WEBHOOK_URL=" set "DISCORD_WEBHOOK_URL=%CFG_LINE:~20%"
+goto :eof
+
 :apply_webhook_skipworktree
-rem Apply git skip-worktree to discord_webhook.txt once per clone so local
-rem edits to the webhook URL don't show up in `git status`. Silently skips
-rem when git isn't installed or the working directory isn't a git checkout.
+rem Apply git skip-worktree to config.txt once per clone so local edits to
+rem the webhook URL (or guild tag) don't show up in `git status`. Silently
+rem skips when git isn't installed or the working directory isn't a git checkout.
 if exist "%SKIPWT_MARKER%" goto :eof
 where git >nul 2>&1
 if errorlevel 1 goto :eof
-if not exist "%DISCORD_WEBHOOKS_FILE%" goto :eof
+if not exist "%CONFIG_FILE%" goto :eof
 pushd "%ROOT%" >nul 2>&1 || goto :eof
 git rev-parse --is-inside-work-tree >nul 2>&1
 if errorlevel 1 (
   popd >nul 2>&1
   goto :eof
 )
-git update-index --skip-worktree "discord_webhook.txt" >nul 2>&1
+git update-index --skip-worktree "config.txt" >nul 2>&1
 if not errorlevel 1 > "%SKIPWT_MARKER%" echo applied
 popd >nul 2>&1
 goto :eof
@@ -395,11 +417,11 @@ goto :eof
 :notify_discord
 rem Args:
 rem   %~1 = HTML path
-rem   %~2 = webhooks file path
+rem   %~2 = Discord webhook URL (may be empty)
 setlocal EnableExtensions EnableDelayedExpansion
 
 set "HTML_PATH=%~1"
-set "HOOKS_FILE=%~2"
+set "WEBHOOK_URL=%~2"
 set "RET_POSTED=0"
 set "RET_REASON="
 set "RET_NAME="
@@ -408,16 +430,6 @@ if not exist "!HTML_PATH!" (
   echo [WARN] Discord notify: HTML missing: !HTML_PATH!
   set "RET_REASON=MissingFile"
   goto :notify_done
-)
-
-set "WEBHOOK_URL="
-if exist "!HOOKS_FILE!" (
-  for /f "usebackq tokens=* delims=" %%L in ("!HOOKS_FILE!") do (
-    if not defined WEBHOOK_URL (
-      set "LINE=%%L"
-      if defined LINE if not "!LINE:~0,1!"=="#" set "WEBHOOK_URL=!LINE!"
-    )
-  )
 )
 
 if not defined WEBHOOK_URL (
