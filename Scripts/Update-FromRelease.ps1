@@ -14,8 +14,7 @@ $InstallRoot = $InstallRoot.TrimEnd('\', '/')
 $PreservePrefixes = @(
     'Raid_Logs',
     'Raids_Summaries',
-    'config.txt',
-    '.config_skipworktree_applied'
+    'config.txt'
 )
 
 $WholesaleReplace = @(

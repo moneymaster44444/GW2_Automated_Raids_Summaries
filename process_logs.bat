@@ -30,7 +30,13 @@ set "COMBINER_PY=%ROOT%Resources\EI Combiner\tw5_top_stats.py"
 
 rem --- User config (NAME=VALUE pairs; lines starting with # are ignored) ---
 set "CONFIG_FILE=%ROOT%config.txt"
-set "SKIPWT_MARKER=%ROOT%.config_skipworktree_applied"
+set "SAMPLE_CONFIG_FILE=%ROOT%sample.config.txt"
+if not exist "%CONFIG_FILE%" (
+  if exist "%SAMPLE_CONFIG_FILE%" (
+    echo [SETUP] Creating config.txt from sample.config.txt...
+    copy /y "%SAMPLE_CONFIG_FILE%" "%CONFIG_FILE%" >nul
+  )
+)
 set "GUILD_TAG="
 set "DISCORD_WEBHOOK_URL="
 call :load_config
@@ -71,8 +77,6 @@ if not exist "%COMBINER_INI%" (
   echo [ERROR] top_stats_config.ini not found after setup: %COMBINER_INI%
   goto :fail
 )
-
-call :apply_webhook_skipworktree
 
 set "NEED_EI_BUILD=0"
 if not exist "%EI_CLI_DIR%\%EI_EXE_NAME1%" (
@@ -393,25 +397,6 @@ if not defined CFG_LINE goto :eof
 if "%CFG_LINE:~0,1%"=="#" goto :eof
 if /i "%CFG_LINE:~0,10%"=="GUILD_TAG="           set "GUILD_TAG=%CFG_LINE:~10%"
 if /i "%CFG_LINE:~0,20%"=="DISCORD_WEBHOOK_URL=" set "DISCORD_WEBHOOK_URL=%CFG_LINE:~20%"
-goto :eof
-
-:apply_webhook_skipworktree
-rem Apply git skip-worktree to config.txt once per clone so local edits to
-rem the webhook URL (or guild tag) don't show up in `git status`. Silently
-rem skips when git isn't installed or the working directory isn't a git checkout.
-if exist "%SKIPWT_MARKER%" goto :eof
-where git >nul 2>&1
-if errorlevel 1 goto :eof
-if not exist "%CONFIG_FILE%" goto :eof
-pushd "%ROOT%" >nul 2>&1 || goto :eof
-git rev-parse --is-inside-work-tree >nul 2>&1
-if errorlevel 1 (
-  popd >nul 2>&1
-  goto :eof
-)
-git update-index --skip-worktree "config.txt" >nul 2>&1
-if not errorlevel 1 > "%SKIPWT_MARKER%" echo applied
-popd >nul 2>&1
 goto :eof
 
 :notify_discord
