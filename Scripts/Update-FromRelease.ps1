@@ -170,6 +170,9 @@ try {
         }
     }
 
+    Set-Content -LiteralPath $versionFile -Value $tag -Encoding ASCII
+    Write-Host "[INFO] VERSION set to $tag."
+
     Write-Host ""
     Write-Host "[OK] Updated to $tag. Run process_logs.bat to rebuild EI and regenerate configs."
     exit 0
