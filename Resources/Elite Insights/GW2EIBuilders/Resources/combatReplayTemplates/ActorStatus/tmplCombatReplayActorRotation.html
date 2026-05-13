@@ -1,13 +1,13 @@
 <template>
     <div class="d-flex align-items-center actor-rotation">
         <div v-if="rotation.current">
-            <img class="icon-ll" :class="getIconClass(rotation.current)" :src="rotation.current.skill.icon" :title="getTooltip(rotation.current)"/>
+            <img class="icon-cur-cr-rota" :class="getIconClass(rotation.current)" :src="rotation.current.skill.icon" :title="getTooltip(rotation.current)"/>
         </div>
-        <div v-else class="empty-icon-ll">
+        <div v-else class="empty-icon-cur-cr-rota">
 
         </div>
         <div v-for="next in rotation.nexts">
-            <img class="icon-l" :class="getIconClass(next)" :src="next.skill.icon" :title="getTooltip(next)"/>
+            <img class="icon-next-cr-rota" :class="getIconClass(next)" :src="next.skill.icon" :title="getTooltip(next)"/>
         </div>
     </div>
 </template>
@@ -69,6 +69,9 @@
                 }
             },
             drawItem(skillCast, time) {
+                if (!skillCast) {
+                    return false;
+                }
                 return skillCast[0] <= time &&
                         time <= skillCast[0] + this.getSkillDuration(skillCast);
             }
@@ -126,7 +129,10 @@
                 if (instantItem) {
                     // If instant item to be rendered or If instant item before animated item and instant time after current time, it comes before in the order
                     if (this.drawItem(instantItem, time) ||
-                        (instantItem[0] < item[0] &&
+                        (
+                            (!item || 
+                              instantItem[0] < item[0]
+                            ) &&
                             instantItem[0] >= time
                         )
                     ) {
@@ -144,7 +150,7 @@
                     };
                     id++;
                 }
-                for (let j = id; j < this.actorRotation.length; j++) {
+                for (let j = Math.max(id, 0); j < this.actorRotation.length; j++) {
                     const next = this.actorRotation[j];
                     if (next[0] >= time) {
                         res.nexts.push({
@@ -154,7 +160,7 @@
                             type: next[3]
                         });
                     }
-                    if (res.nexts.length == 4) {
+                    if (res.nexts.length == 7) {
                         break;
                     }
                 }

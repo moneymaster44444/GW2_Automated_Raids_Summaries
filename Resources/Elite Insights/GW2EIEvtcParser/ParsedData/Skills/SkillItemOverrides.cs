@@ -1077,6 +1077,8 @@ public static class SkillItemOverrides
             { EternalNightHealing, SkillImages.EternalNight },
             { LarcenousTormentSiphonHealing, TraitImages.LarcenousTorment },
             { HoloDancerTaunt, SkillImages.HoloDancerDecoy },
+            { EnterprisingAristocratBarrier, TraitImages.EnterprisingAristocrat },
+            { ExaltedHammerSkillHealing, SkillImages.ExaltedHammer },
             #endregion ThiefIcons
             #region WarriorIcons
             { MendingMight, TraitImages.MendingMight },

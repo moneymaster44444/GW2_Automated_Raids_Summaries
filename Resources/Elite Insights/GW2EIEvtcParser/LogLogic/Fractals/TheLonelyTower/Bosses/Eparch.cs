@@ -101,7 +101,7 @@ internal class Eparch : LonelyTower
     {
         var dummyEparchs = agentData.GetNPCsByID(TargetID.EparchLonelyTower).Where(eparch =>
         {
-            return !combatData.Any(x => x.SrcMatchesAgent(eparch) && x.StartCasting() && x.SkillID != WeaponDraw && x.SkillID != WeaponStow);
+            return !combatData.Any(x => x.SrcMatchesAgent(eparch) && x.IsStartCastEvent() && x.SkillID != WeaponDraw && x.SkillID != WeaponStow);
         });
         foreach (var dummyEparch in dummyEparchs)
         {
@@ -255,7 +255,7 @@ internal class Eparch : LonelyTower
                         replay.Decorations.Add(circle);
                         if (target.TryGetCurrentPosition(log, effect.Time, out var eparchPos))
                         {
-                            replay.Decorations.AddProjectile(eparchPos, effect.Position, lifespan, Colors.Black, 0.4);
+                            replay.Decorations.AddProjectile(eparchPos.Value, effect.Position, lifespan, Colors.Black, 0.4);
                         }
                     }
                 }
@@ -469,7 +469,7 @@ internal class Eparch : LonelyTower
                         if (gadget.TryGetCurrentPosition(log, gadget.LastAware, out var position))
                         {
                             (long, long) lifespan = (spawn.Time, despawn.Time);
-                            environmentDecorations.Add(new CircleDecoration(globuleWidth, lifespan, color, 0.7, new PositionConnector(position)));
+                            environmentDecorations.Add(new CircleDecoration(globuleWidth, lifespan, color, 0.7, new PositionConnector(position.Value)));
                         }
                     }
                 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex flex-column justify-content-center align-items-center" style="width: 750px;">
+    <div class="d-flex flex-column align-items-center" style="width: 750px;">
         <div v-if="showNormalPhases" class="mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center max-wd-700px">
                 <li class="nav-item" v-for="(phase, id) in phases"
@@ -20,8 +20,10 @@
                 <canvas :width="canvasSize.x + 'px'" :height="canvasSize.y + 'px'" :id="htmlElementIDs.pickCanvasID"
                     class="replay"></canvas>
             </div>
-            <div class="animation-control">
-                <div class="d-flex justify-content-center mb-1">
+            <div class="animation-control">        
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                    <img class="icon mr-2" :src="UIIcons.QuestionMark"
+                        data-original-title="You can click on the canvas to select agents" />
                     <div @click="toggleAnimate();" class="btn btn-small"
                         :class="{'btn-dark': !light, 'btn-light': light}" style="width: 50px;">{{animated ? "Pause" :
                         "Play"}}</div>
@@ -52,7 +54,6 @@
                         {{speed}}x
                     </label>
                 </div>
-                <p class="text-justify text-center">You can click on the canvas to select agents</p>
             </div>
         </div>
     </div>
@@ -62,7 +63,7 @@
     Vue.component("combat-replay-animation-control-component", {
         props: ["light", "animated", "range"],
         template: `${template}`,
-        mixins: [encounterPhaseComponent],
+        mixins: [encounterPhaseComponent, UIIconsComponent],
         data: function () {
             return {
                 selectedSpeed: 1,

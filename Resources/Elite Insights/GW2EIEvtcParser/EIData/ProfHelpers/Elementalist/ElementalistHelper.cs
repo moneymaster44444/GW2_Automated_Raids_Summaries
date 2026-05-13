@@ -107,7 +107,11 @@ internal static class ElementalistHelper
         new BuffOnActorDamageModifier(Mod_PyromancersTraining, [FireAttunementBuff, FireWaterAttunement, FireAirAttunement, FireEarthAttunement, DualFireAttunement], "Pyromancer's Training", "10% while fire attuned", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PyromancersTraining, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.July2019Balance),
         new BuffOnFoeDamageModifier(Mod_PyromancersTraining, Burning, "Pyromancer's Training", "10% on burning target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PyromancersTraining, DamageModifierMode.All)
-            .WithBuilds(GW2Builds.July2019Balance),
+            .WithBuilds(GW2Builds.July2019Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PyromancersTraining, Burning, "Pyromancer's Training", "7% on burning target", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PyromancersTraining, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PyromancersTraining, Burning, "Pyromancer's Training", "10% on burning target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PyromancersTraining, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // - Burning Rage
         new BuffOnFoeDamageModifier(Mod_BurningRage, Burning, "Burning Rage", "10% on burning target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.BurningRage, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.July2019Balance),
@@ -124,22 +128,32 @@ internal static class ElementalistHelper
         // - Aquamancer's Training
         new DamageLogDamageModifier(Mod_AquamancersTraining, "Aquamancer's Training", "10% if hp >=90%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, TraitImages.AquamancersTraining, (x, log) => x.IsOverNinety, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.July2019Balance),
-        // - Piercing Shards
-        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards w/ Water", "20% on vuln target while on water", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.PvE)
-            .UsingActorCheckerByPresence([ WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement ])
-            .WithBuilds(GW2Builds.July2019Balance),
+        // - Piercing Shards - Water
+        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards", "20% on vuln target while on water", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.All)
+            .UsingActorCheckerByPresence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.February2020Balance),
+        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards", "20% on vuln target while on water", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.PvE)
+            .UsingActorCheckerByPresence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.February2020Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards", "14% on vuln target while on water", DamageSource.NoPets, 14.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.PvE)
+            .UsingActorCheckerByPresence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards", "10% on vuln target while on water", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.sPvPWvW)
+            .UsingActorCheckerByPresence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.February2020Balance),
+        // - Piercing Shards - No Water
+        new BuffOnFoeDamageModifier(Mod_PiercingShardsNoWater, Vulnerability, "Piercing Shards", "10% on vuln target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.All)
+            .UsingActorCheckerByAbsence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.July2019Balance, GW2Builds.February2020Balance),
         new BuffOnFoeDamageModifier(Mod_PiercingShardsNoWater, Vulnerability, "Piercing Shards", "10% on vuln target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.PvE)
-            .UsingActorCheckerByAbsence([ WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement ])
-            .WithBuilds(GW2Builds.July2019Balance),
-        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards w/ Water", "10% on vuln target while on water", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.sPvPWvW)
-            .UsingActorCheckerByPresence([ WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement ])
-            .WithBuilds(GW2Builds.July2019Balance),
+            .UsingActorCheckerByAbsence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.February2020Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PiercingShardsNoWater, Vulnerability, "Piercing Shards", "7% on vuln target", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.PvE)
+            .UsingActorCheckerByAbsence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         new BuffOnFoeDamageModifier(Mod_PiercingShardsNoWater, Vulnerability, "Piercing Shards", "5% on vuln target", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.sPvPWvW)
-            .UsingActorCheckerByAbsence([ WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement ])
-            .WithBuilds(GW2Builds.July2019Balance),
-        new BuffOnFoeDamageModifier(Mod_PiercingShardsWater, Vulnerability, "Piercing Shards", "20% on vuln target while on water", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.PiercingShards, DamageModifierMode.PvE)
-            .UsingActorCheckerByPresence([ WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement ])
-            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.July2019Balance),
+            .UsingActorCheckerByAbsence([WaterAttunementBuff, WaterAirAttunement, WaterEarthAttunement, WaterFireAttunement, DualWaterAttunement])
+            .WithBuilds(GW2Builds.February2020Balance),
         // - Flow like Water
         new DamageLogDamageModifier(Mod_FlowLikeWater, "Flow like Water", "10% if hp >=75%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Elementalist, TraitImages.FlowLikeWater, FromHPChecker(75), DamageModifierMode.All)
             .WithBuilds(GW2Builds.July2019Balance, GW2Builds.February2020Balance)
@@ -169,7 +183,15 @@ internal static class ElementalistHelper
             .UsingApproximate(),
         new BuffOnFoeDamageModifier(Mod_StormSoulDefiant, [Stun, Daze, Knockdown, Fear, Taunt], "Stormsoul", "10% to defiant foes", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Elementalist, ByAbsence, TraitImages.Stormsoul, DamageModifierMode.All)
             .UsingChecker((x, log) => x.To.GetCurrentBreakbarState(log, x.Time) != BreakbarState.None)
-            .WithBuilds(GW2Builds.November2022Balance)
+            .WithBuilds(GW2Builds.November2022Balance, GW2Builds.April2026Balancepocalypse)
+            .UsingApproximate(),
+        new BuffOnFoeDamageModifier(Mod_StormSoulDefiant, [Stun, Daze, Knockdown, Fear, Taunt], "Stormsoul", "7% to defiant foes", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.Strike, Source.Elementalist, ByAbsence, TraitImages.Stormsoul, DamageModifierMode.PvE)
+            .UsingChecker((x, log) => x.To.GetCurrentBreakbarState(log, x.Time) != BreakbarState.None)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse)
+            .UsingApproximate(),
+        new BuffOnFoeDamageModifier(Mod_StormSoulDefiant, [Stun, Daze, Knockdown, Fear, Taunt], "Stormsoul", "10% to defiant foes", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.Strike, Source.Elementalist, ByAbsence, TraitImages.Stormsoul, DamageModifierMode.sPvPWvW)
+            .UsingChecker((x, log) => x.To.GetCurrentBreakbarState(log, x.Time) != BreakbarState.None)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse)
             .UsingApproximate(),
 
         // Hammer
@@ -184,7 +206,7 @@ internal static class ElementalistHelper
 
         // Pistol
         new BuffOnActorDamageModifier(Mod_RagingRicochet, RagingRichochetBuff, "Raging Ricochet", "5%", DamageSource.NoPets, 5.0, DamageType.Condition, DamageType.All, Source.Elementalist, ByPresence, SkillImages.RagingRicochet, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.February2024NewWeapons),
+            .WithBuilds(GW2Builds.February2024NewWeapons, GW2Builds.April2026Balancepocalypse),
     ];
 
     internal static readonly IReadOnlyList<DamageModifierDescriptor> IncomingDamageModifiers =
@@ -196,6 +218,8 @@ internal static class ElementalistHelper
         // Earth
         // - Stone Flesh
         new BuffOnActorDamageModifier(Mod_StoneFlesh, [EarthAttunementBuff, FireEarthAttunement, WaterEarthAttunement, EarthAirAttunement, DualEarthAttunement], "Stone Flesh", "-7% damage while attuned to earth", DamageSource.Incoming, -7, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.StoneFlesh, DamageModifierMode.All),
+        // - Stone Heart
+        new BuffOnActorDamageModifier(Mod_StoneHeart, StoneHeart, "Stone Heart", "-40% damage", DamageSource.Incoming, -40, DamageType.Strike, DamageType.All, Source.Elementalist, ByPresence, TraitImages.StoneHeart, DamageModifierMode.All),
         // - Geomancer's Training
         new DamageLogDamageModifier(Mod_GeomancersTraining, "Geomancer's Training", "-10% damage from foes within 360 range", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Elementalist, TraitImages.GeomancersTraining, (x, log) => TargetWithinRangeChecker(x, log, 360), DamageModifierMode.All)
             .UsingApproximate()

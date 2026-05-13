@@ -51,6 +51,7 @@ internal static class Colors
     public static Color DarkRedSkin = new(99, 50, 57);
     public static Color Orange = new(255, 100, 0);
     public static Color LightOrange = new(250, 120, 0);
+    public static Color FluoOrange = new(220, 72, 11);
     public static Color BreakbarRecoveringOrange = new(168, 104, 61);
     public static Color Sand = new(177, 157, 111);
     public static Color Yellow = new(255, 220, 0);

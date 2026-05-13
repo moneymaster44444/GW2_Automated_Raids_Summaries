@@ -22,7 +22,7 @@ public static class AgentManipulationHelper
                 continue;
             }
             // redirect damage events
-            if (cbt.IsDamage(extensions))
+            if (cbt.IsDamageEvent(extensions))
             {
                 // only redirect incoming damage
                 if (cbt.DstMatchesAgent(src, extensions))
@@ -314,7 +314,11 @@ public static class AgentManipulationHelper
         var positionEvents = combatDataDict
                 .Where(x => x.IsStateChange == StateChange.Position)
                 .GroupBy(x => agentData.GetAgent(x.SrcAgent, x.Time))
+                .ToList();
+        var lastPositionEvents = positionEvents
                 .ToDictionary(x => x.Key, x => x.Select(x => MovementEvent.GetPoint3D(x)).LastOrDefault());
+        var firstPositionEvents = positionEvents
+                .ToDictionary(x => x.Key, x => x.Select(x => MovementEvent.GetPoint3D(x)).FirstOrDefault());
         var pov = combatDataDict.FirstOrDefault(x => x.IsStateChange == StateChange.PointOfView);
         AgentItem? povAgent = null;
         var povPositions = new List<ParametricPoint3D>();
@@ -363,6 +367,7 @@ public static class AgentManipulationHelper
             } 
             else
             {
+                long distanceThreshold = 4980; // 5000 - 20
                 foreach (var npcsByInstdID in npcsByInstIDs)
                 {
                     var agentToRegroup = new List<AgentItem>(5);
@@ -374,13 +379,30 @@ public static class AgentManipulationHelper
                         bool goNext = true;
                         if (curAgent.CouldBeEqual(previousAgent) && curStateTime == previousStateTime)
                         {
-                            if (positionEvents.TryGetValue(previousAgent, out var agentPosition))
+                            if (lastPositionEvents.TryGetValue(previousAgent, out var agentPosition))
                             {
                                 var nextPovPosition = povPositions.FirstOrNull((in ParametricPoint3D x) => x.Time > previousAgent.LastAware);
-                                if (nextPovPosition != null && (nextPovPosition.Value.XYZ - agentPosition).Length() > 5000)
+                                if (nextPovPosition != null)
                                 {
-                                    goNext = false;
-                                    agentToRegroup.Add(curAgent);
+                                    var length = (nextPovPosition.Value.XYZ - agentPosition).Length();
+                                    if (length > distanceThreshold)
+                                    {
+                                        goNext = false;
+                                        agentToRegroup.Add(curAgent);
+                                    }
+                                }
+                            }
+                            if (goNext && firstPositionEvents.TryGetValue(curAgent, out agentPosition))
+                            {
+                                var prevPovPosition = povPositions.LastOrNull((in ParametricPoint3D x) => x.Time < curAgent.FirstAware);
+                                if (prevPovPosition != null)
+                                {
+                                    var length = (prevPovPosition.Value.XYZ - agentPosition).Length();
+                                    if (length > distanceThreshold)
+                                    {
+                                        goNext = false;
+                                        agentToRegroup.Add(curAgent);
+                                    }
                                 }
                             }
                         }

@@ -262,7 +262,7 @@ public class CombatReplay
                     if (dstActor.TryGetCurrentPosition(log, effectEvt.Time, out var position))
                     {
                         color = Colors.DarkBlue;
-                        positionConnector = new PositionConnector(position);
+                        positionConnector = new PositionConnector(position.Value);
                     }
                     else
                     {
@@ -311,7 +311,7 @@ public class CombatReplay
                     if (dstActor.TryGetCurrentPosition(log, effectEvt.Time, out var position))
                     {
                         color = Colors.DarkGreen;
-                        positionConnector = new PositionConnector(position);
+                        positionConnector = new PositionConnector(position.Value);
                     }
                     else
                     {
@@ -364,7 +364,7 @@ public class CombatReplay
                     if (dstActor.TryGetCurrentPosition(log, effectEvt.Time, out var position))
                     {
                         color = Colors.DarkBlue;
-                        positionConnector = new PositionConnector(position);
+                        positionConnector = new PositionConnector(position.Value);
                     }
                     else
                     {
@@ -418,7 +418,7 @@ public class CombatReplay
                     if (dstActor.TryGetCurrentPosition(log, effectEvt.Time, out var position))
                     {
                         color = Colors.DarkBlue;
-                        positionConnector = new PositionConnector(position);
+                        positionConnector = new PositionConnector(position.Value);
                     }
                     else
                     {
@@ -471,7 +471,7 @@ public class CombatReplay
                     if (dstActor.TryGetCurrentPosition(log, effectEvt.Time, out var position))
                     {
                         color = Colors.DarkBlue;
-                        positionConnector = new PositionConnector(position);
+                        positionConnector = new PositionConnector(position.Value);
                     }
                     else
                     {

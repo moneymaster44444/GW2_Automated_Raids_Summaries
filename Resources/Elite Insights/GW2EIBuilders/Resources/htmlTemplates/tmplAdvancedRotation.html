@@ -4,21 +4,21 @@
             <a href="#" class="dropdown-toggle rot-font-dropdown" data-toggle="dropdown" title="Filter Skills">
                 Skills <span class="caret"></span>
             </a>
+            <img class="icon ml-2" :src="UIIcons.QuestionMark"
+                data-original-title="Use Skills dropdown to hide unwanted skills" />
             <ul class="dropdown-menu p-2 font-weight-normal scrollabledropdown min-wd-165px" style="width:auto;">
-                <div class="d-flex flex-column justify-content-center align-items-center mb-1 separator-border-bottom">
-                    <li>
-                        <button type="button" class="btn btn-primary btn-sm rot-button"
+                <li class="d-flex flex-column justify-content-center align-items-center mb-1">
+                    <button type="button" class="btn btn-primary btn-sm rot-button"
                             @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = true;}" @click.stop="stopClickEvent">
-                            Select all
-                        </button>
-                    </li>
-                    <li class="mb-1">
-                        <button type="button" class="btn btn-primary btn-sm rot-button"
+                        Select all
+                    </button>
+                </li>
+                <li class="d-flex flex-column justify-content-center align-items-center mb-1 separator-border-bottom">
+                    <button type="button" class="btn btn-primary btn-sm rot-button"
                             @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = false;}" @click.stop="stopClickEvent">
-                            Deselect all
-                        </button>
-                    </li>
-                </div>
+                        Deselect all
+                    </button>
+                </li>
                 <li v-for="(skill, index) in skillList" :key="index">
                     <div style="width: max-content;">
                         <input :id="'advanced-rotation-player-' + index  + '-' + phaseindex" type="checkbox"
@@ -199,7 +199,7 @@
     Vue.component("advancedrotation-component", {
         props: ["phaseindex", "light", "actorindex", "target"],
         template: `${template}`,
-        mixins: [graphComponent],
+        mixins: [graphComponent, UIIconsComponent],
         watch: {
             light: {
                 handler: function () {

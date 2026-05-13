@@ -332,7 +332,7 @@ internal class BanditTrio : SalvationPass
                             lifespan = (cast.Time, growing);
                             if (target.TryGetCurrentFacingDirection(log, lifespan.start + 600, out var facing, lifespan.end))
                             {
-                                var cone = (PieDecoration)new PieDecoration(550, 80, lifespan, Colors.Orange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing));
+                                var cone = (PieDecoration)new PieDecoration(550, 80, lifespan, Colors.Orange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing.Value));
                                 replay.Decorations.AddWithGrowing(cone, growing);
                             }
                             break;
@@ -355,7 +355,7 @@ internal class BanditTrio : SalvationPass
                             if (target.TryGetCurrentFacingDirection(log, firstCone.start, out var facing))
                             {
                                 var connector = new AgentConnector(target);
-                                var rotationConnector = new AngleConnector(facing);
+                                var rotationConnector = new AngleConnector(facing.Value);
                                 replay.Decorations.Add(new PieDecoration(radius, 28, firstCone, Colors.LightOrange, 0.2, connector).UsingRotationConnector(rotationConnector));
                                 replay.Decorations.Add(new PieDecoration(radius, 54, secondCone, Colors.LightOrange, 0.2, connector).UsingRotationConnector(rotationConnector));
                                 replay.Decorations.Add(new PieDecoration(radius, 81, thirdCone, Colors.LightOrange, 0.2, connector).UsingRotationConnector(rotationConnector));
@@ -403,7 +403,7 @@ internal class BanditTrio : SalvationPass
         }
         if (log.CombatData.GetBuffData(EnvironmentallyFriendly).Any())
         {
-            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)

@@ -127,7 +127,7 @@ internal static class RenegadeHelper
                 {
                     if (player.AgentItem.TryGetCurrentPosition(log, effect.Time, out var playerPosition))
                     {
-                        var playerPositionConnector = new PositionConnector(playerPosition);
+                        var playerPositionConnector = new PositionConnector(playerPosition.Value);
                         var positions = new List<Vector3>();
                         foreach (EffectEvent hitEffect in citadelBombardmentHits.Where(x => x.Time >= effect.Time && x.Time <= effect.Time + 3000))
                         {
@@ -136,7 +136,7 @@ internal static class RenegadeHelper
                             // Shooting Animation
                             long animationDuration = hitEffect.Time - effect.Time;
                             (long start, long end) lifespanAnimation = (effect.Time, effect.Time + animationDuration);
-                            var startPoint = new ParametricPoint3D(playerPosition, lifespanAnimation.start);
+                            var startPoint = new ParametricPoint3D(playerPosition.Value, lifespanAnimation.start);
                             var endPoint = new ParametricPoint3D(hitEffect.Position, lifespanAnimation.end);
                             var rotationConnector = new AngleConnector(effect.Rotation.Z);
                             var shootingArrow = (RectangleDecoration)new RectangleDecoration(15, 100, lifespanAnimation, color, 0.5, new InterpolationConnector(new List<ParametricPoint3D>() { startPoint, endPoint }))

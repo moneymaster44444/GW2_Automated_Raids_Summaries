@@ -140,7 +140,7 @@ internal static class LogLogicPhaseUtils
     }
 
 
-    internal static IReadOnlyList<SubPhasePhaseData> GetSubPhasesByCast(ParsedEvtcLog log, IEnumerable<long> skillIDs, SingleActor mainTarget, bool addSkipPhases, bool mainBetweenCasts, long start, long end, bool filterSmallPhases = true)
+    internal static IReadOnlyList<SubPhasePhaseData> GetSubPhasesByCast(ParsedEvtcLog log, IEnumerable<long> skillIDs, SingleActor mainTarget, bool addSkipPhases, bool mainBetweenCasts, long start, long end, long successiveMergeThreshold = 0, bool filterSmallPhases = true)
     {
         long last = start;
         var casts = mainTarget.GetAnimatedCastEvents(log, start, end);
@@ -148,11 +148,30 @@ internal static class LogLogicPhaseUtils
             .Where(x => skillIDs.Contains(x.SkillID))
             .ToList();
         invuls.SortByTime(); // Sort in case there were multiple skillIDs
-
+        var mergeSuccessiveCasts = successiveMergeThreshold > 0;
         var phases = new List<SubPhasePhaseData>(invuls.Count);
         bool nextToAddIsSkipPhase = !mainBetweenCasts;
-        foreach (CastEvent c in invuls)
+        for (var i = 0; i < invuls.Count; i++)
         {
+            var c = invuls[i];
+            long startTime = c.Time;
+            if (mergeSuccessiveCasts)
+            {
+                while (i < invuls.Count - 1)
+                {
+                    var nextC = invuls[i + 1];
+                    if (nextC.Time < c.EndTime + successiveMergeThreshold)
+                    {
+                        c = nextC;
+                        i++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+            }
             long endTime = c.EndTime;
             if (c.IsUnknown && !casts.Any(x => x.Time >= endTime))
             {
@@ -160,18 +179,19 @@ internal static class LogLogicPhaseUtils
             }
             if (mainBetweenCasts)
             {
-                phases.Add(new SubPhasePhaseData(last, c.Time));
-                if (addSkipPhases) {
-                    phases.Add(new SubPhasePhaseData(c.Time, endTime));
+                phases.Add(new SubPhasePhaseData(last, startTime));
+                if (addSkipPhases)
+                {
+                    phases.Add(new SubPhasePhaseData(startTime, endTime));
                 }
-            } 
+            }
             else
             {
                 if (addSkipPhases)
                 {
-                    phases.Add(new SubPhasePhaseData(last, c.Time));
+                    phases.Add(new SubPhasePhaseData(last, startTime));
                 }
-                phases.Add(new SubPhasePhaseData(c.Time, endTime));
+                phases.Add(new SubPhasePhaseData(startTime, endTime));
             }
             last = endTime;
         }
@@ -183,9 +203,9 @@ internal static class LogLogicPhaseUtils
         return phases.Where(x => x.DurationInMS > filterThreshold).ToList(); // only filter unrealistically short phases, otherwise it may mess with phase names
     }
 
-    internal static IReadOnlyList<SubPhasePhaseData> GetSubPhasesByCast(ParsedEvtcLog log, long skillID, SingleActor mainTarget, bool addSkipPhases, bool mainBetweenCast, long start, long end, bool filterSmallPhases = true)
+    internal static IReadOnlyList<SubPhasePhaseData> GetSubPhasesByCast(ParsedEvtcLog log, long skillID, SingleActor mainTarget, bool addSkipPhases, bool mainBetweenCast, long start, long end, long successiveMergeThreshold = 0, bool filterSmallPhases = true)
     {
-        return GetSubPhasesByCast(log, [skillID], mainTarget, addSkipPhases, mainBetweenCast, start, end, filterSmallPhases);
+        return GetSubPhasesByCast(log, [skillID], mainTarget, addSkipPhases, mainBetweenCast, start, end, successiveMergeThreshold, filterSmallPhases);
     }
 
     internal static List<PhaseData> GetInitialPhase(ParsedEvtcLog log)
@@ -227,7 +247,8 @@ internal static class LogLogicPhaseUtils
     #region INSTANCE ENCOUNTER
     internal static EncounterPhaseData? AddInstanceEncounterPhase(ParsedEvtcLog log, List<PhaseData> phases, List<EncounterPhaseData> encounterPhases, IEnumerable<SingleActor?> targets, IEnumerable<SingleActor?> blockingBosses, IEnumerable<SingleActor?> nonBlockingBosses, PhaseData instancePhase, string phaseName, long start, long end, bool success, string icon, long encounterID, LogData.Mode logMode, LogData.StartStatus logStartStatus)
     {
-        if (!success && (end - start < log.ParserSettings.TooShortLimit || log.ParserSettings.SkipFailedTries))
+        if ((!success && (end - start < log.ParserSettings.TooShortLimit || log.ParserSettings.SkipFailedTries)) ||
+            (end - start) < ParserHelper.PhaseTimeLimit)
         {
             return null;
         }

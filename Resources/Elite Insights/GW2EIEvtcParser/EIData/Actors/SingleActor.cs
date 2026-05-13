@@ -428,7 +428,7 @@ public abstract partial class SingleActor : Actor
 
     public abstract SingleActorCombatReplayDescription GetCombatReplayDescription(CombatReplayMap map, ParsedEvtcLog log);
 
-    private static bool TryGetCurrentPoint(IReadOnlyList<ParametricPoint3D> points, long time, [NotNullWhen(true)] out Vector3 point, long forwardWindow = 0)
+    private static bool TryGetCurrentPoint(IReadOnlyList<ParametricPoint3D> points, long time, [NotNullWhen(true)] out Vector3? point, long forwardWindow = 0)
     {
         if (forwardWindow != 0)
         {
@@ -463,7 +463,7 @@ public abstract partial class SingleActor : Actor
     }
 
     /// <param name="forwardWindow">Position will be looked up to time + forwardWindow if given</param>
-    public bool TryGetCurrentPosition(ParsedEvtcLog log, long time, [NotNullWhen(true)] out Vector3 position, long forwardWindow = 0)
+    public bool TryGetCurrentPosition(ParsedEvtcLog log, long time, [NotNullWhen(true)] out Vector3? position, long forwardWindow = 0)
     {
         if (!HasCombatReplayPositions(log))
         {
@@ -478,7 +478,7 @@ public abstract partial class SingleActor : Actor
         return TryGetCurrentPoint(GetCombatReplayPolledPositions(log), time, out position, forwardWindow);
     }
 
-    public bool TryGetCurrentInterpolatedPosition(ParsedEvtcLog log, long time, [NotNullWhen(true)] out Vector3 position)
+    public bool TryGetCurrentInterpolatedPosition(ParsedEvtcLog log, long time, [NotNullWhen(true)] out Vector3? position)
     {
         if (!HasCombatReplayPositions(log))
         {
@@ -522,7 +522,7 @@ public abstract partial class SingleActor : Actor
     //TODO(Rennorb) @cleanup: There is an argument to be made here that in all the places where this is used you probably want to add a decoration either way, regardless if this fails or not.
     //Something to look into.
     /// <param name="forwardWindow">Rotation will be looked up to time + forwardWindow if given</param>
-    public bool TryGetCurrentFacingDirection(ParsedEvtcLog log, long time, [NotNullWhen(true)] out Vector3 rotation, long forwardWindow = 0) 
+    public bool TryGetCurrentFacingDirection(ParsedEvtcLog log, long time, [NotNullWhen(true)] out Vector3? rotation, long forwardWindow = 0) 
     {
         if (!HasCombatReplayRotations(log))
         {

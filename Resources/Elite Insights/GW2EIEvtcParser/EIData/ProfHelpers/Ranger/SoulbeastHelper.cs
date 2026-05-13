@@ -56,7 +56,9 @@ internal static class SoulbeastHelper
         new BuffOnActorDamageModifier(Mod_TwiceAsVicious, TwiceAsVicious, "Twice as Vicious", "5% (10s) after disabling foe", DamageSource.NoPets, 5.0, DamageType.StrikeAndCondition, DamageType.All, Source.Soulbeast, ByPresence, TraitImages.TwiceAsVicious, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.July2019Balance, GW2Builds.February2020Balance),
         new BuffOnActorDamageModifier(Mod_TwiceAsVicious, TwiceAsVicious, "Twice as Vicious", "10% (10s) after disabling foe", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Soulbeast, ByPresence, TraitImages.TwiceAsVicious, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.February2020Balance),
+            .WithBuilds(GW2Builds.February2020Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_TwiceAsVicious, TwiceAsVicious, "Twice as Vicious", "7% (10s) after disabling foe", DamageSource.NoPets, 7.0, DamageType.StrikeAndCondition, DamageType.All, Source.Soulbeast, ByPresence, TraitImages.TwiceAsVicious, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         new BuffOnActorDamageModifier(Mod_TwiceAsVicious, TwiceAsVicious, "Twice as Vicious", "5% (10s) after disabling foe", DamageSource.NoPets, 5.0, DamageType.StrikeAndCondition, DamageType.All, Source.Soulbeast, ByPresence, TraitImages.TwiceAsVicious, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.February2020Balance),
         // Furious Strength

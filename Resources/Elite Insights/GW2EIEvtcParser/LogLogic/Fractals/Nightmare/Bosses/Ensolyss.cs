@@ -108,7 +108,7 @@ internal class Ensolyss : Nightmare
 
         // ensolyss exits combat during split phases and reenters after
         // make sure we dont have a late start via caustic explosion, expected to happen 2s after invuln remove in later phases
-        var causticExplosion = combatData.FirstOrDefault(x => x.SkillID == CausticExplosionEnsolyss && x.StartCasting() && x.SrcMatchesAgent(ensolyss) && x.Time > start);
+        var causticExplosion = combatData.FirstOrDefault(x => x.SkillID == CausticExplosionEnsolyss && x.IsStartCastEvent() && x.SrcMatchesAgent(ensolyss) && x.Time > start);
         if (causticExplosion != null && causticExplosion.Time <= start + 3000)
         {
             return GetGenericLogOffset(logData);
@@ -311,7 +311,7 @@ internal class Ensolyss : Nightmare
                             lifespan = (cast.Time, ComputeEndCastTimeByBuffApplication(log, target, Stun, cast.Time, castDuration));
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + castDuration, out var facing))
                             {
-                                var rotation = new AngleConnector(facing);
+                                var rotation = new AngleConnector(facing.Value);
                                 var cone = (PieDecoration)new PieDecoration(530, 160, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(rotation);
                                 replay.Decorations.AddWithGrowing(cone, growing);
                             }
@@ -329,8 +329,8 @@ internal class Ensolyss : Nightmare
                             if (target.TryGetCurrentFacingDirection(log, cast.Time, out var facingDirection, castDuration))
                             {
                                 // Calculated points
-                                var frontalPoint = new Vector3(facingDirection.X, facingDirection.Y, 0);
-                                var leftPoint = new Vector3(facingDirection.Y * -1, facingDirection.X, 0);
+                                var frontalPoint = new Vector3(facingDirection.Value.X, facingDirection.Value.Y, 0);
+                                var leftPoint = new Vector3(facingDirection.Value.Y * -1, facingDirection.Value.X, 0);
 
                                 AddTormentingBlastDecoration(replay, target, lifespan, frontalPoint, firstQuarterAoe, firstQuarterHit); // Frontal
                                 AddTormentingBlastDecoration(replay, target, lifespan, leftPoint, secondQuarterAoe, secondQuarterHit); // Left of frontal
@@ -374,8 +374,8 @@ internal class Ensolyss : Nightmare
                             if (target.TryGetCurrentFacingDirection(log, cast.Time, out var facingCausticExplosion, castDuration))
                             {
                                 // Calculated other quarters from initial point
-                                var frontalPoint = new Vector3(facingCausticExplosion.X, facingCausticExplosion.Y, 0);
-                                var leftPoint = new Vector3(facingCausticExplosion.Y * -1, facingCausticExplosion.X, 0);
+                                var frontalPoint = new Vector3(facingCausticExplosion.Value.X, facingCausticExplosion.Value.Y, 0);
+                                var leftPoint = new Vector3(facingCausticExplosion.Value.Y * -1, facingCausticExplosion.Value.X, 0);
                                 int initialDelay = 1500;
 
                                 // First quarters
@@ -401,7 +401,7 @@ internal class Ensolyss : Nightmare
                             castDuration = 1000;
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + castDuration, out var facingLunge))
                             {
-                                var rotation = new AngleConnector(facingLunge);
+                                var rotation = new AngleConnector(facingLunge.Value);
                                 lifespan = (cast.Time, cast.Time + castDuration);
                                 replay.Decorations.Add(new RectangleDecoration(1700, target.HitboxWidth, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target).WithOffset(new Vector3(850, 0, 0), true)).UsingRotationConnector(rotation));
                             }
@@ -454,7 +454,7 @@ internal class Ensolyss : Nightmare
                             castDuration = 1000;
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + castDuration, out var facingLunge))
                             {
-                                var rotation = new AngleConnector(facingLunge);
+                                var rotation = new AngleConnector(facingLunge.Value);
                                 lifespan = (cast.Time, cast.Time + castDuration);
                                 replay.Decorations.Add(new RectangleDecoration(1700, target.HitboxWidth, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target).WithOffset(new(850, 0, 0), true)).UsingRotationConnector(rotation));
                             }

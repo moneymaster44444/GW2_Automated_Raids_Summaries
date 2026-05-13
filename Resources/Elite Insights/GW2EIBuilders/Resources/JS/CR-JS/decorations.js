@@ -602,18 +602,21 @@ class ActorOrientationDrawable extends MechanicDrawable {
         this.moveContext(ctx, pos, rot);
         const facingFullSize = 5 * this.master.getSize() / 3;
         const facingHalfSize = facingFullSize / 2;
-        if (this.master !== null && animator.coneControl.enabled && this.master.isSelected()) {           
-            ctx.save(); 
-            const coneOpening = ToRadians(animator.coneControl.openingAngle);
-            ctx.rotate(0.5 * coneOpening);
-            const coneRadius = InchToPixel * animator.coneControl.radius;
-            ctx.beginPath();
-            ctx.arc(0, 0, coneRadius, -coneOpening, 0, false);
-            ctx.arc(0, 0, 0, 0, coneOpening, true);
-            ctx.closePath();
-            ctx.fillStyle = "rgba(0, 255, 200, 0.3)";
-            ctx.fill();
-            ctx.restore();
+        if (this.master !== null && animator.extraDecorationMap.has(this.master.id)) {
+            let coneControl = animator.extraDecorationMap.get(this.master.id).coneControl;
+            if (coneControl.enabled) {
+                ctx.save();
+                const coneOpening = ToRadians(coneControl.openingAngle);
+                ctx.rotate(0.5 * coneOpening);
+                const coneRadius = InchToPixel * coneControl.radius;
+                ctx.beginPath();
+                ctx.arc(0, 0, coneRadius, -coneOpening, 0, false);
+                ctx.arc(0, 0, 0, 0, coneOpening, true);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(0, 255, 200, 0.3)";
+                ctx.fill();
+                ctx.restore();
+            }
         }    
         ctx.drawImage(facingIcon, -facingHalfSize, -facingHalfSize, facingFullSize, facingFullSize);
         ctx.restore();

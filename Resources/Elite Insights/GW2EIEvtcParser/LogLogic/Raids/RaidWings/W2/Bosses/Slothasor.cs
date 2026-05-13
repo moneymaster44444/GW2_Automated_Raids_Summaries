@@ -91,7 +91,7 @@ internal class Slothasor : SalvationPass
         }
         if (log.CombatData.GetBuffData(SlipperySlubling).Any())
         {
-            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)
@@ -216,9 +216,9 @@ internal class Slothasor : SalvationPass
 
     internal static void FindSlublingTransformations(LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
-        var slubTransformList = combatData.Where(x => x.SkillID == MagicTransformation && !x.IsExtension && (x.IsBuffRemove == BuffRemove.All || x.IsBuffApply()));
-        var transformStart = slubTransformList.Where(x => x.IsBuffRemove == BuffRemove.None).ToList();
-        var transformEnd = slubTransformList.Where(x => x.IsBuffRemove == BuffRemove.All).ToList();
+        var slubTransformList = combatData.Where(x => x.SkillID == MagicTransformation && (x.IsBuffRemoveAllEvent() || x.IsBuffApplyEvent())).ToList();
+        var transformStart = slubTransformList.Where(x => !x.IsBuffRemoveAllEvent()).ToList();
+        var transformEnd = slubTransformList.Where(x => x.IsBuffRemoveAllEvent()).ToList();
         var copies = new List<CombatItem>();
         for (int i = 0; i < transformStart.Count; i++)
         {
@@ -276,7 +276,7 @@ internal class Slothasor : SalvationPass
                             if (target.TryGetCurrentFacingDirection(log, lifespanPrecast.start, out var facingHalitosis))
                             {
                                 var connector = new AgentConnector(target);
-                                var rotationConnector = new AngleConnector(facingHalitosis);
+                                var rotationConnector = new AngleConnector(facingHalitosis.Value);
                                 var openingAngle = 60;
                                 replay.Decorations.Add(new PieDecoration(range, openingAngle, lifespanPrecast, Colors.Orange, 0.1, connector).UsingRotationConnector(rotationConnector));
                                 replay.Decorations.Add(new PieDecoration(range, openingAngle, lifespan, Colors.Orange, 0.4, connector).UsingRotationConnector(rotationConnector));
@@ -350,7 +350,7 @@ internal class Slothasor : SalvationPass
             replay.Decorations.AddWithFilledWithGrowing(circle.UsingFilled(false), true, toDropStart + 8000);
             if (!log.CombatData.HasEffectData && p.TryGetCurrentInterpolatedPosition(log, toDropEnd, out var position))
             {
-                replay.Decorations.Add(new CircleDecoration(900, 180, (toDropEnd, toDropStart + 90000), Colors.GreenishYellow, 0.3, new PositionConnector(position)).UsingGrowingEnd(toDropEnd + 82000));
+                replay.Decorations.Add(new CircleDecoration(900, 180, (toDropEnd, toDropStart + 90000), Colors.GreenishYellow, 0.3, new PositionConnector(position.Value)).UsingGrowingEnd(toDropEnd + 82000));
             }
             replay.Decorations.AddOverheadIcon(seg, p, ParserIcons.VolatilePoisonOverhead);
         }
