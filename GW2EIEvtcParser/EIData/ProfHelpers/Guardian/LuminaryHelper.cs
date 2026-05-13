@@ -44,6 +44,10 @@ internal static class LuminaryHelper
 
     internal static readonly IReadOnlyList<DamageModifierDescriptor> OutgoingDamageModifiers =
     [
+        // Daring Advance   
+        new BuffOnActorDamageModifier(Mod_DaringAdvance, DaringAdvanceBuff, "Daring Advance", "15%", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Luminary, ByPresence, SkillImages.DaringAdvance, DamageModifierMode.All)
+            .WithBuffOnActorFromFoe()
+            .WithBuilds(GW2Builds.August2025VoEBeta),
         // Empowered Armaments
         new BuffOnActorDamageModifier(Mod_EmpoweredArmaments, EmpoweredArmaments, "Empowered Armaments", "15%", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Luminary, ByPresence, TraitImages.EmpoweredArmaments, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.January2026Balance),

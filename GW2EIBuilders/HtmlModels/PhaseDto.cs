@@ -387,7 +387,9 @@ internal class PhaseDto
                 support.ResurrectCount,
                 support.ResurrectTime,
                 support.StunBreakCount,
-                support.RemovedStunDuration
+                support.RemovedStunDuration,
+                support.StunBreakSelfCount,
+                support.RemovedStunSelfDuration
         ];
     }
 
@@ -399,7 +401,7 @@ internal class PhaseDto
         {
             var downDuration = TimeSpan.FromMilliseconds(defenses.DownDuration);
             downCount = (defenses.DownCount);
-            downTooltip = (downDuration.TotalSeconds + " seconds downed, " + Math.Round((downDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1) + "% Downed");
+            downTooltip = (downDuration.TotalSeconds + " seconds downed, " + Math.Round(downDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% Downed");
         }
         int deadCount = 0;
         string deadTooltip = "100% Alive";
@@ -407,7 +409,7 @@ internal class PhaseDto
         {
             var deathDuration = TimeSpan.FromMilliseconds(defenses.DeadDuration);
             deadCount = (defenses.DeadCount);
-            deadTooltip = (deathDuration.TotalSeconds + " seconds dead, " + (100.0 - Math.Round((deathDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1)) + "% Alive");
+            deadTooltip = (deathDuration.TotalSeconds + " seconds dead, " + Math.Round(100.0 - deathDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% Alive");
         }
         return [
                 defenses.DamageTaken, 
@@ -428,7 +430,9 @@ internal class PhaseDto
                 deadTooltip,
                 defenses.DownedDamageTaken, 
                 defenses.ReceivedCrowdControl,
-                defenses.ReceivedCrowdControlDuration
+                defenses.ReceivedCrowdControlDuration,
+                defenses.StunBreakCount,
+                defenses.RemovedStunDuration,
             ];
     }
     public static List<DPSStatDataItem> BuildDPSData(ParsedEvtcLog log, PhaseData phase)

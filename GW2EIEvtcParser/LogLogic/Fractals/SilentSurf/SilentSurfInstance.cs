@@ -38,7 +38,7 @@ internal class SilentSurfInstance : SilentSurf
         var crMap = new CombatReplayMap((800, 960), (-15360, -18432, 15360, 18432));
         arenaDecorations.Add(new ArenaDecoration((log.LogData.LogStart, log.LogData.LogEnd), CombatReplaySilentSurf, crMap));
         _kanaxai.GetCombatMapInternal(log, arenaDecorations);
-        return crMap;
+        return CombatReplayMap.CreateSquareMapFrom(crMap);
     }
     internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {

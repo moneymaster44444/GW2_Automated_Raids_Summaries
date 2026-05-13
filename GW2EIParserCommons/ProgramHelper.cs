@@ -205,6 +205,10 @@ public sealed class ProgramHelper : IDisposable
     {
         //Upload Process
         string[] uploadresult = ["", ""];
+        if (originalController.FileSize > originalLog.ParserSettings.TooBigLimit)
+        {
+            return uploadresult;
+        }
         if (Settings.UploadToDPSReports)
         {
             originalController.DPSReportUploadTentative = true;
@@ -335,10 +339,7 @@ public sealed class ProgramHelper : IDisposable
                                             Settings.ParseCombatReplay,
                                             Settings.ComputeDamageModifiers,
                                             Settings.CustomTooShort,
-                                            (Settings.UploadToDPSReports || Settings.UploadToWingman) ?
-                                                Math.Min(150, Settings.CustomTooBig)
-                                                :
-                                                Settings.CustomTooBig,
+                                            Settings.CustomTooBig,
                                             Settings.DetailledWvW),
                                         APIController);
 

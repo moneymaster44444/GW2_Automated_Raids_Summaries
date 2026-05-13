@@ -56,7 +56,9 @@ internal static class EvokerHelper
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "20% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 20.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "15% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 15.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.December2025Balance),
+            .WithBuilds(GW2Builds.December2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusFox, FamiliarsProwessFox, "Familiar's Prowess + Focus (Fox)", "10% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 10.0, DamageType.Condition, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // Familiar's Prowess (Hare)
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessHare, FamiliarsProwessHare, "Familiar's Prowess (Hare)", "10% after familiar skill", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.All)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease),
@@ -86,9 +88,11 @@ internal static class EvokerHelper
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "15% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvEsPvP)
             .WithBuilds(GW2Builds.December2025Balance, GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "15% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
+            .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance, GW2Builds.April2026Balancepocalypse),
         new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "12% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 12.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.sPvP)
             .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
+        new BuffOnActorDamageModifier(Mod_FamiliarsProwessFocusHare, FamiliarsProwessHare, "Familiar's Prowess + Focus (Hare)", "10% after familiar skill (Familiar's Focus)", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, TraitImages.FamiliarsProwess, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse, GW2Builds.April2026Balancepocalypse),
         // Zap
         new BuffOnFoeDamageModifier(Mod_Zap, ZapBuffPlayerToTarget, "Zap", "7% crit damage", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Evoker, ByPresence, SkillImages.Zap, DamageModifierMode.PvE)
             .WithBuffOnFoeFromActor()

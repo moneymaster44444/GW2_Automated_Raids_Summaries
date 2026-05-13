@@ -66,11 +66,17 @@ public abstract class LogLogic
         public readonly Buff Buff;
         public readonly int Stack;
         public readonly PhaseDataWithMetaData AttachedPhase;
+        public readonly long RemainingDuration;
         public InstanceBuff(Buff buff, int stack, PhaseDataWithMetaData phase)
         {
             Buff = buff;
             Stack = stack;
             AttachedPhase = phase;
+        }
+
+        public InstanceBuff(Buff buff, int stack, PhaseDataWithMetaData phase, long remainingDuration) : this(buff, stack, phase)
+        {
+            RemainingDuration = remainingDuration;
         }
     }
     protected List<InstanceBuff>? InstanceBuffs { get; private set; } = null;
@@ -114,7 +120,8 @@ public abstract class LogLogic
                         new PlayerDstCrowdControlMechanic(SkillIDs.ArcDPSGenericKnockbackPull, new MechanicPlotlySetting(Symbols.StarTriangleUp, Colors.DarkGreen), "Knck.Pll", "Knocked Back or Pulled", "Knocked Back/Pulled", 0),
                         new PlayerDstCrowdControlMechanic(SkillIDs.ArcDPSGenericFloat, new MechanicPlotlySetting(Symbols.StarTriangleUp, Colors.LightBlue), "Flt", "Float", "Float", 0),
                         new PlayerDstCrowdControlMechanic(SkillIDs.ArcDPSGenericLaunch, new MechanicPlotlySetting(Symbols.StarTriangleUp, Colors.DarkPurple), "Lnch", "Launched", "Launched", 0),
-                        new PlayerDstCrowdControlMechanic(SkillIDs.ArcDPSGenericWaterFloatSink, new MechanicPlotlySetting(Symbols.StarTriangleUp, Colors.DarkBlue), "Wtr.Flt.Snk", "Float or Sinked in Water", "Float or Sinked", 0),
+                        new PlayerDstCrowdControlMechanic([SkillIDs.ArcDPSGenericLockOut, SkillIDs.ArcDPSGenericStagger, SkillIDs.ArcDPSGenericFear], new MechanicPlotlySetting(Symbols.StarTriangleUp, Colors.LightPurple), "Lckt", "Lockout", "Lockout (Stun, Daze, Petrify, etc...) ", 0),
+                        new PlayerDstCrowdControlMechanic([SkillIDs.ArcDPSGenericWaterFloatSink, SkillIDs.ArcDPSGenericFloatWater, SkillIDs.ArcDPSGenericSink], new MechanicPlotlySetting(Symbols.StarTriangleUp, Colors.DarkBlue), "Wtr.Flt.Snk", "Float or Sinked in Water", "Float or Sinked", 0),
                     ]
                 ),
             ])
@@ -430,7 +437,7 @@ public abstract class LogLogic
 
     internal virtual IEnumerable<ErrorEvent> GetCustomWarningMessages(LogData logData, AgentData agentData, CombatData combatData, EvtcVersionEvent evtcVersion)
     {
-        if (evtcVersion.Build >= ArcDPSBuilds.DirectX11Update)
+        if (evtcVersion.Build >= ArcDPSBuilds.DirectX11Update && evtcVersion.Build < ArcDPSBuilds.ExtraDataInGUIDEvents)
         {
             return [new("As of arcdps 20210923, animated cast events' durations are broken, as such, any feature having a dependency on it are to be taken with a grain of salt. Impacted features are: <br>- Rotations <br>- Time spent in animation statistics <br>- Mechanics <br>- Phases <br>- Combat Replay Decorations")];
         }

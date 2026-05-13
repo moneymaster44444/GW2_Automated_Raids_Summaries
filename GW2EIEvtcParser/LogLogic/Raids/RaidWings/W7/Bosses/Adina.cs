@@ -60,7 +60,7 @@ internal class Adina : TheKeyOfAhdashim
         // Handle potentially wrongly associated logs
         if (logStartNPCUpdate != null)
         {
-            if (agentData.GetNPCsByID(TargetID.Sabir).Any(sabir => combatData.Any(evt => evt.IsDamagingDamage() && evt.DstMatchesAgent(sabir) && agentData.GetAgent(evt.SrcAgent, evt.Time).GetFinalMaster().IsPlayer)))
+            if (agentData.GetNPCsByID(TargetID.Sabir).Any(sabir => combatData.Any(evt => evt.IsNonZeroDamageEvent() && evt.DstMatchesAgent(sabir) && agentData.GetAgent(evt.SrcAgent, evt.Time).GetFinalMaster().IsPlayer)))
             {
                 return new Sabir((int)TargetID.Sabir);
             }
@@ -533,7 +533,7 @@ internal class Adina : TheKeyOfAhdashim
         try
         {
             var allPhases = log.LogData.GetPhases(log);
-            var adinaPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+            var adinaPhases = log.LogData.GetEncounterPhases(log, LogID);
             var splitPhasesMap = new List<string>()
             {
                     CombatReplayAdinaSplitPhase1,
@@ -619,7 +619,7 @@ internal class Adina : TheKeyOfAhdashim
         }
         if (log.CombatData.GetBuffData(AchievementEligibilityConserveTheLand).Any())
         {
-            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)

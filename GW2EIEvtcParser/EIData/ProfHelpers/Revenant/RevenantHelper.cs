@@ -135,11 +135,15 @@ internal static class RevenantHelper
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.October2018Balance),
         // - Swift Termination
         new DamageLogDamageModifier(Mod_SwiftTermination, "Swift Termination", "20% if target <50%", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.SwiftTermination, (x, log) => x.AgainstUnderFifty, DamageModifierMode.All),
-        // Brutality
+        // - Brutality
         new BuffOnFoeDamageModifier(Mod_Brutality, [Stability, Protection], "Brutality", "15% against protection and stability", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Revenant, ByPresence, TraitImages.Brutality, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.June2025Balance),
+            .WithBuilds(GW2Builds.June2025Balance, GW2Builds.April2026Balancepocalypse),
         new BuffOnFoeDamageModifier(Mod_Brutality, [Stability, Protection], "Brutality", "10% against protection and stability", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, ByPresence, TraitImages.Brutality, DamageModifierMode.sPvPWvW)
-            .WithBuilds(GW2Builds.June2025Balance),
+            .WithBuilds(GW2Builds.June2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_Brutality, [Stability, Protection], "Brutality", "15% against protection and stability", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Revenant, ByPresence, TraitImages.Brutality, DamageModifierMode.PvEWvW)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_Brutality, [Stability, Protection], "Brutality", "10% against protection and stability", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Revenant, ByPresence, TraitImages.Brutality, DamageModifierMode.sPvP)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
     ];
 
     internal static readonly IReadOnlyList<DamageModifierDescriptor> IncomingDamageModifiers =
@@ -170,7 +174,7 @@ internal static class RevenantHelper
 
         // Retribution
         // - Close Quarters
-        new DamageLogDamageModifier(Mod_CloseQuarters, "Close Quarters", "-10% from foes beyond 360 range", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.CloseQuarters, (x, log) => !TargetWithinRangeChecker(x, log, 360, false), DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_CloseQuarters, "Close Quarters", "-10% from foes beyond 360 range", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Revenant, TraitImages.CloseQuarters, (x, log) => TargetOutsideRangeChecker(x, log, 360, true), DamageModifierMode.All)
             .UsingApproximate(),
         // - Determined Resolution
         new BuffOnActorDamageModifier(Mod_DeterminedResolution, Stability, "Determined Resolution", "-15% under stability", DamageSource.Incoming, -15.0, DamageType.Strike, DamageType.All, Source.Revenant, ByPresence, TraitImages.DeterminedResolution, DamageModifierMode.All)

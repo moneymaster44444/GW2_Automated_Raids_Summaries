@@ -427,11 +427,11 @@ internal class DecimaTheStormsinger : MountBalrior
 
                         // Unlike Seismic Crash, the indicator effect end and the damage effect are only ~5ms apart
                         lifespan = group[0].ComputeLifespan(log, 2800);
-                        if (target.TryGetCurrentFacingDirection(log, group[0].Time, out Vector3 facing, 100))
+                        if (target.TryGetCurrentFacingDirection(log, group[0].Time, out var facing, 100))
                         {
                             for (int i = 0; i < 360; i += lineAngle)
                             {
-                                var rotation = facing.GetRoundedZRotationDeg() + i;
+                                var rotation = facing.Value.GetRoundedZRotationDeg() + i;
                                 var line = new RectangleDecoration(10, outer - inner, lifespan, Colors.LightOrange, 0.6, new AgentConnector(target).WithOffset(offset, true)).UsingRotationConnector(new AngleConnector(rotation));
                                 replay.Decorations.Add(line);
                             }
@@ -478,13 +478,13 @@ internal class DecimaTheStormsinger : MountBalrior
 
                     // Because the x9th and the x0th can happen at the same timestamp, we need to check the distance of the from Decima.
                     // A simple increase every 10 can happen to increase the x9th instead of the following x0th.
-                    if (target.TryGetCurrentPosition(log, first.Time, out Vector3 decimaPosition))
+                    if (target.TryGetCurrentPosition(log, first.Time, out var decimaPosition))
                     {
                         foreach (var group in aftershock)
                         {
                             foreach (var effect in group)
                             {
-                                distance = (effect.Position - decimaPosition).XY().Length();
+                                distance = (effect.Position - decimaPosition.Value).XY().Length();
                                 if (distance > 1074 && distance < 1076 || distance > 1759 && distance < 1761)
                                 {
                                     radius = 200;
@@ -656,7 +656,7 @@ internal class DecimaTheStormsinger : MountBalrior
                             (long start, long end) lifespanSparkwave = (cast.Time, Math.Min(cast.EndTime, cast.Time + castDuration));
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + castDuration, out var facing))
                             {
-                                var cone = (PieDecoration)new PieDecoration(6000, 120, lifespanSparkwave, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing));
+                                var cone = (PieDecoration)new PieDecoration(6000, 120, lifespanSparkwave, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing.Value));
                                 replay.Decorations.AddWithGrowing(cone, cast.Time + castDuration);
                             }
                             break;
@@ -705,9 +705,9 @@ internal class DecimaTheStormsinger : MountBalrior
             (long start, long end) lifespan = (apply.Time, apply.Time + duration);
             replay.Decorations.Add(new LineDecoration((apply.Time, apply.Time + duration), Colors.DarkGreen, 0.2, new AgentConnector(apply.To), new AgentConnector(apply.By)).WithThickess(80, true));
             replay.Decorations.Add(new LineDecoration((apply.Time + duration, apply.Time + duration + 1000), Colors.DarkGreen, 0.5, new AgentConnector(apply.To), new AgentConnector(apply.By)).WithThickess(80, true));
-            if (apply.To.TryGetCurrentInterpolatedPosition(log, apply.Time, out Vector3 pos1) && apply.By.TryGetCurrentInterpolatedPosition(log, apply.Time, out Vector3 pos2))
+            if (apply.To.TryGetCurrentInterpolatedPosition(log, apply.Time, out var pos1) && apply.By.TryGetCurrentInterpolatedPosition(log, apply.Time, out var pos2))
             {
-                Vector3 centralPos = (pos1 + pos2) / 2;
+                Vector3 centralPos = (pos1.Value + pos2.Value) / 2;
                 replay.Decorations.Add(new IconDecoration(img, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.7f, lifespan, new PositionConnector(centralPos)));
             }
         }
@@ -745,7 +745,7 @@ internal class DecimaTheStormsinger : MountBalrior
                         // Get the position before movement happened for beam start
                         if (beamStartAgent.TryGetCurrentInterpolatedPosition(log, tetherStart - 500, out var posDst))
                         {
-                            replay.Decorations.Add(new LineDecoration((tetherStart, tetherEnd), color, 0.5, new PositionConnector(posSrc), new PositionConnector(posDst)).WithThickess(beamWidth, true));
+                            replay.Decorations.Add(new LineDecoration((tetherStart, tetherEnd), color, 0.5, new PositionConnector(posSrc.Value), new PositionConnector(posDst.Value)).WithThickess(beamWidth, true));
                         }
                         beamEndAgent = _unknownAgent;
                         beamStartAgent = _unknownAgent;
@@ -767,7 +767,7 @@ internal class DecimaTheStormsinger : MountBalrior
                 // We ignore the movement of the agent, it moves closer to target before firing
                 if (target.TryGetCurrentInterpolatedPosition(log, start, out var posDst))
                 {
-                    var connector = new PositionConnector(posDst).WithOffset(new(beamLength / 2, 0, 0), true);
+                    var connector = new PositionConnector(posDst.Value).WithOffset(new(beamLength / 2, 0, 0), true);
                     var rotationConnector = new AgentFacingConnector(target);
                     replay.Decorations.Add(new RectangleDecoration(beamLength, beamWidth, (start, end), color, 0.2, connector).UsingRotationConnector(rotationConnector));
                 }
@@ -839,7 +839,7 @@ internal class DecimaTheStormsinger : MountBalrior
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success && encounterPhase.IsCM)
@@ -859,7 +859,7 @@ internal class DecimaTheStormsinger : MountBalrior
         }
         {
             var thisBugCanDanceEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var decimaCMPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var decimaCMPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             // Fulgent check
             var fulgentCMs = log.CombatData.GetDamageData(FulgentFenceCM);
             foreach (var evt in fulgentCMs)

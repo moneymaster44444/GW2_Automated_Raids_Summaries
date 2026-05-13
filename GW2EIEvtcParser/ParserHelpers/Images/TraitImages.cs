@@ -137,6 +137,7 @@ internal static class TraitImages
     public const string Syncopate = "https://render.guildwars2.com/file/42C9802D696B9670A0155DDF0FD2480CD9FBC473/3679969.png";
     public const string SymphonicResonance = "https://render.guildwars2.com/file/AF276ECB07996BF5343A513FF2E52F3BE1CBAD0B/3679978.png";
     public const string LoveSong = "https://render.guildwars2.com/file/1CC50D6BDDE64580522F0D396D194C020AC50DCE/3679972.png";
+    public const string Chronophantasma = "https://render.guildwars2.com/file/120E2199010315D0C1FACA9BBFB5DF9E5E47027F/1012481.png";
     #endregion
     #region Necromancer
     public const string VampiricPresence = "https://render.guildwars2.com/file/22B370D754AC1D69A8FE66DCCB36BE940455E5EA/1012539.png";
@@ -214,7 +215,7 @@ internal static class TraitImages
     public const string NaturalHealing = "https://render.guildwars2.com/file/E10A27535DAC0BBFFCB205BFBBC9D30F68BE0C07/1012611.png";
     public const string PredatorsCunning = "https://render.guildwars2.com/file/25054EAF081EAB14A6B5C53197312F2AE6C32A17/1769977.png";
     public const string EvasivePurity = "https://render.guildwars2.com/file/C374B3F2C1BCFCB0B164FF0567FB6CC1B31B9651/1012633.png";
-    public const string RestorativeStrikesAndBiorythm = "https://render.guildwars2.com/file/44B8970EAEBCFC14E11A910C5B5D0FC512FEEBE5/2503639.png";
+    public const string RestorativeStrikesAndBiorhythm = "https://render.guildwars2.com/file/44B8970EAEBCFC14E11A910C5B5D0FC512FEEBE5/2503639.png";
     public const string GaleForce = "https://render.guildwars2.com/file/206A95E4F6F236D824F80CF2495B4E6553ABFF34/3679998.png";
     public const string WutheringWind = "https://render.guildwars2.com/file/BE5F0405E79D13C89F0D9EF13B1B11479D0C3805/3679993.png";
     #endregion Ranger
@@ -285,7 +286,7 @@ internal static class TraitImages
     public const string CombatHigh = "https://render.guildwars2.com/file/EDF09834A4A650256C98A3680C2DF4A4C5339BAC/3680023.png";
     public const string MagpiesDefense = "https://render.guildwars2.com/file/3A4DAC71019B64EA1893E06638234E1BE4DB6251/3680025.png";
     public const string LarcenousTorment = "https://render.guildwars2.com/file/2E41AD9FAC08F79333EAC791C4B9967EE60E98AA/2503647.png";
-    public const string EnterprisingAristocrate = "https://render.guildwars2.com/file/CEED9A51F13AD702C52A015C26B5AD3880260169/3680026.png";
+    public const string EnterprisingAristocrat = "https://render.guildwars2.com/file/CEED9A51F13AD702C52A015C26B5AD3880260169/3680026.png";
     #endregion
     #region Warrior
     public const string RousingResilience = "https://render.guildwars2.com/file/630279C914D8BF414C2358281F1A37EDF86B203B/1012794.png";
@@ -322,6 +323,7 @@ internal static class TraitImages
     public const string SignetMastery = "https://render.guildwars2.com/file/3D117C0158CD7A55BE740D6B072807A3121C90A1/1012775.png";
     public const string GunsAndGlory = "https://render.guildwars2.com/file/0B2291AEBD4B3755F0CD9A38987797763AD34790/2491554.png";
     public const string BriskPacing = "https://render.guildwars2.com/file/9D35A3CED107B068AD4D20A3782BF6262FE36610/3680030.png";
+    public const string StalwartStrength = "https://render.guildwars2.com/file/630279C914D8BF414C2358281F1A37EDF86B203B/1012794.png";
     #endregion
 }
 #pragma warning restore CA1823 // Unused field

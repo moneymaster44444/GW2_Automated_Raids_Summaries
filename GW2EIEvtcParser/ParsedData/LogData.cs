@@ -15,6 +15,7 @@ public class LogData
 {
     // Fields
     private List<PhaseData> _phases = [];
+    private Dictionary<long, IReadOnlyList<EncounterPhaseData>> _encounterPhasesByID = [];
     private List<EncounterPhaseData> _encounterPhases = [];
     public readonly int TriggerID;
     public readonly LogLogic.LogLogic Logic;
@@ -446,6 +447,7 @@ public class LogData
                 }
             }
             _encounterPhases = encounterPhases;
+            _encounterPhasesByID = _encounterPhases.GroupBy(x => x.ID).ToDictionary(x => x.Key, x => (IReadOnlyList<EncounterPhaseData>)x.ToList());
         }
         return _phases;
     }
@@ -471,6 +473,59 @@ public class LogData
             GetPhases(log);
         }
         return _encounterPhases;
+    }
+
+    public IReadOnlyList<EncounterPhaseData> GetEncounterPhases(ParsedEvtcLog log, long logID)
+    {
+        if (_phases.Count == 0)
+        {
+            GetPhases(log);
+        }
+        if (_encounterPhasesByID.TryGetValue(logID, out var encounterPhases))
+        {
+            return encounterPhases;
+        }
+        return [];
+    }
+
+    public Mode GetEncounterMode(ParsedEvtcLog log, long logID, long time)
+    {
+        var encounterPhase = GetEncounterPhases(log, logID).FirstOrDefault(x => x.InInterval(time));
+        if (encounterPhase != null)
+        {
+            return encounterPhase.Mode;
+        }
+        return Mode.NotApplicable;
+    }
+
+    public bool EncounterIsNM(ParsedEvtcLog log, long logID, long time)
+    {
+        var encounterPhase = GetEncounterPhases(log, logID).FirstOrDefault(x => x.InInterval(time));
+        if (encounterPhase != null)
+        {
+            return !encounterPhase.IsCM && !encounterPhase.IsLegendaryCM;
+        }
+        return false;
+    }
+
+    public bool EncounterIsCM(ParsedEvtcLog log, long logID, long time)
+    {
+        var encounterPhase = GetEncounterPhases(log, logID).FirstOrDefault(x => x.InInterval(time));
+        if (encounterPhase != null)
+        {
+            return encounterPhase.IsCM;
+        }
+        return false;
+    }
+
+    public bool EncounterIsLegendaryCM(ParsedEvtcLog log, long logID, long time)
+    {
+        var encounterPhase = GetEncounterPhases(log, logID).FirstOrDefault(x => x.InInterval(time));
+        if (encounterPhase != null)
+        {
+            return encounterPhase.IsLegendaryCM;
+        }
+        return false;
     }
 
     public IReadOnlyList<SingleActor> GetMainTargets(ParsedEvtcLog log)

@@ -7,7 +7,6 @@ internal class BuffChartDataDto
 {
     public long Id { get; set; }
     public string Color { get; set; }
-    public bool Visible { get; set; }
     public List<double[]> States { get; set; }
 
     private static string GetBuffColor(string name)
@@ -42,7 +41,6 @@ internal class BuffChartDataDto
     private BuffChartDataDto(BuffGraph bgm, IReadOnlyList<GenericSegment<double>> bChart, PhaseData phase)
     {
         Id = bgm.Buff.ID;
-        Visible = (bgm.Buff.Name == "Might" || bgm.Buff.Name == "Quickness" || bgm.Buff.Name == "Vulnerability");
         Color = GetBuffColor(bgm.Buff.Name);
         States = bChart.ToObjectList(phase.Start, phase.End);
     }

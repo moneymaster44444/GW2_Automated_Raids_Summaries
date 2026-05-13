@@ -40,7 +40,7 @@ internal static class LogLogicUtils
 
     internal static void AddArenaDecorationsPerEncounter(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations, long logID, string image, CombatReplayMap crMap)
     {
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == logID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, logID);
         foreach (var encounterPhase in encounterPhases)
         {
             arenaDecorations.Add(new ArenaDecoration((encounterPhase.Start - 5000, encounterPhase.End + 5000), image, crMap));

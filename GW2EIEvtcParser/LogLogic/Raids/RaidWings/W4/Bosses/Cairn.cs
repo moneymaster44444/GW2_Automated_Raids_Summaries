@@ -167,7 +167,7 @@ internal class Cairn : BastionOfThePenitent
                 {
                     if (greenEffect.Dst.TryGetCurrentPosition(log, greenEffect.Time, out var position))
                     {
-                        positionConnector = new PositionConnector(position);
+                        positionConnector = new PositionConnector(position.Value);
                     }
                     else
                     {
@@ -243,10 +243,10 @@ internal class Cairn : BastionOfThePenitent
                             if (target.TryGetCurrentFacingDirection(log, lifespanWarning.start, out var facing))
                             {
                                 var positionConnector = (AgentConnector)new AgentConnector(target).WithOffset(new(width / 2, 0, 0), true);
-                                var rotationConnector = new AngleConnector(facing);
+                                var rotationConnector = new AngleConnector(facing.Value);
                                 replay.Decorations.Add(new RectangleDecoration(width, height, lifespanWarning, Colors.Purple, 0.1, positionConnector).UsingRotationConnector(rotationConnector));
                                 replay.Decorations.Add(new RectangleDecoration(width, height, lifespanHit, Colors.DarkPurple, 0.5, positionConnector).UsingRotationConnector(rotationConnector));
-                                replay.Decorations.Add(new RectangleDecoration(width, height, lifespanSwipe, Colors.DarkPurple, 0.5, positionConnector).UsingRotationConnector(new SpinningConnector(facing, 360)));
+                                replay.Decorations.Add(new RectangleDecoration(width, height, lifespanSwipe, Colors.DarkPurple, 0.5, positionConnector).UsingRotationConnector(new SpinningConnector(facing.Value, 360)));
                             }
                             break;
                         // Gravity Wave - Doughnuts
@@ -285,7 +285,7 @@ internal class Cairn : BastionOfThePenitent
             throw new MissingKeyActorsException("Cairn not found");
         }
         // spawn protection loss -- most reliable
-        CombatItem? spawnProtectionLoss = combatData.Find(x => x.IsBuffRemove == BuffRemove.All && x.SrcMatchesAgent(cairn) && x.SkillID == SpawnProtection);
+        CombatItem? spawnProtectionLoss = combatData.Find(x => x.IsBuffRemoveAllEvent() && x.SrcMatchesAgent(cairn) && x.SkillID == SpawnProtection);
         if (spawnProtectionLoss != null)
         {
             return spawnProtectionLoss.Time;
@@ -293,7 +293,7 @@ internal class Cairn : BastionOfThePenitent
         else
         {
             // get first end casting
-            CombatItem? firstCastEnd = combatData.FirstOrDefault(x => x.EndCasting() && (x.Time - logData.EvtcLogStart) < 2000 && x.SrcMatchesAgent(cairn));
+            CombatItem? firstCastEnd = combatData.FirstOrDefault(x => x.IsEndCastEvent() && (x.Time - logData.EvtcLogStart) < 2000 && x.SrcMatchesAgent(cairn));
             // It has to Impact(38102), otherwise anomaly, player may have joined mid fight, do nothing
             if (firstCastEnd != null && firstCastEnd.SkillID == CairnImpact)
             {

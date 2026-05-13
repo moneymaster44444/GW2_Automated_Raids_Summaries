@@ -90,7 +90,7 @@ internal static class ThiefHelper
     internal static readonly IReadOnlyList<DamageModifierDescriptor> IncomingDamageModifiers =
     [
         // Marauder's Resilience
-        new DamageLogDamageModifier(Mod_MaraudersResilience, "Marauder's Resilience", "-10% from foes within 360 range", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Thief, TraitImages.MaraudersResilience, (x, log) => !TargetWithinRangeChecker(x, log, 360, false), DamageModifierMode.All)
+        new DamageLogDamageModifier(Mod_MaraudersResilience, "Marauder's Resilience", "-10% from foes within 360 range", DamageSource.Incoming, -10.0, DamageType.Strike, DamageType.All, Source.Thief, TraitImages.MaraudersResilience, (x, log) => TargetOutsideRangeChecker(x, log, 360, true), DamageModifierMode.All)
             .UsingApproximate()
             .WithBuilds(GW2Builds.April2019Balance)
     ];

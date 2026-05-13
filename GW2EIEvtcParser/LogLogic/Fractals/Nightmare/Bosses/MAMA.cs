@@ -199,7 +199,7 @@ internal class MAMA : Nightmare
                             // Find position at the end of the leap time
                             if (target.TryGetCurrentPosition(log, growing + 1000, out var targetPosition))
                             {
-                                replay.Decorations.AddWithGrowing(new CircleDecoration(350, lifespan, Colors.Orange, 0.2, new PositionConnector(targetPosition)), growing);
+                                replay.Decorations.AddWithGrowing(new CircleDecoration(350, lifespan, Colors.Orange, 0.2, new PositionConnector(targetPosition.Value)), growing);
 
                                 // 3 rounds of decorations for the 3 waves
                                 if (lifespan.end == growing)
@@ -210,7 +210,7 @@ internal class MAMA : Nightmare
                                     {
                                         long shockWaveStart = growing + i * 120;
                                         (long, long) lifespanShockwave = (shockWaveStart, shockWaveStart + duration);
-                                        GeographicalConnector connector = new PositionConnector(targetPosition);
+                                        GeographicalConnector connector = new PositionConnector(targetPosition.Value);
                                         replay.Decorations.AddShockwave(connector, lifespanShockwave, Colors.Yellow, 0.3, shockwaveRadius);
                                     }
                                 }

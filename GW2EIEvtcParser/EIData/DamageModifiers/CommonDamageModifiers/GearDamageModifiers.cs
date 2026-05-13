@@ -93,10 +93,7 @@ internal static class GearDamageModifiers
         new DamageLogDamageModifier(Mod_RuneOfTheStars, "Rune of the Stars", "-10% condition damamge", DamageSource.Incoming, -10.0, DamageType.Condition, DamageType.All, Source.Gear, ItemImages.SuperiorRuneOfTheStars, (x, log) => true, DamageModifierMode.All).WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
         new DamageLogDamageModifier(Mod_RuneOfMercy, "Rune of Mercy", "-20%", DamageSource.Incoming, -20.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ItemImages.SuperiorRuneOfMercy, (x, log) => log.CombatData.GetAnimatedCastData(Resurrect).Any(y => y.Caster.Is(x.To) && y.IntersectsActualCastWindow(x.Time, 0)), DamageModifierMode.All)
             .WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
-        new DamageLogDamageModifier(Mod_RuneOfTheScrapper, "Rune of the Scrapper", "-10% condition damamge", DamageSource.Incoming, -7.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ItemImages.SuperiorRuneOfTheScrapper, (x,log) =>
-                x.From.TryGetCurrentPosition(log, x.Time, out var currentPosition)
-                && x.To.TryGetCurrentPosition(log, x.Time, out var currentTargetPosition)
-                && (currentPosition - currentTargetPosition).Length() >= 600.0
+        new DamageLogDamageModifier(Mod_RuneOfTheScrapper, "Rune of the Scrapper", "-10% condition damamge", DamageSource.Incoming, -7.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ItemImages.SuperiorRuneOfTheScrapper, (x,log) => ProfHelper.TargetOutsideRangeChecker(x, log, 600)
             , DamageModifierMode.PvEWvW)
             .WithBuilds(GW2Builds.November2018Rune, GW2Builds.SOTOReleaseAndBalance),
         new BuffOnFoeDamageModifier(Mod_RuneOfPerplexity, Confusion, "Rune of Perplexity", "-10% from confused foes", DamageSource.Incoming, -10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Gear, ByPresence, ItemImages.SuperiorRuneOfPerplexity, DamageModifierMode.All)

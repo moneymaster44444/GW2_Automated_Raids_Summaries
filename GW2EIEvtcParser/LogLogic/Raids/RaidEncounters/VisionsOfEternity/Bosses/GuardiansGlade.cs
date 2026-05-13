@@ -179,7 +179,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
         if (logStartNPCUpdate != null)
         {
             long enterCombatTime = GetEnterCombatTime(logData, agentData, combatData, logStartNPCUpdate.Time, GenericTriggerID, logStartNPCUpdate.DstAgent);
-            var firstFixation = combatData.FirstOrDefault(x => x.IsBuffApply() && x.SkillID == FixatedKela);
+            var firstFixation = combatData.FirstOrDefault(x => x.IsBuffApplyEvent() && x.SkillID == FixatedKela);
             // If fixation is missing or first seen fixation is after boss enters combat, fallback to enterCombatTime, log will be seen as late start
             if (firstFixation == null || firstFixation.Time > enterCombatTime)
             {
@@ -378,7 +378,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
         // Fixated
-        var kelaPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID).ToList();
+        var kelaPhases = log.LogData.GetEncounterPhases(log, LogID);
         var fixateds = p.GetBuffStatus(log, FixatedKela).Where(x => x.Value > 0);
         foreach (Segment seg in fixateds)
         {
@@ -603,7 +603,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
         }
 
         var surefooted = new List<AchievementEligibilityEvent>();
-        var kelaPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+        var kelaPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
         var sandApplications = log.CombatData.GetBuffApplyDataByIDByDst(LooseSand, p.AgentItem);
 
         foreach (AbstractBuffApplyEvent apply in sandApplications)
@@ -628,7 +628,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         var tackleCasts = log.CombatData.GetAnimatedCastData(CrocodilianRazortoothTackle)
                 .Where(x => x.Caster.IsAnySpecies([TargetID.VeteranCrocodilianRazortooth, TargetID.EliteCrocodilianRazortooth]) && !x.IsInterrupted).ToList();
 
@@ -715,7 +715,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
             var kela = kelas.FirstOrDefault(x => x.InAwareTimes(croc));
             if (kela != null)
             {
-                IEnumerable<CombatItem> items = combatData.Where(x => x.IsDamage() && x.DstMatchesAgent(croc) && x.SrcInstid == 0 && x.SkillID == ArcDPSGenericKill);
+                IEnumerable<CombatItem> items = combatData.Where(x => x.IsDamageEvent() && x.DstMatchesAgent(croc) && x.SrcInstid == 0 && x.SkillID == ArcDPSGenericKill);
                 foreach (CombatItem item in items)
                 {
                     item.OverrideSrcAgent(kela);
@@ -732,7 +732,7 @@ internal class GuardiansGlade : VisionsOfEternityRaidEncounter
             var kela = kelas.FirstOrDefault(x => x.InAwareTimes(eatableAgent));
             if (kela != null)
             {
-                IEnumerable<CombatItem> items = combatData.Where(x => x.IsDamage() && x.DstMatchesAgent(eatableAgent)
+                IEnumerable<CombatItem> items = combatData.Where(x => x.IsDamageEvent() && x.DstMatchesAgent(eatableAgent)
                     && x.SrcInstid == 0 && x.SkillID == ArcDPSGenericKill
                     && x.IFF == IFF.Foe);
                 foreach (CombatItem item in items)

@@ -255,7 +255,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
 
         foreach (var encounterPhase in encounterPhases)
         {
@@ -308,13 +308,13 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                         {
                             uint radius = 500; // Zone 1
                                                // Zone 2
-                            if (ankkaPosition.X > 0 && ankkaPosition.X < 4000)
+                            if (ankkaPosition.Value.X > 0 && ankkaPosition.Value.X < 4000)
                             {
                                 radius = 340;
                             }
 
                             // Zone 3
-                            if (ankkaPosition.Y > 4000 && ankkaPosition.Y < 6000)
+                            if (ankkaPosition.Value.Y > 4000 && ankkaPosition.Value.Y < 6000)
                             {
                                 radius = 380;
                             }
@@ -330,13 +330,13 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                             // logs without effects
                             int delay = 1833 * 2;
                             // Zone 1
-                            if (ankkaPosition.X > -6000 && ankkaPosition.X < -2500 && ankkaPosition.Y < 1000 && ankkaPosition.Y > -1000)
+                            if (ankkaPosition.Value.X > -6000 && ankkaPosition.Value.X < -2500 && ankkaPosition.Value.Y < 1000 && ankkaPosition.Value.Y > -1000)
                             {
                                 AddDeathEmbraceDecoration(replay, cast.Time, castDuration, 500, delay, new(-3941.78f, 66.76819f, -3611.2f)); // CENTER
                             }
 
                             // Zone 2
-                            if (ankkaPosition.X > 0 && ankkaPosition.X < 4000)
+                            if (ankkaPosition.Value.X > 0 && ankkaPosition.Value.X < 4000)
                             {
                                 AddDeathEmbraceDecoration(replay, cast.Time, castDuration, 340, delay, new(1663.69f, 1739.87f, -4639.695f)); // NW
                                 AddDeathEmbraceDecoration(replay, cast.Time, castDuration, 340, delay, new(2563.689f, 1739.87f, -4664.611f)); // NE
@@ -345,7 +345,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                             }
 
                             // Zone 3
-                            if (ankkaPosition.Y > 4000 && ankkaPosition.Y < 6000)
+                            if (ankkaPosition.Value.Y > 4000 && ankkaPosition.Value.Y < 6000)
                             {
                                 AddDeathEmbraceDecoration(replay, cast.Time, castDuration, 380, delay, new(-2547.61f, 5466.439f, -6257.504f)); // NW
                                 AddDeathEmbraceDecoration(replay, cast.Time, castDuration, 380, delay, new(-1647.61f, 5466.439f, -6256.795f)); // NE
@@ -367,7 +367,6 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                     }
                 }
 
-                var xjjPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM).ToList();
                 if (log.CombatData.TryGetEffectEventsBySrcWithGUID(target.AgentItem, EffectGUIDs.DeathsHandByAnkkaRadius380, out var deathsHandOnPlayerCMOrInBetween))
                 {
                     foreach (EffectEvent deathsHandEffect in deathsHandOnPlayerCMOrInBetween)
@@ -380,7 +379,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                                 AddDeathsHandDecoration(replay, deathsHandEffect.Position, deathsHandEffect.Time, 3000, 380, 1000);
                             }
                         }
-                        else if (xjjPhases.Any(x => x.InInterval(deathsHandEffect.Time)))
+                        else if (log.LogData.EncounterIsCM(log, LogID, deathsHandEffect.Time))
                         {
                             AddDeathsHandDecoration(replay, deathsHandEffect.Position, deathsHandEffect.Time, 3000, 380, 33000);
                         }
@@ -486,7 +485,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
 
             case (int)TargetID.SanctuaryPrism:
             {
-                var xjjPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM).ToList();
+                var xjjPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IsCM).ToList();
                 var prismStart = log.LogData.EvtcLogStart;
                 foreach (var xjjPhase in xjjPhases)
                 {
@@ -507,7 +506,6 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
         }
-        var xjjPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM).ToList();
         if (p.GetBuffGraphs(log).TryGetValue(DeathsHandSpreadBuff, out var value))
         {
             foreach (Segment segment in value.Values)
@@ -515,7 +513,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                 //TODO(Rennorb) @correctnes: there was a null check here, i have no clue why.
                 if (!segment.IsEmpty() && segment.Value == 1)
                 {
-                    var isCM = xjjPhases.Any(x => x.IntersectsWindow(segment.Start, segment.End));
+                    var isCM = log.LogData.EncounterIsCM(log, LogID, segment.Start);
                     uint deathsHandRadius = (uint)(isCM ? 380 : 300);
                     int deathsHandDuration = isCM ? 33000 : 13000;
                     // AoE on player
@@ -525,7 +523,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
                     {
                         if (p.TryGetCurrentPosition(log, segment.End, out var playerPosition))
                         {
-                            AddDeathsHandDecoration(replay, playerPosition, segment.End, 3000, deathsHandRadius, deathsHandDuration);
+                            AddDeathsHandDecoration(replay, playerPosition.Value, segment.End, 3000, deathsHandRadius, deathsHandDuration);
                         }
                     }
                 }
@@ -577,7 +575,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         }
         {
             var clarityEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var xjjPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var xjjPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             List<HealthDamageEvent> damageData = [
                 ..log.CombatData.GetDamageData(WallOfFear),
                 ..log.CombatData.GetDamageData(WaveOfTormentNM),
@@ -597,7 +595,7 @@ internal class XunlaiJadeJunkyard : EndOfDragonsRaidEncounter
         }
         {
             var undevouredEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var xjjCMPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var xjjCMPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x =>x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             var buffApplyData = log.CombatData.GetBuffApplyDataByIDByDst(DevouringVoid, p.AgentItem);
             foreach (var evt in buffApplyData)
             {

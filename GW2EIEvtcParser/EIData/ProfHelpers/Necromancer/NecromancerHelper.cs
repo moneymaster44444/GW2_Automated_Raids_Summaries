@@ -63,7 +63,12 @@ internal static class NecromancerHelper
     [
         // Spite
         // - Spiteful Talisman
-        new BuffOnFoeDamageModifier(Mod_SpitefulTalisman, NumberOfBoons, "Spiteful Talisman", "10% on boonless target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByAbsence, TraitImages.SpitefulTalisman, DamageModifierMode.All),
+        new BuffOnFoeDamageModifier(Mod_SpitefulTalisman, NumberOfBoons, "Spiteful Talisman", "10% on boonless target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByAbsence, TraitImages.SpitefulTalisman, DamageModifierMode.All)
+            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_SpitefulTalisman, NumberOfBoons, "Spiteful Talisman", "10% on boonless target", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByAbsence, TraitImages.SpitefulTalisman, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_SpitefulTalisman, NumberOfBoons, "Spiteful Talisman", "5% on boonless target", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByAbsence, TraitImages.SpitefulTalisman, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // - Death's Embrace
         new BuffOnActorDamageModifier(Mod_DeathsEmbrace, Downed, "Death's Embrace", "25% on while downed", DamageSource.NoPets, 25.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByPresence, TraitImages.DeathsEmbrace, DamageModifierMode.All)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.February2020Balance),
@@ -96,7 +101,13 @@ internal static class NecromancerHelper
         // - Death Perception
         new BuffOnActorDamageModifier(Mod_DeathPerception, [DeathShroud, ReapersShroud, DesertShroudBuff, HarbingerShroud, RitualistsShroud], "Death Perception", "15% crit damage while in shroud", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByPresence, TraitImages.DeathPerception, DamageModifierMode.All)
             .UsingChecker((x, log) => x.HasCrit)
-            .WithBuilds(GW2Builds.June2022Balance),
+            .WithBuilds(GW2Builds.June2022Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_DeathPerception, [DeathShroud, ReapersShroud, DesertShroudBuff, HarbingerShroud, RitualistsShroud], "Death Perception", "15% crit damage while in shroud", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByPresence, TraitImages.DeathPerception, DamageModifierMode.sPvPWvW)
+            .UsingChecker((x, log) => x.HasCrit)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_DeathPerception, [DeathShroud, ReapersShroud, DesertShroudBuff, HarbingerShroud, RitualistsShroud], "Death Perception", "10% crit damage while in shroud", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Necromancer, ByPresence, TraitImages.DeathPerception, DamageModifierMode.PvE)
+            .UsingChecker((x, log) => x.HasCrit)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
 
         // Death Magic
         // - Necromantic Corruption

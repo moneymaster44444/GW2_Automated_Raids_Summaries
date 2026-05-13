@@ -17,39 +17,48 @@ internal static class ParagonHelper
 
     internal static readonly IReadOnlyList<DamageModifierDescriptor> OutgoingDamageModifiers = 
     [
-        // Chant of Action Beta
+        // Strengthening Stanzas - Chant of Action Beta
         new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "20%", DamageSource.NoPets, 20.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease),
         new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "15%", DamageSource.NoPets, 15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.OctoberVoERelease),
-        // Chant of Action
+        // Strengthening Stanzas - Chant of Action
         new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "15%", DamageSource.NoPets, 15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.OctoberVoERelease),
-        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas:Chant of Action", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.OctoberVoERelease, GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
-        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas:Chant of Action", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.WvW)
+        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.WvW)
+            .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "7%", DamageSource.NoPets, 7.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.sPvP)
             .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
-        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas:Chant of Action", "7%", DamageSource.NoPets, 7.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.sPvP)
-            .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
+        new BuffOnActorDamageModifier(Mod_ChantOfAction_StrengtheningStanzas, ChantOfActionBuff, "Strengthening Stanzas: Chant of Action", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, SkillImages.ChantOfAction, DamageModifierMode.PvEWvW)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // Brisk Pacing 1
         new BuffOnActorDamageModifier(Mod_BriskPacingTier1, BriskPacingTier1, "Brisk Pacing", "7.5%", DamageSource.NoPets, 7.5, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.December2025Balance),
+            .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier1, BriskPacingTier1, "Brisk Pacing", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.December2025Balance),
-        new BuffOnActorDamageModifier(Mod_BriskPacingTier1, BriskPacingTier1, "Brisk Pacing", "5.0%", DamageSource.NoPets, 5.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.sPvPWvW),
+            .WithBuilds(GW2Builds.December2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_BriskPacingTier1, BriskPacingTier1, "Brisk Pacing", "5.0%", DamageSource.NoPets, 5.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_BriskPacingTier1, BriskPacingTier1, "Brisk Pacing", "5.0%", DamageSource.NoPets, 5.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.All)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // Brisk Pacing 2
         new BuffOnActorDamageModifier(Mod_BriskPacingTier2, BriskPacingTier2, "Brisk Pacing", "15%", DamageSource.NoPets, 15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.December2025Balance),
+            .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier2, BriskPacingTier2, "Brisk Pacing", "20%", DamageSource.NoPets, 20.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.December2025Balance),
+            .WithBuilds(GW2Builds.December2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_BriskPacingTier2, BriskPacingTier2, "Brisk Pacing", "15%", DamageSource.NoPets, 15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier2, BriskPacingTier2, "Brisk Pacing", "10%", DamageSource.NoPets, 10.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.sPvPWvW),
         // Brisk Pacing 3
         new BuffOnActorDamageModifier(Mod_BriskPacingTier3, BriskPacingTier3, "Brisk Pacing", "25%", DamageSource.NoPets, 25.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.December2025Balance),
+            .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.December2025Balance),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier3, BriskPacingTier3, "Brisk Pacing", "30%", DamageSource.NoPets, 30.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.December2025Balance),
+            .WithBuilds(GW2Builds.December2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_BriskPacingTier3, BriskPacingTier3, "Brisk Pacing", "25%", DamageSource.NoPets, 25.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier3, BriskPacingTier3, "Brisk Pacing", "20%", DamageSource.NoPets, 20.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.sPvPWvW)
-            .WithBuilds(GW2Builds.StartOfLife, GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
+            .WithBuilds(GW2Builds.August2025VoEBeta, GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier3, BriskPacingTier3, "Brisk Pacing", "20%", DamageSource.NoPets, 20.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.WvW)
             .WithBuilds(GW2Builds.February2026GuardiansGladeReleaseAndPvPBalance),
         new BuffOnActorDamageModifier(Mod_BriskPacingTier3, BriskPacingTier3, "Brisk Pacing", "15%", DamageSource.NoPets, 15.0, DamageType.StrikeAndCondition, DamageType.All, Source.Paragon, ByPresence, TraitImages.BriskPacing, DamageModifierMode.sPvP)

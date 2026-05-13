@@ -19,6 +19,10 @@ namespace GW2EIEvtcParser.LogLogic;
 
 internal class UraTheSteamshrieker : MountBalrior
 {
+
+    private const double CMThreshold = 70e6;
+    private const double LCMThreshold = 90e6;
+
     internal readonly MechanicGroup Mechanics = new([
             // Sulfuric Geysers
             new MechanicGroup([
@@ -165,11 +169,11 @@ internal class UraTheSteamshrieker : MountBalrior
         CombatItem? logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogNPCUpdate);
         if (logStartNPCUpdate != null)
         {
-            var deterrences = combatData.Where(x => (x.IsBuffApply() || x.IsBuffRemoval()) && x.SkillID == Deterrence);
+            var deterrences = combatData.Where(x => (x.IsBuffApplyEvent() || x.IsBuffRemoveEvent()) && x.SkillID == Deterrence);
             var activeDeterrences = new Dictionary<ulong, long>();
             foreach (var deterrence in deterrences)
             {
-                if (deterrence.IsBuffApply())
+                if (deterrence.IsBuffApplyEvent())
                 {
                     activeDeterrences[deterrence.DstAgent] = deterrence.Time;
                 }
@@ -235,7 +239,7 @@ internal class UraTheSteamshrieker : MountBalrior
         }
         // Sulfuric geysers
         var sulfuricAgents = combatData
-            .Where(x => x.IsBuffApply() && x.SkillID == HardenedCrust)
+            .Where(x => x.IsBuffApplyEvent() && x.SkillID == HardenedCrust)
             .Select(x => agentData.GetAgent(x.SrcAgent, x.Time))
             .Where(x => x.Type == AgentItem.AgentType.Gadget)
             .Distinct();
@@ -303,9 +307,9 @@ internal class UraTheSteamshrieker : MountBalrior
     }
     internal static void AdjustUraHP(SingleActor ura, int health, bool phased, ulong gw2build)
     {
-        if (health > 70e6)
+        if (health > CMThreshold)
         {
-            if (health > 100e6)
+            if (health > LCMThreshold)
             {
                 ura.SetHealthBars([
                    (100, 1, health, !phased),
@@ -438,7 +442,7 @@ internal class UraTheSteamshrieker : MountBalrior
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 1000, out var facing))
                             {
                                 var offset = new Vector3(250, 0, 0);
-                                var rotation = new AngleConnector(facing);
+                                var rotation = new AngleConnector(facing.Value);
                                 replay.Decorations.Add(new RectangleDecoration(500, 70, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target).WithOffset(offset, true)).UsingRotationConnector(rotation));
                             }
                             break;
@@ -465,7 +469,7 @@ internal class UraTheSteamshrieker : MountBalrior
                         lifespan.end = Math.Min(lifespan.end, ComputeEndCastTimeByBuffApplication(log, target, Stun, effect.Time, duration));
                         if (target.TryGetCurrentFacingDirection(log, effect.Time, out var facingDirection, duration))
                         {
-                            var pie = (PieDecoration)new PieDecoration(1000, 60, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facingDirection));
+                            var pie = (PieDecoration)new PieDecoration(1000, 60, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facingDirection.Value));
                             replay.Decorations.AddWithGrowing(pie, growing);
                         }
                     }
@@ -552,7 +556,10 @@ internal class UraTheSteamshrieker : MountBalrior
                 break;
             case (int)TargetID.SulfuricGeyser:
                 // Hardened Crust - Overhead
-                replay.Decorations.AddOverheadIcons(target.GetBuffStatus(log, HardenedCrust).Where(x => x.Value > 0), target, BuffImages.HardenedCrust);
+                if (log.LogData.EncounterIsNM(log, LogID, target.FirstAware))
+                {
+                    replay.Decorations.AddOverheadIcons(target.GetBuffStatus(log, HardenedCrust).Where(x => x.Value > 0), target, BuffImages.HardenedCrust);
+                }
 
                 // Damage field ring
                 replay.Decorations.Add(new CircleDecoration(580, (target.FirstAware, target.LastAware), Colors.Red, 0.2, new AgentConnector(target)).UsingFilled(false));
@@ -576,9 +583,11 @@ internal class UraTheSteamshrieker : MountBalrior
                         case StoneSlamConeKnockback:
                             lifespan = (cast.Time, cast.GetInterruptedByStunTime(log));
                             growing = cast.Time + 2000; // 2000 Cast Duration
-                            target.TryGetCurrentFacingDirection(log, cast.Time, out var rotation, 300);
-                            var cone = (PieDecoration)new PieDecoration(350, 90, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(rotation));
-                            replay.Decorations.AddWithGrowing(cone, growing);
+                            if (target.TryGetCurrentFacingDirection(log, cast.Time, out var rotation, 300))
+                            {
+                                var cone = (PieDecoration)new PieDecoration(350, 90, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(rotation.Value));
+                                replay.Decorations.AddWithGrowing(cone, growing);
+                            }
                             break;
                         default:
                             break;
@@ -740,11 +749,11 @@ internal class UraTheSteamshrieker : MountBalrior
     {
         SingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Ura)) ?? throw new MissingKeyActorsException("Ura not found");
         var uraHP = target.GetHealth(combatData);
-        if (uraHP > 70e6)
+        if (uraHP > CMThreshold)
         {
             AdjustUraHP(target, uraHP, GetHealedPhaseStartEvent(combatData, target, logData.LogStart, logData.LogEnd) != null, combatData.GetGW2BuildEvent().Build);
             target.OverrideName("Godscream Ura");
-            return uraHP > 90e6 ? LogData.Mode.LegendaryCM : LogData.Mode.CMNoName;
+            return uraHP > LCMThreshold ? LogData.Mode.LegendaryCM : LogData.Mode.CMNoName;
         }
         target.OverrideName("Ura, the Steamshrieker");
         return LogData.Mode.Normal;
@@ -757,7 +766,7 @@ internal class UraTheSteamshrieker : MountBalrior
             base.SetInstanceBuffs(log, instanceBuffs);
         }
         var toxicGeysers = log.AgentData.GetNPCsByID(TargetID.ToxicGeyser);
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success && (encounterPhase.IsCM || encounterPhase.IsLegendaryCM))
@@ -800,7 +809,7 @@ internal class UraTheSteamshrieker : MountBalrior
         }
         {
             var hopscotchMasterEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var uraPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && (x.IsCM || x.IsLegendaryCM) && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var uraPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => (x.IsCM || x.IsLegendaryCM) && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             List<HealthDamageEvent> damageData = [
                 ..log.CombatData.GetDamageData(EruptionVent),
                 ..log.CombatData.GetDamageData(SulfuricEruption)

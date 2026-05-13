@@ -116,7 +116,7 @@ internal class Skorvald : ShatteredObservatory
         }
         foreach (AgentItem fluxAnomaly in fluxAnomalies)
         {
-            if (combatData.Any(x => x.SkillID == Determined762 && x.IsBuffApply() && x.DstMatchesAgent(fluxAnomaly)))
+            if (combatData.Any(x => x.SkillID == Determined762 && x.IsBuffApplyEvent() && x.DstMatchesAgent(fluxAnomaly)))
             {
                 fluxAnomaly.OverrideID(TargetID.UnknownAnomaly, agentData);
             }
@@ -309,7 +309,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var facingHorizonStrike, castDuration))
                             {
-                                float degree = facingHorizonStrike.GetRoundedZRotationDeg();
+                                float degree = facingHorizonStrike.Value.GetRoundedZRotationDeg();
 
                                 // Horizon Strike starting at Skorvald's facing point
                                 if (cast.SkillID == HorizonStrikeSkorvald4)
@@ -349,7 +349,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var facingCrimsonDawn, castDuration))
                             {
-                                float degree = facingCrimsonDawn.GetRoundedZRotationDeg();
+                                float degree = facingCrimsonDawn.Value.GetRoundedZRotationDeg();
 
                                 if (cast.SkillID == CrimsonDawnSkorvaldCM2)
                                 {
@@ -374,7 +374,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var frontalPoint, castDuration))
                             {
-                                float rotation = frontalPoint.GetRoundedZRotationDeg();
+                                float rotation = frontalPoint.Value.GetRoundedZRotationDeg();
                                 // Frontal
                                 AddKickIndicatorDecoration(replay, target, lifespan, expectedEndCast, rotation);
                             }
@@ -410,7 +410,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var facingCranialCascade, castDuration))
                             {
-                                float rotation = facingCranialCascade.GetRoundedZRotationDeg();
+                                float rotation = facingCranialCascade.Value.GetRoundedZRotationDeg();
 
                                 // Frontal
                                 AddKickIndicatorDecoration(replay, target, lifespan, growing, rotation);
@@ -453,7 +453,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var frontalPoint, castDuration))
                             {
-                                float rotation = frontalPoint.GetRoundedZRotationDeg();
+                                float rotation = frontalPoint.Value.GetRoundedZRotationDeg();
                                 // Frontal
                                 AddKickIndicatorDecoration(replay, target, lifespan, growing, rotation);
                             }
@@ -467,7 +467,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var facingCranialCascade, castDuration))
                             {
-                                float rotation = facingCranialCascade.GetRoundedZRotationDeg();
+                                float rotation = facingCranialCascade.Value.GetRoundedZRotationDeg();
 
                                 // Left
                                 AddKickIndicatorDecoration(replay, target, lifespan, growing, rotation - angleCranialCascade);
@@ -494,7 +494,7 @@ internal class Skorvald : ShatteredObservatory
 
                             if (target.TryGetCurrentFacingDirection(log, cast.Time + 100, out var facingWaveOfMutilation, castDuration))
                             {
-                                float rotation = facingWaveOfMutilation.GetRoundedZRotationDeg();
+                                float rotation = facingWaveOfMutilation.Value.GetRoundedZRotationDeg();
 
                                 float startingDegree = rotation - angleWaveOfMutilation * 2;
                                 for (int i = 0; i < 5; i++)

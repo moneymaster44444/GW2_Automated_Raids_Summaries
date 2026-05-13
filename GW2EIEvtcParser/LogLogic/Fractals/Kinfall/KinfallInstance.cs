@@ -38,7 +38,7 @@ internal class KinfallInstance : Kinfall
         var crMap = new CombatReplayMap((800, 800), (-18432, -18432, 21504, 21504));
         arenaDecorations.Add(new ArenaDecoration((log.LogData.LogStart, log.LogData.LogEnd), CombatReplayKinfall, crMap));
         _whisperingShadow.GetCombatMapInternal(log, arenaDecorations);
-        return crMap;
+        return CombatReplayMap.CreateSquareMapFrom(crMap);
     }
     internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
