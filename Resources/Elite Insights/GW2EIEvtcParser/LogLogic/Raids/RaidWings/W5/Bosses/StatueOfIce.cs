@@ -54,7 +54,7 @@ internal class StatueOfIce : HallOfChains
         CombatItem? logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogNPCUpdate);
         if (logStartNPCUpdate != null)
         {
-            CombatItem? initialCast = combatData.FirstOrDefault(x => x.StartCasting() && x.SkillID == BrokenKingFirstCast && x.SrcMatchesAgent(brokenKing));
+            CombatItem? initialCast = combatData.FirstOrDefault(x => x.IsStartCastEvent() && x.SkillID == BrokenKingFirstCast && x.SrcMatchesAgent(brokenKing));
             startToUse = initialCast?.Time ?? GetFirstDamageEventTime(logData, agentData, combatData, brokenKing);
         }
         return startToUse;
@@ -100,7 +100,7 @@ internal class StatueOfIce : HallOfChains
                                 uint range = 450;
                                 int angle = 100;
                                 var connector = new AgentConnector(target);
-                                var rotationConnector = new AngleConnector(facing);
+                                var rotationConnector = new AngleConnector(facing.Value);
                                 replay.Decorations.Add(new PieDecoration(range, angle, lifespan, Colors.LightBlue, 0.2, connector).UsingRotationConnector(rotationConnector));
                                 replay.Decorations.Add(new PieDecoration(range, angle, (lifespan.start + 1900, lifespan.end), Colors.LightBlue, 0.3, connector).UsingRotationConnector(rotationConnector));
                             }

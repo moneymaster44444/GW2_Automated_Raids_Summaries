@@ -68,7 +68,7 @@ public static class EffectGUIDs
 
     #region Mesmer
     public static readonly GUID MesmerThePrestigeDisappear1 = new("48B69FBC3090E144BFC067D6C0208878");
-    public static readonly GUID MesmerThePrestigeDisappear2 = new("5FA6527231BB8041AC783396142C6200"); // also used with elementalist cleansing fire
+    public static readonly GUID MesmerThePrestigeDisappear2AndNonChronoShatterAroundClones = new("5FA6527231BB8041AC783396142C6200"); // also used with elementalist cleansing fire
     public static readonly GUID MesmerSignetOfMidnight = new("02154B72900B5740A73CD0ADECED27BF");
     public static readonly GUID MesmerFeedback = new("D6C8F406E4DEE04AB16A215BE068E910");
     public static readonly GUID MesmerVeil = new("6B29E895E2EB9341B560FFD3A78F78F2");
@@ -970,7 +970,7 @@ public static class EffectGUIDs
     public static readonly GUID HarvestTemplePurificationWaterProjectiles = new("F8F9628F58DA09438574D66424399151");
     public static readonly GUID HarvestTempleJormagFrostMeteorIceField = new("40C38381C43B184A885960714F9388D5");
     public static readonly GUID HarvestTempleJormagGraspOfJormagIndicator = new("3A39297503D1C542AFC16CB5C1D2D3F7"); // duration 2000
-    public static readonly GUID HarvestTemplePrimordusLavaSlamIndicator = new("EDA1C033B296404BA403E106F6F258C0");
+    public static readonly GUID HarvestTemplePrimordusLavaSlamHitIndicator = new("EDA1C033B296404BA403E106F6F258C0"); // duration 3333, effect when he hits the ground
     public static readonly GUID HarvestTemplePrimordusGeneralJawAttack = new("160CBAE34F4A2941885EB3F3CD6BB0C3");
     public static readonly GUID HarvestTemplePrimordusJawsOfDestructionIndicator = new("4D8CA1836969BD4BBF345719576ACAAF");
     public static readonly GUID HarvestTemplePrimordusJawsOfDestructionDamage = new("363F831AD54DB7489DFDC31F659B222E");
@@ -1029,6 +1029,7 @@ public static class EffectGUIDs
     public static readonly GUID HarvestTempleVoidObliteratorWyvernBreathFire = new("453283E51FF9EF489980B6F0208F5F43"); // duration 30000
     public static readonly GUID HarvestTempleVoidObliteratorFirebomb = new("D2E7228A6225FB44911507A45EF2CCEC"); // duration 21000
     public static readonly GUID HarvestTempleVoidObliteratorShockwave = new("4254DCF4AF72FF4A83847908DA98E427"); // duration 0, should probably be 2900
+    public static readonly GUID HarvestTempleVoidSkullpiercerChargedShot = new("2E9DC4D29F08554DA6ABB766A738FBF9"); // duration 5000, many events for each skill usage
     // Old Lion's Court
     public static readonly GUID OldLionsCourtExhaustPlumeAoE = new("E273E005F90E3041939C6235FF9CADBA"); // All Knights Src - Duration 5000 - AoE
     public static readonly GUID OldLionsCourtBoilingAetherExpanding = new("CBD8C6AE14B69A43A9596B94C402B9F3"); // All Knights Src - Duration 10000

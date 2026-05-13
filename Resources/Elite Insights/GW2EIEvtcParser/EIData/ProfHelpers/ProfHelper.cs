@@ -149,7 +149,9 @@ internal static class ProfHelper
         new EffectCastFinder(RelicOfFireworks, EffectGUIDs.RelicOfFireworks)
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new BuffGainCastFinder(RelicOfTheClaw, RelicOfTheClaw)
-            .UsingOverridenDurationChecker(0)
+            .UsingChecker((ba, combatData, agentData, skillData) => {
+                return !combatData.GetBuffRemoveSingleDataByIDByDst(RelicOfTheClaw, ba.To).Any(x => Math.Abs(x.Time - ba.Time) < ServerDelayConstant);
+            })
             .UsingOrigin(InstantCastFinder.InstantCastOrigin.Gear),
         new EffectCastFinder(RelicOfPeithaBlade, EffectGUIDs.RelicOfPeitha)
             .UsingDisableWithMissileData()
@@ -803,7 +805,9 @@ internal static class ProfHelper
         {
             AddOffensiveBoonsDecorations(minion, master, log, replay);
             var phantasmalForceStatus = minion.GetBuffStatus(log, PhantasmalForce).Where(x => x.Value > 0);
-            replay.Decorations.AddRotatedOverheadIconsWithValueAsText(phantasmalForceStatus, minion, TraitImages.PhantasmalForce_Mistrust, 90, 15);
+            replay.Decorations.AddRotatedOverheadIconsWithValueAsText(phantasmalForceStatus, minion, TraitImages.PhantasmalForce_Mistrust, 60, 15);
+            var chronoPhantasmaResummon = minion.GetBuffStatus(log, ChronophantasmaResummonBuff).Where(x => x.Value > 0);
+            replay.Decorations.AddRotatedOverheadIconsWithValueAsText(chronoPhantasmaResummon, minion, TraitImages.Chronophantasma, 120, 15);
         }
         if (NecromancerHelper.IsUndeadMinion(minion.AgentItem) || RitualistHelper.IsSpiritMinion(minion.AgentItem))
         {
@@ -1007,10 +1011,25 @@ internal static class ProfHelper
     /// <param name="includeRange">Wether the range value should be included in the distance.</param>
     internal static bool TargetWithinRangeChecker(DamageEvent x, ParsedEvtcLog log, long range, bool includeRange = true)
     {
-        x.From.TryGetCurrentPosition(log, x.Time, out var currentPosition);
-        x.To.TryGetCurrentPosition(log, x.Time, out var currentTargetPosition);
-        var distance = (currentPosition - currentTargetPosition).Length();
+        if (x.From.TryGetCurrentPosition(log, x.Time, out var currentPosition) && x.To.TryGetCurrentPosition(log, x.Time, out var currentTargetPosition))
+        {
+            var distance = (currentPosition.Value - currentTargetPosition.Value).Length();
+            return includeRange ? distance <= range : distance < range;
+        }
+        return false;
+    }
 
-        return includeRange ? distance <= range : distance < range;
+    /// <summary>
+    /// Checks the distance between Src and Dst to be less than <paramref name="range"/>.
+    /// </summary>
+    /// <param name="includeRange">Wether the range value should be included in the distance.</param>
+    internal static bool TargetOutsideRangeChecker(DamageEvent x, ParsedEvtcLog log, long range, bool includeRange = false)
+    {
+        if (x.From.TryGetCurrentPosition(log, x.Time, out var currentPosition) && x.To.TryGetCurrentPosition(log, x.Time, out var currentTargetPosition))
+        {
+            var distance = (currentPosition.Value - currentTargetPosition.Value).Length();
+            return includeRange ? distance >= range : distance > range;
+        }
+        return false;
     }
 }

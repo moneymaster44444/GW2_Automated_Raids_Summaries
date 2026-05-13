@@ -136,7 +136,7 @@ internal class StatueOfDeath : HallOfChains
                                 uint radius = 900;
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start, out var facing) && target.TryGetCurrentPosition(log, lifespan.start, out var position))
                                 {
-                                    replay.Decorations.Add(new PieDecoration(radius, 60, lifespan, Colors.GreenishYellow, 0.5, new PositionConnector(position)).UsingGrowingEnd(lifespan.start + cascading).UsingRotationConnector(new AngleConnector(facing)));
+                                    replay.Decorations.Add(new PieDecoration(radius, 60, lifespan, Colors.GreenishYellow, 0.5, new PositionConnector(position.Value)).UsingGrowingEnd(lifespan.start + cascading).UsingRotationConnector(new AngleConnector(facing.Value)));
                                 }
                                 break;
                             case PseudoDeathEaterOfSouls:

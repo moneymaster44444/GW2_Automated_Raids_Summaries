@@ -125,7 +125,7 @@ internal class SoullessHorror : HallOfChains
     internal static void HandleSoullessHorrorFinalHPUpdate(List<CombatItem> combatData, SingleActor soullessHorror)
     {
         // discard hp update events after determined apply
-        CombatItem? determined895Apply = combatData.LastOrDefault(x => x.SkillID == Determined895 && x.IsBuffApply() && x.DstMatchesAgent(soullessHorror.AgentItem));
+        CombatItem? determined895Apply = combatData.LastOrDefault(x => x.SkillID == Determined895 && x.IsBuffApplyEvent() && x.DstMatchesAgent(soullessHorror.AgentItem));
         if (determined895Apply != null)
         {
             foreach (var combatEvent in combatData.Where(x => x.IsStateChange == StateChange.HealthUpdate && x.SrcMatchesAgent(soullessHorror.AgentItem) && x.Time >= determined895Apply.Time))
@@ -201,7 +201,7 @@ internal class SoullessHorror : HallOfChains
         {
             case (int)TargetID.SoullessHorror:
                 // arena reduction
-                var encounterPhase = log.LogData.GetEncounterPhases(log).FirstOrDefault(x => x.Targets.ContainsKey(target));     
+                var encounterPhase = log.LogData.GetEncounterPhases(log, LogID).FirstOrDefault(x => x.Targets.ContainsKey(target));     
                 if (encounterPhase != null)
                 {
                     var center = new Vector3(-10581, 825, -817);
@@ -258,9 +258,9 @@ internal class SoullessHorror : HallOfChains
                             (long start, long end) lifespanDoughnut = (lifespan.end, lifespan.end + doughnutDuration);
                             if (target.TryGetCurrentInterpolatedPosition(log, lifespan.start, out var position))
                             {
-                                var innerCircle = new CircleDecoration(380, lifespan, Colors.LightOrange, 0.2, new PositionConnector(position));
+                                var innerCircle = new CircleDecoration(380, lifespan, Colors.LightOrange, 0.2, new PositionConnector(position.Value));
                                 replay.Decorations.AddWithFilledWithGrowing(innerCircle, true, lifespan.end);
-                                var outerDoughnut = new DoughnutDecoration(380, 760, lifespanDoughnut, Colors.LightOrange, 0.2, new PositionConnector(position));
+                                var outerDoughnut = new DoughnutDecoration(380, 760, lifespanDoughnut, Colors.LightOrange, 0.2, new PositionConnector(position.Value));
                                 replay.Decorations.AddWithFilledWithGrowing(outerDoughnut, true, lifespanDoughnut.end);
                             }
                             break;
@@ -269,7 +269,7 @@ internal class SoullessHorror : HallOfChains
                                 lifespan = (cast.Time, cast.EndTime);
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start + 500, out var facing))
                                 {
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     var connector = new AgentConnector(target);
                                     for (int i = 0; i < 8; i++)
                                     {
@@ -284,7 +284,7 @@ internal class SoullessHorror : HallOfChains
                                 lifespan = (cast.Time, cast.EndTime);
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start + 500, out var facing))
                                 {
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     var connector = new AgentConnector(target);
                                     for (int i = 0; i < 4; i++)
                                     {
@@ -299,7 +299,7 @@ internal class SoullessHorror : HallOfChains
                                 lifespan = (cast.Time, cast.EndTime);
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start + 500, out var facing))
                                 {
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     var connector = new AgentConnector(target);
                                     for (int i = 0; i < 4; i++)
                                     {
@@ -446,7 +446,7 @@ internal class SoullessHorror : HallOfChains
         }
         {
             var necroDancerEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var shPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var shPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             List<HealthDamageEvent> damageData = [
                 ..log.CombatData.GetDamageData(InnerVortexSlash),
                 ..log.CombatData.GetDamageData(OuterVortexSlash)

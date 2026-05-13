@@ -300,8 +300,8 @@ internal class Qadim : MythwrightGambit
         {
             throw new MissingKeyActorsException("Qadim not found");
         }
-        CombatItem? startCast = combatData.FirstOrDefault(x => x.SkillID == QadimInitialCast && x.StartCasting());
-        CombatItem? sanityCheckCast = combatData.FirstOrDefault(x => (x.SkillID == FlameSlash3 || x.SkillID == FlameSlash || x.SkillID == FlameWave) && x.StartCasting());
+        CombatItem? startCast = combatData.FirstOrDefault(x => x.SkillID == QadimInitialCast && x.IsStartCastEvent());
+        CombatItem? sanityCheckCast = combatData.FirstOrDefault(x => (x.SkillID == FlameSlash3 || x.SkillID == FlameSlash || x.SkillID == FlameWave) && x.IsStartCastEvent());
         if (startCast == null || sanityCheckCast == null)
         {
             return logData.EvtcLogStart;
@@ -788,7 +788,7 @@ internal class Qadim : MythwrightGambit
                             if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing)
                                 && target.TryGetCurrentPosition(log, start + 1000, out var targetPosition))
                             {
-                                var position = new Vector3(targetPosition.X + (facing.X * spellCenterDistance), targetPosition.Y + (facing.Y * spellCenterDistance), targetPosition.Z);
+                                var position = new Vector3(targetPosition.Value.X + (facing.Value.X * spellCenterDistance), targetPosition.Value.Y + (facing.Value.Y * spellCenterDistance), targetPosition.Value.Z);
                                 (long, long) lifespanShockwave = (start + delay, start + delay + castDuration);
                                 GeographicalConnector connector = new PositionConnector(position);
                                 replay.Decorations.Add(new CircleDecoration(impactRadius, (start, start + delay), Colors.Orange, 0.2, connector));
@@ -820,7 +820,7 @@ internal class Qadim : MythwrightGambit
                                 lifespan = (cast.Time + delay, cast.Time + delay + castDuration);
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start + 1000, out var facing))
                                 {
-                                    replay.Decorations.Add(new PieDecoration(1300, 70, lifespan, Colors.LightOrange, 0.3, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing)));
+                                    replay.Decorations.Add(new PieDecoration(1300, 70, lifespan, Colors.LightOrange, 0.3, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing.Value)));
                                 }
                             }
                             break;
@@ -845,7 +845,7 @@ internal class Qadim : MythwrightGambit
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing))
                                 {
                                     var positionConnector = (AgentConnector)new AgentConnector(target).WithOffset(new(range / 2, 0, 0), true);
-                                    var rotationConnextor = new AngleConnector(facing);
+                                    var rotationConnextor = new AngleConnector(facing.Value);
                                     replay.Decorations.Add(new RectangleDecoration(range, span, (start, start + preCast), Colors.LightBlue, 0.2, positionConnector).UsingRotationConnector(rotationConnextor));
                                     replay.Decorations.Add(new RectangleDecoration(range, span, (start + preCast, start + duration), Colors.LightBlue, 0.5, positionConnector).UsingRotationConnector(rotationConnextor));
                                 }
@@ -862,9 +862,9 @@ internal class Qadim : MythwrightGambit
                                 int fieldDuration = 10000;
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing) && target.TryGetCurrentPosition(log, start + 1000, out var pos))
                                 {
-                                    var rotationConnector = new AngleConnector(facing);
+                                    var rotationConnector = new AngleConnector(facing.Value);
                                     replay.Decorations.Add(new PieDecoration(radius, openingAngle, (start + delay, start + delay + duration), Colors.Yellow, 0.3, new AgentConnector(target)).UsingRotationConnector(rotationConnector));
-                                    replay.Decorations.Add(new PieDecoration(radius, openingAngle, (start + delay + duration, start + delay + fieldDuration), Colors.Red, 0.3, new PositionConnector(pos)).UsingRotationConnector(rotationConnector));
+                                    replay.Decorations.Add(new PieDecoration(radius, openingAngle, (start + delay + duration, start + delay + fieldDuration), Colors.Red, 0.3, new PositionConnector(pos.Value)).UsingRotationConnector(rotationConnector));
                                 }
                             }
                             break;
@@ -880,7 +880,7 @@ internal class Qadim : MythwrightGambit
                                 int coneAmount = 4;
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing))
                                 {
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     var connector = new AgentConnector(target);
                                     for (uint i = 0; i < coneAmount; i++)
                                     {
@@ -918,9 +918,9 @@ internal class Qadim : MythwrightGambit
                                 int fieldDuration = 10000;
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing) && target.TryGetCurrentPosition(log, start + 1000, out var pos))
                                 {
-                                    var rotationConnector = new AngleConnector(facing);
+                                    var rotationConnector = new AngleConnector(facing.Value);
                                     replay.Decorations.Add(new PieDecoration(radius, openingAngle, (start + delay, start + delay + duration), Colors.Yellow, 0.3, new AgentConnector(target)).UsingRotationConnector(rotationConnector));
-                                    replay.Decorations.Add(new PieDecoration(radius, openingAngle, (start + delay + duration, start + delay + fieldDuration), Colors.Red, 0.3, new PositionConnector(pos)).UsingRotationConnector(rotationConnector));
+                                    replay.Decorations.Add(new PieDecoration(radius, openingAngle, (start + delay + duration, start + delay + fieldDuration), Colors.Red, 0.3, new PositionConnector(pos.Value)).UsingRotationConnector(rotationConnector));
                                 }
                             }
                             break;
@@ -936,7 +936,7 @@ internal class Qadim : MythwrightGambit
                                 int coneAmount = 4;
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing))
                                 {
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     var connector = new AgentConnector(target);
                                     for (uint i = 0; i < coneAmount; i++)
                                     {
@@ -979,7 +979,7 @@ internal class Qadim : MythwrightGambit
                                 int spellCenterDistance = 270; //hitbox radius
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing) && target.TryGetCurrentPosition(log, start + 1000, out var targetPosition))
                                 {
-                                    var position = new Vector3(targetPosition.X + facing.X * spellCenterDistance, targetPosition.Y + facing.Y * spellCenterDistance, targetPosition.Z);
+                                    var position = new Vector3(targetPosition.Value.X + facing.Value.X * spellCenterDistance, targetPosition.Value.Y + facing.Value.Y * spellCenterDistance, targetPosition.Value.Z);
                                     replay.Decorations.Add(new CircleDecoration(impactRadius, (start, start + delay), Colors.Orange, 0.1, new PositionConnector(position)));
                                     replay.Decorations.Add(new CircleDecoration(impactRadius, (start + delay - 10, start + delay + 100), Colors.Orange, 0.5, new PositionConnector(position)));
                                     replay.Decorations.Add(new CircleDecoration(maxRadius, (start + delay, start + delay + duration), Colors.Yellow, 0.5, new PositionConnector(position)).UsingFilled(false).UsingGrowingEnd(start + delay + duration));
@@ -998,7 +998,7 @@ internal class Qadim : MythwrightGambit
                                 int coneAmount = 3;
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing))
                                 {
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     var connector = new AgentConnector(target);
                                     for (uint i = 0; i < coneAmount; i++)
                                     {
@@ -1483,7 +1483,7 @@ internal class Qadim : MythwrightGambit
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success)
@@ -1613,7 +1613,7 @@ internal class Qadim : MythwrightGambit
         }
         {
             var takingTurnsEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var qadimPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var qadimPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             var deaths = log.CombatData.GetDeadEvents(p.AgentItem);
             foreach (var death in deaths)
             {

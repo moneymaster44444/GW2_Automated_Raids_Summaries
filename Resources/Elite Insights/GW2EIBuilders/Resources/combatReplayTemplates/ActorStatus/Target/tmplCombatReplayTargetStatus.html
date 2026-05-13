@@ -1,7 +1,7 @@
 <template>
-    <div class="d-flex flex-column justify-content-center align-items-center">
+    <div class="d-flex flex-column justify-content-center align-items-center" style="width: 208px;">
         <div class="target-status" :style="{'background': getHPGradient(time, status)}" @click="select" :title="target.name + ' - ' + target.health + ' health'">
-            <h6 class="actor-shorten-cr text-center">
+            <h6 class="target-shorten-cr text-center">
                 <img v-for="(marker, index) in activeMarkers()" :src="marker.imageUrl" height="16" width="16">
                 <img :src="target.icon" height="18" width="18"/>
                 {{target.name}}
@@ -12,7 +12,7 @@
             <p v-if="hasBarrier" class="text-right cr-barrier-display cr-barrier-display-target">
                 {{(Math.round(100*getBarrierPercent(time))/100).toFixed(2)}} %
             </p>
-            <div v-if="hasBarrier" class="cr-barrier" :style="{'background': getBarrierGradient(time, status)}"></div>
+            <div v-if="hasBarrier" class="cr-barrier cr-barrier-target" :style="{'background': getBarrierGradient(time, status)}"></div>
         </div>
         <div v-if="hasBreakbarPercent" class="cr-breakbar-display">
             <div class="cr-breakbar-bar" :style="{'background': getBreakbarGradient(time)}">

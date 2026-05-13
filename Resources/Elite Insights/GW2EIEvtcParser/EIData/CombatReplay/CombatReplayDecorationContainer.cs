@@ -682,7 +682,7 @@ internal class CombatReplayDecorationContainer
             {
                 if (rotationCenterTarget.TryGetCurrentFacingDirection(log, launch.Time, out var facing))
                 {
-                    initialAngle = facing.GetZRotationRadians();
+                    initialAngle = facing.Value.GetZRotationRadians();
                 } 
                 else
                 {

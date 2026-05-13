@@ -30,7 +30,6 @@ public class HTMLBuilder
     private readonly string _eiHealingExtJS;
 
     private readonly string _scriptVersion;
-    private readonly int _scriptVersionRev;
 
     private readonly ParsedEvtcLog _log;
     private readonly Version _parserVersion;
@@ -73,10 +72,10 @@ public class HTMLBuilder
         _scriptVersion = parserVersion.Major + "." + parserVersion.Minor;
 #if !DEBUG
         _scriptVersion += "." + parserVersion.Build;
+        _scriptVersion += "." + parserVersion.Revision;
 #else
         _scriptVersion += "-debug";
 #endif
-        _scriptVersionRev = parserVersion.Revision;
         _log = log;
 
         _uploadLink = uploadResults;
@@ -269,7 +268,7 @@ public class HTMLBuilder
         {
             string fileName = "EliteInsights-CR-" + _scriptVersion + ".js";
             string path = CreateAssetFile(externalPath, cdnPath, fileName, scriptContent);
-            return "<script src=\"" + path + "?version=" + _scriptVersionRev + "\"></script>\n";
+            return "<script src=\"" + path + "\"></script>\n";
         }
         else
         {
@@ -290,7 +289,7 @@ public class HTMLBuilder
         {
             string fileName = "EliteInsights-HealingExt-" + _scriptVersion + ".js";
             string path = CreateAssetFile(externalPath, cdnPath, fileName, scriptContent);
-            return "<script src=\"" + path + "?version=" + _scriptVersionRev + "\"></script>\n";
+            return "<script src=\"" + path + "\"></script>\n";
         }
         else
         {
@@ -307,7 +306,7 @@ public class HTMLBuilder
         {
             string fileName = "EliteInsights-" + _scriptVersion + ".css";
             string path = CreateAssetFile(externalPath, cdnPath, fileName, scriptContent);
-            return "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + path + "?version=" + _scriptVersionRev + "\">";
+            return "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + path + "\">";
         }
         else
         {
@@ -324,7 +323,7 @@ public class HTMLBuilder
         {
             string fileName = "EliteInsights-" + _scriptVersion + ".js";
             string path = CreateAssetFile(externalPath, cdnPath, fileName, scriptContent);
-            return "<script src=\"" + path + "?version=" + _scriptVersionRev + "\"></script>";
+            return "<script src=\"" + path + "\"></script>";
         }
         else
         {

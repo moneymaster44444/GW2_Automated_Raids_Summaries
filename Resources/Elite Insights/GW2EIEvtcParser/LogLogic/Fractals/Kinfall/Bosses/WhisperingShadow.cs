@@ -215,7 +215,7 @@ internal class WhisperingShadow : Kinfall
                     if (target.TryGetCurrentFacingDirection(log, effect.Time, out var facing, 300))
                     {
                         var position = new PositionConnector(effect.Position);
-                        var rotation = new AngleConnector(facing);
+                        var rotation = new AngleConnector(facing.Value);
                         var decoration = (FormDecoration)new PieDecoration(1200, 190f, lifespan, Colors.LightOrange, 0.2, position).UsingRotationConnector(rotation);
                         replay.Decorations.AddWithGrowing(decoration, lifespan.end);
                     }
@@ -350,7 +350,7 @@ internal class WhisperingShadow : Kinfall
         }
         {
             var shatterstepEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var whisperingShadowPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var whisperingShadowPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             List<HealthDamageEvent> damageData = [
                 ..log.CombatData.GetDamageData(LoftedCryoflash),
                 ..log.CombatData.GetDamageData(TerrestialCryoflash)
@@ -376,7 +376,7 @@ internal class WhisperingShadow : Kinfall
         }
         if (log.CombatData.GetBuffData(AchievementEligibilityUndyingLight).Any())
         {
-            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
             var lastEncounter = encounterPhases.LastOrDefault();
             if (lastEncounter != null && lastEncounter.Success && lastEncounter.IsCM)
             {

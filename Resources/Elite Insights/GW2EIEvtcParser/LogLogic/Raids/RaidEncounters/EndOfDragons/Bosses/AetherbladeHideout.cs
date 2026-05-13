@@ -164,7 +164,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                             // Get facing direction
                             if (target.TryGetCurrentFacingDirection(log, lifespan.start + 200, out var facingDirection, castDuration))
                             {
-                                var indicator = (RectangleDecoration)new RectangleDecoration(range, 50, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target.AgentItem).WithOffset(offset, true)).UsingRotationConnector(new AngleConnector(facingDirection));
+                                var indicator = (RectangleDecoration)new RectangleDecoration(range, 50, lifespan, Colors.LightOrange, 0.2, new AgentConnector(target.AgentItem).WithOffset(offset, true)).UsingRotationConnector(new AngleConnector(facingDirection.Value));
                                 replay.Decorations.AddWithGrowing(indicator, growing);
                             }
                             break;
@@ -270,7 +270,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                     // The third circle spawns when the second circle has completed a rotation of 240°
                     if (target.TryGetCurrentPosition(log, lifespanFirstCircle.start, out var echoPosition))
                     {
-                        var positionConnector = new PositionConnector(echoPosition).WithOffset(initialPoint - echoPosition, true, true);
+                        var positionConnector = new PositionConnector(echoPosition.Value).WithOffset(initialPoint - echoPosition.Value, true, true);
                         var firstRotationConnector = new SpinningConnector(0, 720);
                         var secondRotationConnector = new SpinningConnector(0, 480);
                         var thirdRotationConnector = new SpinningConnector(0, 240);
@@ -288,7 +288,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                                 thirdRotationConnector,
                             };
 
-                        AddRotatingCirclesDecorations(replay.Decorations, rotationConnectors, lifespans, positionConnector, echoPosition, innerRadius, outerRadius);
+                        AddRotatingCirclesDecorations(replay.Decorations, rotationConnectors, lifespans, positionConnector, echoPosition.Value, innerRadius, outerRadius);
                     }
                 }
                 break;
@@ -310,7 +310,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                                 (long start, long end) lifespanIndicator = (lifespanDamage.start - 1520, lifespanDamage.start);
 
                                 var connector = new AgentConnector(target.AgentItem);
-                                var angle = new AngleConnector(facingDirection);
+                                var angle = new AngleConnector(facingDirection.Value);
 
                                 var indicator = (RectangleDecoration)new RectangleDecoration(range, 300, lifespanIndicator, Colors.LightOrange, 0.2, connector.WithOffset(offset, true)).UsingRotationConnector(angle);
                                 var damage = (RectangleDecoration)new RectangleDecoration(range, 300, lifespanDamage, Colors.LightBlue, 0.2, connector.WithOffset(offset, true)).UsingRotationConnector(angle);
@@ -407,14 +407,12 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                 environmentDecorations.Add(growingCircle);
             }
         }
-
-        var aetherPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM).ToList();
         // Ley Breach - Red Puddles
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.AetherbladeHideoutLeyBreachRedPuddle, out var leyBreachPuddle))
         {
             foreach (EffectEvent effect in leyBreachPuddle)
             {
-                long duration = aetherPhases.Any(x => x.InInterval(effect.Time)) ? 30000 : 15000;
+                long duration = log.LogData.EncounterIsCM(log, LogID, effect.Time) ? 30000 : 15000;
                 (long start, long end) lifespan = effect.ComputeLifespan(log, duration);
                 var circle = new CircleDecoration(240, lifespan, Colors.Red, 0.3, new PositionConnector(effect.Position));
                 environmentDecorations.Add(circle);
@@ -475,14 +473,14 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                         (long start, long end) lifespanThirdCircle = (lifespanFirstCircle.start + duration * 2 / 3, lifespanFirstCircle.end);
 
                         // Point on the Phantom facing direction, perpendicular from the Echo.
-                        var pointOnLine = echoPosition.ProjectPointOn2DLine(phantomPosition, phantomFacing);
+                        var pointOnLine = echoPosition.Value.ProjectPointOn2DLine(phantomPosition.Value, phantomFacing.Value);
                         // Opposite point, our starting position
-                        var initialPoint = echoPosition + Vector3.Normalize(echoPosition - pointOnLine) * radiusFromCenter;
+                        var initialPoint = echoPosition + Vector3.Normalize(echoPosition.Value - pointOnLine) * radiusFromCenter;
 
                         // The 3 circles always spawn in the same location
                         // The second circle spawns when the first circle has completed a rotation of 120°
                         // The third circle spawns when the first circle has completed a rotation of 240° and the second circle 120°
-                        var positionConnector = new PositionConnector(echoPosition).WithOffset(initialPoint - echoPosition, true, true);
+                        var positionConnector = new PositionConnector(echoPosition.Value).WithOffset(initialPoint.Value - echoPosition.Value, true, true);
                         var firstRotationConnector = new SpinningConnector(0, 360);
                         var secondRotationConnector = new SpinningConnector(0, 240);
                         var thirdRotationConnector = new SpinningConnector(0, 120);
@@ -501,7 +499,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
                             thirdRotationConnector
                         ];
 
-                        AddRotatingCirclesDecorations(environmentDecorations, rotationConnectors, lifespans, positionConnector, echoPosition, innerRadius, outerRadius);
+                        AddRotatingCirclesDecorations(environmentDecorations, rotationConnectors, lifespans, positionConnector, echoPosition.Value, innerRadius, outerRadius);
                     }
                 }
             }
@@ -841,7 +839,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
 
             if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.AetherbladeHideoutPuzzleCirclesDetonation, out var detonations) && actor.TryGetCurrentPosition(log, segment.End, out var position, 1000))
             {
-                foreach (EffectEvent effect in detonations.Where(x => Math.Abs(segment.End - x.Time) < 100 && Vector2.Distance(position.XY(), x.Position.XY()) < 20))
+                foreach (EffectEvent effect in detonations.Where(x => Math.Abs(segment.End - x.Time) < 100 && Vector2.Distance(position.Value.XY(), x.Position.XY()) < 20))
                 {
                     // Adding an effect for the damage like Normal Mode
                     // We use the circles detonations as timestamp
@@ -868,7 +866,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
         {
             // Add indicator
             var connector = new AgentConnector(target);
-            var rotation = new AngleConnector(facingDirection);
+            var rotation = new AngleConnector(facingDirection.Value);
             var pie = (PieDecoration)new PieDecoration(radius, angle, lifespan, Colors.Orange, 0.2, connector).UsingRotationConnector(rotation);
             replay.Decorations.AddWithGrowing(pie, growing);
             replay.Decorations.Add(pie.GetBorderDecoration());
@@ -1077,7 +1075,7 @@ internal class AetherbladeHideout : EndOfDragonsRaidEncounter
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
 
         foreach (var encounterPhase in encounterPhases)
         {

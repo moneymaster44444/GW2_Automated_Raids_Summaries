@@ -277,7 +277,7 @@ internal class KeepConstruct : StrongholdOfTheFaithful
                                 long skillCast = end - 1000;
                                 if (target.TryGetCurrentInterpolatedPosition(log, end, out var position))
                                 {
-                                    replay.Decorations.AddWithFilledWithGrowing(new CircleDecoration(400, (start, skillCast), Colors.LightOrange, 0.5, new PositionConnector(position)).UsingFilled(false), true, skillCast);
+                                    replay.Decorations.AddWithFilledWithGrowing(new CircleDecoration(400, (start, skillCast), Colors.LightOrange, 0.5, new PositionConnector(position.Value)).UsingFilled(false), true, skillCast);
                                 }
                             }
                             break;
@@ -289,7 +289,7 @@ internal class KeepConstruct : StrongholdOfTheFaithful
                                 {
                                     var connector = new AgentConnector(target);
                                     replay.Decorations.Add(new CircleDecoration(200, (start, start + (ticks + 1) * 1000), Colors.Red, 0.4, connector));
-                                    float initialAngle = facing.GetRoundedZRotationDeg();
+                                    float initialAngle = facing.Value.GetRoundedZRotationDeg();
                                     replay.Decorations.Add(new PieDecoration(bladeRadius, bladeOpeningAngle, (start, start + 2 * duration), Colors.Magenta, 0.5, connector).UsingRotationConnector(new AngleConnector(initialAngle))); // First blade lasts twice as long
                                     for (int i = 1; i < ticks; i++)
                                     {
@@ -307,9 +307,9 @@ internal class KeepConstruct : StrongholdOfTheFaithful
                                 {
                                     var connector = new AgentConnector(target);
                                     replay.Decorations.Add(new CircleDecoration(200, (start, start + (ticks + 1) * 1000), Colors.Red, 0.4, connector));
-                                    float initialAngle1 = facing.GetRoundedZRotationDeg();
+                                    float initialAngle1 = facing.Value.GetRoundedZRotationDeg();
                                     replay.Decorations.Add(new PieDecoration(bladeRadius, bladeOpeningAngle, (start, start + 2 * duration), Colors.Magenta, 0.5, connector).UsingRotationConnector(new AngleConnector(initialAngle1))); // First blade lasts twice as long
-                                    float initialAngle2 = RadianToDegreeF(Math.Atan2(-facing.Y, -facing.X));
+                                    float initialAngle2 = RadianToDegreeF(Math.Atan2(-facing.Value.Y, -facing.Value.X));
                                     replay.Decorations.Add(new PieDecoration(bladeRadius, bladeOpeningAngle, (start, start + 2 * duration), Colors.Magenta, 0.5, connector).UsingRotationConnector(new AngleConnector(initialAngle2))); // First blade lasts twice as long
                                     for (int i = 1; i < ticks; i++)
                                     {
@@ -329,7 +329,7 @@ internal class KeepConstruct : StrongholdOfTheFaithful
                                 {
                                     var connector = new AgentConnector(target);
                                     replay.Decorations.Add(new CircleDecoration(200, (start, start + (ticks + 1) * 1000), Colors.Red, 0.4, connector));
-                                    float initialAngle1 = RadianToDegreeF(Math.Atan2(-facing.Y, -facing.X));
+                                    float initialAngle1 = RadianToDegreeF(Math.Atan2(-facing.Value.Y, -facing.Value.X));
                                     replay.Decorations.Add(new PieDecoration(bladeRadius, bladeOpeningAngle, (start, start + 2 * duration), Colors.Magenta, 0.5, connector).UsingRotationConnector(new AngleConnector(initialAngle1))); // First blade lasts twice as long
                                     float initialAngle2 = initialAngle1 + 120;
                                     replay.Decorations.Add(new PieDecoration(bladeRadius, bladeOpeningAngle, (start, start + 2 * duration), Colors.Magenta, 0.5, connector).UsingRotationConnector(new AngleConnector(initialAngle2))); // First blade lasts twice as long
@@ -462,7 +462,7 @@ internal class KeepConstruct : StrongholdOfTheFaithful
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success && encounterPhase.IsCM)

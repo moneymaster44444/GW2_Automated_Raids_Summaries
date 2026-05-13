@@ -340,7 +340,7 @@ internal class Dhuum : HallOfChains
         var yourSoul = combatData.Where(x => MaxHealthUpdateEvent.GetMaxHealth(x) == 14940 && x.IsStateChange == StateChange.MaxHealthUpdate)
             .Select(x => agentData.GetAgent(x.SrcAgent, x.Time))
             .Where(x => x.Type == AgentItem.AgentType.Gadget && x.HitboxHeight == 120 && x.HitboxWidth == 100);
-        var dhuumPlayerToSoulTrackBuffApplications = combatData.Where(x => x.IsBuffApply() && x.SkillID == DhuumPlayerToSoulTrackBuff)
+        var dhuumPlayerToSoulTrackBuffApplications = combatData.Where(x => x.IsBuffApplyEvent() && x.SkillID == DhuumPlayerToSoulTrackBuff)
             .Select(x => (agentData.GetAgent(x.SrcAgent, x.Time), agentData.GetAgent(x.DstAgent, x.Time)))
             .Where(x => x.Item1.IsPlayer)
             .GroupBy(x => x.Item2)
@@ -465,7 +465,7 @@ internal class Dhuum : HallOfChains
                                 // Get Dhuum's rotation with 200 ms delay and a 200ms forward time window.
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start + 200, out var facing, 200))
                                 {
-                                    replay.Decorations.Add(new PieDecoration(850, 60, lifespan, Colors.LightOrange, 0.5, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing)));
+                                    replay.Decorations.Add(new PieDecoration(850, 60, lifespan, Colors.LightOrange, 0.5, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing.Value)));
                                 }
                             }
                             else
@@ -539,9 +539,9 @@ internal class Dhuum : HallOfChains
                             && target.TryGetCurrentPosition(log, start + castDuration, out var targetPosition))
                         {
                             var position = new Vector3(
-                                targetPosition.X + (facing.X * spellCenterDistance),
-                                targetPosition.Y + (facing.Y * spellCenterDistance),
-                                targetPosition.Z
+                                targetPosition.Value.X + (facing.Value.X * spellCenterDistance),
+                                targetPosition.Value.Y + (facing.Value.Y * spellCenterDistance),
+                                targetPosition.Value.Z
                             );
                             var positionConnector = new PositionConnector(position);
 
@@ -627,7 +627,7 @@ internal class Dhuum : HallOfChains
                             if (target.TryGetCurrentFacingDirection(log, cast.Time, out var facing, 200))
                             {
                                 var agentConnector = new AgentConnector(target);
-                                var rotationConnector = new AngleConnector(facing);
+                                var rotationConnector = new AngleConnector(facing.Value);
                                 var cone = (PieDecoration)new PieDecoration(40, 90, lifespan, Colors.Orange, 0.2, agentConnector).UsingRotationConnector(rotationConnector);
                                 replay.Decorations.AddWithFilledWithGrowing(cone, true, lifespan.end);
                             }
@@ -703,7 +703,7 @@ internal class Dhuum : HallOfChains
 
                             foreach (var reaper in ReapersToGreen)
                             {
-                                if ((reaper.Position - greenTakerPosition).Length() < 250)
+                                if ((reaper.Position - greenTakerPosition.Value).Length() < 250)
                                 {
                                     firstReaperIndex = reaper.Index;
                                     break;
@@ -818,7 +818,7 @@ internal class Dhuum : HallOfChains
             Segment? curHastenedDemise = hastenedDemise.FirstOrNull((in Segment x) => x.Start >= soul.FirstAware - 100);
             if (curHastenedDemise != null && soul.TryGetCurrentPosition(log, soul.FirstAware, out var soulPosition, 1000))
             {
-                AddSoulSplitDecorations(p, replay, soul, curHastenedDemise.Value, soulPosition);
+                AddSoulSplitDecorations(p, replay, soul, curHastenedDemise.Value, soulPosition.Value);
             }
         }
         // show the death trigger even if we don't have the souls

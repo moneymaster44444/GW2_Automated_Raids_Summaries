@@ -318,7 +318,7 @@ internal static class RangerHelper
     }
     private static bool TargetAbove600Range(DamageEvent x, ParsedEvtcLog log)
     {
-        return x.Skill.IsWeaponSkill && !TargetWithinRangeChecker(x, log, 600);
+        return x.Skill.IsWeaponSkill && TargetOutsideRangeChecker(x, log, 600);
     }
 
     internal static readonly IReadOnlyList<DamageModifierDescriptor> OutgoingDamageModifiers =
@@ -371,7 +371,17 @@ internal static class RangerHelper
         // - Predator's Onslaught
         new BuffOnFoeDamageModifier(Mod_PredatorsOnslaught, [Stun, Taunt, Daze, Crippled, Fear, Immobile, Chilled], "Predator's Onslaught", "15% to disabled or movement-impaired foes", DamageSource.All, 15.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.PredatorsOnslaught, DamageModifierMode.All)
             .UsingChecker((x, log) => IsJuvenilePet(x.From) || x.From.GetBaseSpecAtTime(x.Time) == Spec.Ranger)
-            .UsingApproximate(),
+            .UsingApproximate()
+            .WithBuilds(GW2Builds.January2016Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PredatorsOnslaught, [Stun, Taunt, Daze, Crippled, Fear, Immobile, Chilled], "Predator's Onslaught", "15% to disabled or movement-impaired foes", DamageSource.All, 15.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.PredatorsOnslaught, DamageModifierMode.sPvPWvW)
+            .UsingChecker((x, log) => IsJuvenilePet(x.From) || x.From.GetBaseSpecAtTime(x.Time) == Spec.Ranger)
+            .UsingApproximate()
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_PredatorsOnslaught, [Stun, Taunt, Daze, Crippled, Fear, Immobile, Chilled], "Predator's Onslaught", "10% to disabled or movement-impaired foes", DamageSource.All, 10.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.PredatorsOnslaught, DamageModifierMode.PvE)
+            .UsingChecker((x, log) => IsJuvenilePet(x.From) || x.From.GetBaseSpecAtTime(x.Time) == Spec.Ranger)
+            .UsingApproximate()
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        // - Wolfsong
         new BuffOnFoeDamageModifier(Mod_Wolfsong, Vulnerability, "Wolfsong", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.Wolfsong, DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.April2025Balance),
         new BuffOnFoeDamageModifier(Mod_Wolfsong, Vulnerability, "Wolfsong", "5%", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.Wolfsong, DamageModifierMode.sPvPWvW)
@@ -386,7 +396,9 @@ internal static class RangerHelper
         new DamageLogDamageModifier(Mod_HuntersTactics, "Hunter's Tactics", "15% while flanking", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Ranger, TraitImages.HuntersTactics, (x, log) => x.IsFlanking , DamageModifierMode.PvE)
             .WithBuilds(GW2Builds.June2022Balance, GW2Builds.June2023BalanceAndSOTOBetaAndSilentSurfNM),
         new DamageLogDamageModifier(Mod_HuntersTactics, "Hunter's Tactics", "15% while flanking or against defiant", DamageSource.NoPets, 15.0, DamageType.Strike, DamageType.All, Source.Ranger, TraitImages.HuntersTactics, (x, log) => x.IsFlanking || x.To.GetCurrentBreakbarState(log, x.Time) != BreakbarState.None, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.June2023BalanceAndSOTOBetaAndSilentSurfNM),
+            .WithBuilds(GW2Builds.June2023BalanceAndSOTOBetaAndSilentSurfNM, GW2Builds.April2026Balancepocalypse),
+        new DamageLogDamageModifier(Mod_HuntersTactics, "Hunter's Tactics", "10% while flanking or against defiant", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Ranger, TraitImages.HuntersTactics, (x, log) => x.IsFlanking || x.To.GetCurrentBreakbarState(log, x.Time) != BreakbarState.None, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // - Light on your Feet
         new BuffOnActorDamageModifier(Mod_LightOnYourFeet, LightOnYourFeet, "Light on your Feet", "10% (4s) after dodging", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Ranger, ByPresence, TraitImages.LightOnYourFeet, DamageModifierMode.All),
 
@@ -414,7 +426,12 @@ internal static class RangerHelper
             .UsingEarlyExit((a, log) => {
                 return !a.GetMinions(log).Any(x => IsJuvenileUrsinePet(x.ReferenceAgentItem) || IsJuvenilePorcinePet(x.ReferenceAgentItem));
             })
-            .WithBuilds(GW2Builds.April2025Balance),
+            .WithBuilds(GW2Builds.April2025Balance, GW2Builds.April2026Balancepocalypse),
+         new DamageLogDamageModifier(Mod_BeastlyWarden_Pet, "Beastly Warden (Pets)", "67% for Ursine and Porcine pets", DamageSource.PetsOnly, 67.0, DamageType.All, DamageType.All, Source.Ranger, TraitImages.BeastlyWarden, (x, log) => IsJuvenileUrsinePet(x.From) || IsJuvenilePorcinePet(x.From), DamageModifierMode.PvE)
+            .UsingEarlyExit((a, log) => {
+                return !a.GetMinions(log).Any(x => IsJuvenileUrsinePet(x.ReferenceAgentItem) || IsJuvenilePorcinePet(x.ReferenceAgentItem));
+            })
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // - Loud Whistle
         new DamageLogDamageModifier(Mod_LoudWhistle_Pet, "Loud Whistle", "10% while master hp >=90%", DamageSource.PetsOnly, 10.0, DamageType.Strike, DamageType.All, Source.Soulbeast, TraitImages.LoudWhistle, (x, log) =>  IsJuvenilePet(x.From) && x.From.GetFinalMaster().GetCurrentHealthPercent(log, x.Time) >= 90.0, DamageModifierMode.All)
             .UsingEarlyExit((a, log) => {

@@ -10,10 +10,10 @@ internal static class SkillImages
     public const string WeaponDraw = "https://i.imgur.com/7TAlNtd.png";
     public const string Dodge = "https://wiki.guildwars2.com/images/archive/b/b2/20150601155307%21Dodge.png";
     #region Down
-    public const string Anchor = "https://wiki.guildwars2.com/images/c/c0/Anchor.png";
+    public const string Anchor = "https://render.guildwars2.com/file/3C2B5C060DA920011A20ACDB96DB155D4BDE2A04/103434.png";
     public const string Resurrect = "https://wiki.guildwars2.com/images/3/3d/Downed_ally.png";
     public const string Bandage = "https://render.guildwars2.com/file/D2D7D11874060D68760BFD519CFC77B6DF14981F/102928.png";
-    public const string RescueProtocol = "https://wiki.guildwars2.com/images/c/cd/Rescue_Protocol_%28skill%29.png";
+    public const string RescueProtocol = "https://render.guildwars2.com/file/B2010324C8091FC1C3D2956A55BD3263042EDCE5/2604806.png";
     #endregion Down
     #region Racial Skills
     // Sylvari

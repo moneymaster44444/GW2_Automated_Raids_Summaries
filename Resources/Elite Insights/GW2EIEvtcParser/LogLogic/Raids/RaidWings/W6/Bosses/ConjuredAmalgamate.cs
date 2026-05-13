@@ -220,7 +220,7 @@ internal class ConjuredAmalgamate : MythwrightGambit
     {
         foreach (CombatItem c in combatData)
         {
-            if (c.IsDamage(extensions) && c.SkillID == ConjuredSlashPlayer)
+            if (c.IsDamageEvent(extensions) && c.SkillID == ConjuredSlashPlayer)
             {
                 c.OverrideSrcAgent(sword);
                 if (sword.FirstAware == long.MinValue)
@@ -247,8 +247,7 @@ internal class ConjuredAmalgamate : MythwrightGambit
         {
             base.ComputeNPCCombatReplayActors(target, log, replay);
         }
-        var caEncounters = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID).ToList();
-        var finalCAEncounter = caEncounters.LastOrDefault();
+        var finalCAEncounter = log.LogData.GetEncounterPhases(log, LogID).LastOrDefault();
         switch (target.ID)
         {
             case (int)TargetID.ConjuredAmalgamate:
@@ -485,7 +484,7 @@ internal class ConjuredAmalgamate : MythwrightGambit
             (long start, long end) lifespan = (c.Time, c.Time + duration);
             if (p.TryGetCurrentInterpolatedPosition(log, lifespan.start, out var position))
             {
-                var circle = new CircleDecoration(radius, lifespan, Colors.Magenta, 0.2, new PositionConnector(position));
+                var circle = new CircleDecoration(radius, lifespan, Colors.Magenta, 0.2, new PositionConnector(position.Value));
                 replay.Decorations.AddWithBorder(circle);
             }
         }

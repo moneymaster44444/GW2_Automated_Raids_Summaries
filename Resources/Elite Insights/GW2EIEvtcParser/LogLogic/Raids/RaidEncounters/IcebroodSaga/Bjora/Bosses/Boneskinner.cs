@@ -96,7 +96,7 @@ internal class Boneskinner : Bjora
 
         if (log.CombatData.GetBuffData(AchievementEligibilityHoldOntoTheLight).Any())
         {
-            var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+            var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
             foreach (var encounterPhase in encounterPhases)
             {
                 if (encounterPhase.Success)
@@ -257,7 +257,7 @@ internal class Boneskinner : Bjora
 
                 if (actor.TryGetCurrentFacingDirection(log, lifespan.start, out var rotation, duration))
                 {
-                    var rectangle = (RectangleDecoration)new RectangleDecoration(width, height, lifespan, Colors.Orange, 0.2, new PositionConnector(indicator.Position)).UsingRotationConnector(new AngleConnector(rotation));
+                    var rectangle = (RectangleDecoration)new RectangleDecoration(width, height, lifespan, Colors.Orange, 0.2, new PositionConnector(indicator.Position)).UsingRotationConnector(new AngleConnector(rotation.Value));
                     replay.Decorations.AddWithBorder(rectangle, Colors.Red, 0.2);
                 }
             }

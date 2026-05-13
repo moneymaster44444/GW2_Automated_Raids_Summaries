@@ -265,7 +265,7 @@ internal class SpiritRace : SpiritVale
                 {
                     encounterOffset = AddHideForBarrier(target, log, replay, encounterOffset);
                 }
-                var spiritRaceEncounters = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID).ToList();
+                var spiritRaceEncounters = log.LogData.GetEncounterPhases(log, LogID);
                 replay.AddHideByEncounterPhases(spiritRaceEncounters, log);
                 replay.Hidden.Sort((x, y) => x.Start.CompareTo(y.Start));
                 break;
@@ -301,7 +301,7 @@ internal class SpiritRace : SpiritVale
         }
         {
             var outrunGhostEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var spiritRacePhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var spiritRacePhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             var crippleds = log.CombatData.GetBuffApplyDataByIDByDst(Crippled, p.AgentItem);
             foreach (var evt in crippleds)
             {

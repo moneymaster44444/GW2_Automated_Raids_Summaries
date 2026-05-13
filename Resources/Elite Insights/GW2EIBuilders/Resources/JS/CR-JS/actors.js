@@ -224,7 +224,10 @@ class IconDrawable {
             ctx.strokeStyle = 'green';
             ctx.rect(pos.x - halfSize, pos.y - halfSize, fullSize, fullSize);
             ctx.stroke();
-            animator.rangeControl.forEach(function (element) {
+        }     
+        if (animator.extraDecorationMap.has(this.id)) {
+            let rangeControls = animator.extraDecorationMap.get(this.id).rangeControls.ranges;
+            rangeControls.forEach(function (element) {
                 if (!element.enabled) {
                     return;
                 }
@@ -234,7 +237,7 @@ class IconDrawable {
                 ctx.arc(pos.x, pos.y, InchToPixel * element.radius, 0, 2 * Math.PI);
                 ctx.stroke();
             });
-        }      
+        } 
         ctx.drawImage(this.getIcon(), pos.x - halfSize, pos.y - halfSize, fullSize, fullSize);
     }
 

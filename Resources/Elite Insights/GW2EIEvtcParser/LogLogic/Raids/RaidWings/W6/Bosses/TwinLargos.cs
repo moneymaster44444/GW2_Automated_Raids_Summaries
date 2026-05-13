@@ -352,7 +352,7 @@ internal class TwinLargos : MythwrightGambit
                                 if (target.TryGetCurrentFacingDirection(log, cast.Time + 250, out var facing))
                                 {
                                     var positionConnector = (AgentConnector)new AgentConnector(target).WithOffset(new(width / 2, 0, 0), true);
-                                    var rotationConnextor = new AngleConnector(facing);
+                                    var rotationConnextor = new AngleConnector(facing.Value);
                                     replay.Decorations.AddWithBorder((RectangleDecoration)new RectangleDecoration(width, height, lifespan, Colors.LightOrange, 0.4, positionConnector).UsingRotationConnector(rotationConnextor));
                                 }
                             }
@@ -386,7 +386,7 @@ internal class TwinLargos : MythwrightGambit
             replay.Decorations.AddWithFilledWithGrowing(new CircleDecoration(debuffRadius, seg, Colors.Orange, 0.4, new AgentConnector(p)).UsingFilled(false), true, toDropStart + timer);
             if (p.TryGetCurrentInterpolatedPosition(log, toDropEnd, out var position))
             {
-                replay.Decorations.AddWithGrowing(new CircleDecoration(radius, debuffRadius, (toDropEnd, toDropEnd + duration), Colors.DarkWhite, 0.5, new PositionConnector(position)).UsingFilled(false), toDropStart + duration);
+                replay.Decorations.AddWithGrowing(new CircleDecoration(radius, debuffRadius, (toDropEnd, toDropEnd + duration), Colors.DarkWhite, 0.5, new PositionConnector(position.Value)).UsingFilled(false), toDropStart + duration);
             }
             replay.Decorations.AddOverheadIcon(seg, p, ParserIcons.TidalPoolOverhead);
         }

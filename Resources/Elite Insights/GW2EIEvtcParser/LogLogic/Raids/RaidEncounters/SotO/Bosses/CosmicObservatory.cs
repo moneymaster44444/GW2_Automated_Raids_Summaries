@@ -522,8 +522,17 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
             return LogData.Mode.Normal;
         }
         SingleActor dagda = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Dagda)) ?? throw new MissingKeyActorsException("Dagda not found");
-        var hpThreshold = combatData.GetGW2BuildEvent().Build >= GW2Builds.April2026Balancepocalypse ? 40e6 : 50e6;
-        return (dagda.GetHealth(combatData) > hpThreshold) ? LogData.Mode.CM : LogData.Mode.Normal;
+        if (dagda.GetHealth(combatData) > 50e6)
+        {
+            // Demonic Aura removed but Timer never applied, not a true CM
+            if (combatData.GetBuffRemoveAllDataByIDByDst(DagdaDemonicAura, dagda.AgentItem).Count > 0 
+                && combatData.GetBuffApplyDataByIDByDst(DagdaDemonicAuraTimer, dagda.AgentItem).Count == 0)
+            {
+                return LogData.Mode.Normal;
+            }
+            return LogData.Mode.CM;
+        }
+        return LogData.Mode.Normal;
     }
 
     internal override string GetLogicName(CombatData combatData, AgentData agentData, GW2APIController apiController)
@@ -537,7 +546,7 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
         {
             base.SetInstanceBuffs(log, instanceBuffs);
         }
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         foreach (var encounterPhase in encounterPhases)
         {
             if (encounterPhase.Success && encounterPhase.IsCM)
@@ -579,7 +588,7 @@ internal class CosmicObservatory : SecretOfTheObscureRaidEncounter
         }
         {
             var dancedStarsEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var coCMPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var coCMPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => x.IsCM && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             List<HealthDamageEvent> damageData = [
                 ..log.CombatData.GetDamageData(SpinningNebulaCentral),
                 ..log.CombatData.GetDamageData(SpinningNebulaWithTeleport)

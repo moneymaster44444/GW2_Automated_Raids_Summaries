@@ -321,42 +321,42 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
             switch (target.ID)
             {
                 case (int)TargetID.EmbodimentOfDespair:
-                    CombatItem? despair = combatData.FirstOrDefault(x => x.SkillID == EmpoweredDespairEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApply());
+                    CombatItem? despair = combatData.FirstOrDefault(x => x.SkillID == EmpoweredDespairEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApplyEvent());
                     if (despair != null && Math.Abs(target.FirstAware - despair.Time) <= ServerDelayConstant)
                     {
                         target.OverrideName("Empowered " + target.Character);
                     }
                     break;
                 case (int)TargetID.EmbodimentOfEnvy:
-                    CombatItem? envy = combatData.FirstOrDefault(x => x.SkillID == EmpoweredEnvyEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApply());
+                    CombatItem? envy = combatData.FirstOrDefault(x => x.SkillID == EmpoweredEnvyEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApplyEvent());
                     if (envy != null && Math.Abs(target.FirstAware - envy.Time) <= ServerDelayConstant)
                     {
                         target.OverrideName("Empowered " + target.Character);
                     }
                     break;
                 case (int)TargetID.EmbodimentOfGluttony:
-                    CombatItem? gluttony = combatData.FirstOrDefault(x => x.SkillID == EmpoweredGluttonyEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApply());
+                    CombatItem? gluttony = combatData.FirstOrDefault(x => x.SkillID == EmpoweredGluttonyEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApplyEvent());
                     if (gluttony != null && Math.Abs(target.FirstAware - gluttony.Time) <= ServerDelayConstant)
                     {
                         target.OverrideName("Empowered " + target.Character);
                     }
                     break;
                 case (int)TargetID.EmbodimentOfMalice:
-                    CombatItem? malice = combatData.FirstOrDefault(x => x.SkillID == EmpoweredMaliceEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApply());
+                    CombatItem? malice = combatData.FirstOrDefault(x => x.SkillID == EmpoweredMaliceEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApplyEvent());
                     if (malice != null && Math.Abs(target.FirstAware - malice.Time) <= ServerDelayConstant)
                     {
                         target.OverrideName("Empowered " + target.Character);
                     }
                     break;
                 case (int)TargetID.EmbodimentOfRage:
-                    CombatItem? rage = combatData.FirstOrDefault(x => x.SkillID == EmpoweredRageEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApply());
+                    CombatItem? rage = combatData.FirstOrDefault(x => x.SkillID == EmpoweredRageEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApplyEvent());
                     if (rage != null && Math.Abs(target.FirstAware - rage.Time) <= ServerDelayConstant)
                     {
                         target.OverrideName("Empowered " + target.Character);
                     }
                     break;
                 case (int)TargetID.EmbodimentOfRegret:
-                    CombatItem? regret = combatData.FirstOrDefault(x => x.SkillID == EmpoweredRegretEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApply());
+                    CombatItem? regret = combatData.FirstOrDefault(x => x.SkillID == EmpoweredRegretEmbodiment && x.DstMatchesAgent(target.AgentItem) && x.IsBuffApplyEvent());
                     if (regret != null && Math.Abs(target.FirstAware - regret.Time) <= ServerDelayConstant)
                     {
                         target.OverrideName("Empowered " + target.Character);
@@ -573,12 +573,11 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
         }
 
         // Pool of Despair - Spread AoE on ground
-        var tofPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && (x.IsCM || x.IsLegendaryCM)).ToList();
         if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.TempleOfFebePoolOfDespair, out var poolOfDespair))
         {
             foreach (EffectEvent effect in poolOfDespair)
             {
-                int duration = tofPhases.Any(x => x.InInterval(effect.Time)) ? 120000 : 60000;
+                int duration = log.LogData.EncounterIsCM(log, LogID, effect.Time) || log.LogData.EncounterIsLegendaryCM(log, LogID, effect.Time) ? 120000 : 60000;
                 (long start, long end) lifespan = effect.ComputeDynamicLifespan(log, duration);
                 var circle = new CircleDecoration(120, lifespan, Colors.RedSkin, 0.2, new PositionConnector(effect.Position));
                 environmentDecorations.Add(circle);
@@ -742,7 +741,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
                 lifespanIndicator = ComputeMechanicLifespanWithCancellationTime(target.AgentItem, log, lifespanIndicator);
 
                 // Frontal indicator
-                var rotation = new AngleConnector(facing);
+                var rotation = new AngleConnector(facing.Value);
                 var agentConnector = (AgentConnector)new AgentConnector(target).WithOffset(new(width / 2, 0, 0), true);
                 var rectangle = (RectangleDecoration)new RectangleDecoration(width, 100, lifespanIndicator, Colors.LightOrange, 0.2, agentConnector).UsingRotationConnector(rotation);
                 replay.Decorations.AddWithGrowing(rectangle, growing);
@@ -784,7 +783,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
                 lifespanDamageCancelled = ComputeMechanicLifespanWithCancellationTime(target.AgentItem, log, lifespanDamage);
                 double millisecondsPerDegree = (double)(lifespanDamage.end - lifespanDamage.start) / 360;
                 double degreesRotated = (lifespanDamageCancelled.end - lifespanDamageCancelled.start) / millisecondsPerDegree;
-                var rotation2 = new SpinningConnector(facing, (float)degreesRotated);
+                var rotation2 = new SpinningConnector(facing.Value, (float)degreesRotated);
                 var rectangle2 = (RectangleDecoration)new RectangleDecoration(width, 100, lifespanDamageCancelled, Colors.Red, 0.2, agentConnector).UsingRotationConnector(rotation2);
                 replay.Decorations.Add(rectangle2);
                 if (isEmpowered)
@@ -800,7 +799,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
                     }
                     double millisecondsPerDegreeOpposite = (double)(lifespanDamageOpposite.end - lifespanDamageOpposite.start) / 360;
                     double degreedRotatedOpposite = (lifespanDamageOppositeCancelled.end - lifespanDamageOppositeCancelled.start) / millisecondsPerDegreeOpposite;
-                    var rotation3 = new SpinningConnector(facing, (float)degreedRotatedOpposite);
+                    var rotation3 = new SpinningConnector(facing.Value, (float)degreedRotatedOpposite);
                     
                     // The bug makes the beam continue while the embodiment has despawned, so we use the agent position for a PositionConnector instead of AgentConnector.
                     ParametricPoint3D? position = target.GetCombatReplayActivePolledPositions(log).FirstOrDefault(x => x!= null && x.Value.Time > lifespanDamage.start && x.Value.Time <= lifespanDamage.end);
@@ -920,7 +919,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
             base.SetInstanceBuffs(log, instanceBuffs);
         }
 
-        var encounterPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID);
+        var encounterPhases = log.LogData.GetEncounterPhases(log, LogID);
         var empoweredBuffs = new List<long>()
         {
             EmpoweredDespairCerus,
@@ -959,7 +958,7 @@ internal class TempleOfFebe : SecretOfTheObscureRaidEncounter
         }
         {
             var unboundedOptimismEligibilityEvents = new List<AchievementEligibilityEvent>();
-            var tofPhases = log.LogData.GetEncounterPhases(log).Where(x => x.ID == LogID && (x.IsCM || x.IsLegendaryCM) && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
+            var tofPhases = log.LogData.GetEncounterPhases(log, LogID).Where(x => (x.IsCM || x.IsLegendaryCM) && x.IntersectsWindow(p.FirstAware, p.LastAware)).ToHashSet();
             List<TimeCombatEvent> lostEvents = [
                 ..p.GetDamageTakenEvents(null, log).Where(x => UnboundOptimismSkillIDs.Contains(x.SkillID) && x.HasHit),
                 ..log.CombatData.GetDeadEvents(p.AgentItem),

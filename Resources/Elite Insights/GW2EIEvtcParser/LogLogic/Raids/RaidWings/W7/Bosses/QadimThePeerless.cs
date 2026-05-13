@@ -266,8 +266,8 @@ internal class QadimThePeerless : TheKeyOfAhdashim
                             (long start, long end) lifespanMagma = (lifespan.end, lifespan.end + magmaDuration);
                             if (target.TryGetCurrentPosition(log, lifespan.end, out var pylonPosition))
                             {
-                                replay.Decorations.AddWithGrowing(new CircleDecoration(magmaRadius, lifespan, Colors.LightRed, 0.2, new PositionConnector(pylonPosition)), lifespan.end);
-                                replay.Decorations.Add(new CircleDecoration(magmaRadius, lifespanMagma, Colors.Red, 0.5, new PositionConnector(pylonPosition)));
+                                replay.Decorations.AddWithGrowing(new CircleDecoration(magmaRadius, lifespan, Colors.LightRed, 0.2, new PositionConnector(pylonPosition.Value)), lifespan.end);
+                                replay.Decorations.Add(new CircleDecoration(magmaRadius, lifespanMagma, Colors.Red, 0.5, new PositionConnector(pylonPosition.Value)));
                             }
                             break;
                         // Force of Havoc
@@ -284,11 +284,11 @@ internal class QadimThePeerless : TheKeyOfAhdashim
                                 if (target.TryGetCurrentFacingDirection(log, start + 1000, out var facing)
                                     && target.TryGetCurrentPosition(log, start + 1000, out var position))
                                 {
-                                    replay.Decorations.Add(new RectangleDecoration(roadLength, roadWidth, (start, start + preCastTime), Colors.Red, 0.1, new PositionConnector(position).WithOffset(new(roadLength / 2 + 200, 0, 0), true)).UsingRotationConnector(new AngleConnector(facing)));
+                                    replay.Decorations.Add(new RectangleDecoration(roadLength, roadWidth, (start, start + preCastTime), Colors.Red, 0.1, new PositionConnector(position.Value).WithOffset(new(roadLength / 2 + 200, 0, 0), true)).UsingRotationConnector(new AngleConnector(facing.Value)));
                                     for (uint i = 0; i < subdivisions; i++)
                                     {
                                         var translation = (int)((i + 0.5) * roadLength / subdivisions + hitboxOffset);
-                                        replay.Decorations.Add(new RectangleDecoration(roadLength / subdivisions, roadWidth, (start + preCastTime + i * (rollOutTime / subdivisions), start + preCastTime + i * (rollOutTime / subdivisions) + duration), "rgba(143, 0, 179, 0.6)", new PositionConnector(position).WithOffset(new(translation, 0, 0), true)).UsingRotationConnector(new AngleConnector(facing)));
+                                        replay.Decorations.Add(new RectangleDecoration(roadLength / subdivisions, roadWidth, (start + preCastTime + i * (rollOutTime / subdivisions), start + preCastTime + i * (rollOutTime / subdivisions) + duration), "rgba(143, 0, 179, 0.6)", new PositionConnector(position.Value).WithOffset(new(translation, 0, 0), true)).UsingRotationConnector(new AngleConnector(facing.Value)));
                                     }
                                 }
                             }
@@ -304,11 +304,11 @@ internal class QadimThePeerless : TheKeyOfAhdashim
                                 long start = cast.Time + 1400;
                                 if (target.TryGetCurrentPosition(log, start + 1000, out var position))
                                 {
-                                    replay.Decorations.AddWithGrowing(new CircleDecoration(radius, (start, start + preCastTime), Colors.Yellow, 0.2, new PositionConnector(position)), start + preCastTime);
+                                    replay.Decorations.AddWithGrowing(new CircleDecoration(radius, (start, start + preCastTime), Colors.Yellow, 0.2, new PositionConnector(position.Value)), start + preCastTime);
                                     for (uint i = 0; i < cascades; i++)
                                     {
-                                        replay.Decorations.Add(new DoughnutDecoration(radius + (uint)(radiusIncrement * i), radius + (uint)(radiusIncrement * (i + 1)), (start + preCastTime + timeBetweenCascades * i, start + preCastTime + timeBetweenCascades * (i + 1)), "rgba(30, 30, 30, 0.5)", new PositionConnector(position)));
-                                        replay.Decorations.Add(new DoughnutDecoration(radius + (uint)(radiusIncrement * i), radius + (uint)(radiusIncrement * (i + 1)), (start + preCastTime + timeBetweenCascades * (i + 1), start + preCastTime + timeBetweenCascades * (i + 2)), "rgba(50, 20, 50, 0.25)", new PositionConnector(position)));
+                                        replay.Decorations.Add(new DoughnutDecoration(radius + (uint)(radiusIncrement * i), radius + (uint)(radiusIncrement * (i + 1)), (start + preCastTime + timeBetweenCascades * i, start + preCastTime + timeBetweenCascades * (i + 1)), "rgba(30, 30, 30, 0.5)", new PositionConnector(position.Value)));
+                                        replay.Decorations.Add(new DoughnutDecoration(radius + (uint)(radiusIncrement * i), radius + (uint)(radiusIncrement * (i + 1)), (start + preCastTime + timeBetweenCascades * (i + 1), start + preCastTime + timeBetweenCascades * (i + 2)), "rgba(50, 20, 50, 0.25)", new PositionConnector(position.Value)));
                                     }
                                 }
                             }
@@ -320,7 +320,7 @@ internal class QadimThePeerless : TheKeyOfAhdashim
                                 lifespan = (cast.Time, cast.Time + castDuration);
                                 if (target.TryGetCurrentFacingDirection(log, lifespan.start + 300, out var facing))
                                 {
-                                    replay.Decorations.AddWithBorder((PieDecoration)new PieDecoration(2600, 60, lifespan, Colors.Orange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing)));
+                                    replay.Decorations.AddWithBorder((PieDecoration)new PieDecoration(2600, 60, lifespan, Colors.Orange, 0.2, new AgentConnector(target)).UsingRotationConnector(new AngleConnector(facing.Value)));
                                 }
                             }
                             break;
@@ -362,7 +362,7 @@ internal class QadimThePeerless : TheKeyOfAhdashim
                                 lifespan = (cast.Time, cast.Time + castDuration);
                                 if (target.TryGetCurrentPosition(log, lifespan.start + 1000, out var position))
                                 {
-                                    replay.Decorations.AddWithGrowing(new CircleDecoration(radius, lifespan, Colors.Yellow, 0.2, new PositionConnector(position)), lifespan.end);
+                                    replay.Decorations.AddWithGrowing(new CircleDecoration(radius, lifespan, Colors.Yellow, 0.2, new PositionConnector(position.Value)), lifespan.end);
 
                                     foreach (NPC pylon in TrashMobs.Where(x => x.IsSpecies(TargetID.PeerlessQadimAuraPylon)))
                                     {
@@ -481,8 +481,8 @@ internal class QadimThePeerless : TheKeyOfAhdashim
                     magmaCounter = (magmaCounter + 1) & 1;
 
                     long magmaWarningEnd = magmaDropEnd + magmaOffset;
-                    replay.Decorations.AddWithGrowing(new CircleDecoration(magmaRadius, (magmaDropEnd, magmaWarningEnd), magmaColor, 0.2, new PositionConnector(position)), magmaDropEnd + magmaOffset);
-                    replay.Decorations.Add(new CircleDecoration(magmaRadius, (magmaWarningEnd, magmaWarningEnd + magmaDuration), magmaColor, 0.5, new PositionConnector(position)));
+                    replay.Decorations.AddWithGrowing(new CircleDecoration(magmaRadius, (magmaDropEnd, magmaWarningEnd), magmaColor, 0.2, new PositionConnector(position.Value)), magmaDropEnd + magmaOffset);
+                    replay.Decorations.Add(new CircleDecoration(magmaRadius, (magmaWarningEnd, magmaWarningEnd + magmaDuration), magmaColor, 0.5, new PositionConnector(position.Value)));
                 }
             }
         }

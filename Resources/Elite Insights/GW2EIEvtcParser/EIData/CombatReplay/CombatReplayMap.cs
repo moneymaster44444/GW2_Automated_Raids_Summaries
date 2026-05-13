@@ -193,4 +193,30 @@ public class CombatReplayMap
         _rectInMap.topY = centerY - halfHeigth;
         return this;
     }
+
+    internal static CombatReplayMap CreateSquareMapFrom(CombatReplayMap other)
+    {
+        if (other._pixelSize.width == other._pixelSize.height)
+        {
+            return other;
+        }
+        if (other._pixelSize.width > other._pixelSize.height)
+        {
+            var height = other._pixelSize.width;
+            var ratio = (double)other._pixelSize.width / other._pixelSize.height;
+            var centerY = (other._rectInMap.topY + other._rectInMap.bottomY) / 2.0;
+            var topY = (other._rectInMap.topY - centerY) * ratio + centerY;
+            var bottomY = (other._rectInMap.bottomY - centerY) * ratio + centerY;
+            return new CombatReplayMap((other._pixelSize.width, height), (other._rectInMap.topX, topY, other._rectInMap.bottomX, bottomY));
+        }
+        else
+        {
+            var width = other._pixelSize.height;
+            var ratio = (double)other._pixelSize.height / other._pixelSize.width;
+            var centerX = (other._rectInMap.topX + other._rectInMap.bottomX) / 2.0;
+            var topX = (other._rectInMap.topX - centerX) * ratio + centerX;
+            var bottomX = (other._rectInMap.bottomX - centerX) * ratio + centerX;
+            return new CombatReplayMap((width, other._pixelSize.height), (topX, other._rectInMap.topY, bottomX, other._rectInMap.bottomY));
+        }
+    }
 }

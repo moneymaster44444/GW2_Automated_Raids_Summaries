@@ -106,6 +106,10 @@ public static class SkillIDs
     internal const long ArcDPSGenericInvalid = 23301;
     internal const long ArcDPSGenericGadgetInteract = 23302;
     internal const long ArcDPSGenericEmote = 23303;
+    internal const long ArcDPSGenericFloatWater = 23304;
+    internal const long ArcDPSGenericSink = 23305;
+    internal const long ArcDPSGenericLockOut = 23306;
+    internal const long ArcDPSGenericFear = 23307;
     #endregion
     #region Core
     public const long Protection = 717;
@@ -1630,6 +1634,7 @@ public static class SkillIDs
     public const long LifeFromDeath = 29901;
     public const long ShieldOfCourageActive = 29906;
     public const long WeakeningCharge = 29911;
+    public const long ChronophantasmaBuff = 29913; // Buff on the first phantasm summoned
     public const long InfusingTerrorSkill = 29958;
     public const long HealingPrism = 29997;
     public const long ImpairingDaggersHit3 = 30017;
@@ -1681,6 +1686,7 @@ public static class SkillIDs
     public const long SoulSpiralHeal = 30591;
     public const long Vault = 30597;
     public const long HuntersWard = 30628;
+    public const long ChronophantasmaResummonBuff = 30644; // Buff on the phantasm resummoned, damage modifier
     public const long FeelTheBurn = 30662;
     public const long Suffer = 30670;
     public const long LightOnYourFeet = 30673;
@@ -3867,13 +3873,13 @@ public static class SkillIDs
     public const long InfluenceOfTheVoidBuff = 64524;
     public const long ZhaitansReachGroundSlamHT = 64526;
     public const long NourishmentBonusPowerFerocity100 = 64528;
-    public const long VoidExplosion = 64557;
+    public const long VoidExplosion180Radius = 64557;
     public const long SoulReunited = 64559;
     public const long PlateOfCrispyFishPancakes = 64562;
     public const long MeatyAsparagusSkewer = 64568;
     public const long PoisonRoar = 64576;
     public const long MagicHail = 64582;
-    public const long VoidExplosion3 = 64585;
+    public const long VoidExplosion240Radius = 64585;
     public const long DragonSlashRushNM2 = 64619;
     public const long DragonsEndContributor8 = 64623;
     public const long WaveOfTormentNM = 64669;
@@ -3960,7 +3966,7 @@ public static class SkillIDs
     public const long VoidRepulsion2 = 65577;
     public const long VoidPoolNM = 65578;
     public const long VoidCorruption = 65590;
-    public const long VoidExplosion2 = 65595;
+    public const long VoidExplosion120Radius = 65595;
     public const long PowerOfTheVoid = 65601;
     public const long EnforcerRushingJusticeNM = 65608;
     public const long YellowfishSushi = 65613;
@@ -4251,7 +4257,7 @@ public static class SkillIDs
     public const long DualOrbitFireAndWater = 69184;
     public const long DreadVisageAspectSkill = 69185;
     public const long FlareSilentSurf = 69189;
-    public const long RestorativeStrikesAndBiorythm = 69193;
+    public const long RestorativeStrikesAndBiorhythm = 69193;
     public const long FrighteningSpeedWindup = 69194;
     public const long RendingStormAxeTargetBuff1 = 69195;
     public const long HarrowshotDeath = 69199; // harrowshot is the boon steal attack
@@ -5094,7 +5100,7 @@ public static class SkillIDs
     public const long WintryOrb = 76482;
     public const long PowerBlockBuff = 76483;
     public const long AchievementEligibilityUndyingLight = 76501;
-    public const long VowOfTheUntamedBiorythm = 76502;
+    public const long VowOfTheUntamedBiorhythm = 76502;
     public const long PhantomPain = 76505;
     public const long ArcaneEchoBuff = 76507;
     public const long HailstormWhisperingShadow = 76510;
@@ -5393,6 +5399,7 @@ public static class SkillIDs
     public const long FamiliarsFocus = 77256; // POV trait buff but also healing in statistics
     public const long ResilientWeaponSkill = 77259;
     public const long FamiliarsProwessFox = 77261;
+    public const long EnterprisingAristocratBarrier = 77260;
     public const long RapaciousStrain2 = 77262;
     public const long PiercingGales = 77264;
     public const long EffulgentStanceStackDamageBuff = 77265;
@@ -5443,7 +5450,7 @@ public static class SkillIDs
     public const long QuickplayBoost = 77676;
     public const long SnowDiamondOrnament = 77727;
     public const long BagOfPoppedCandyCorn = 77728;
-    public const long ExaltedHammerSkill2 = 77746;
+    public const long ExaltedHammerSkillHealing = 77746;
     public const long ForgedSurferDashBuff = 77749;
     public const long RadiantJusticeBuff = 77821;
     public const long ExaltedHammerBuff = 77830;
@@ -5582,6 +5589,7 @@ public static class SkillIDs
     public const long AchievementEligibilitySeeYouLaterAlligator = 79542;
     public const long DefenderMoralBoost = 79544;
     public const long AchievementEligibilitySurefooted = 79546;
+    public const long SuperSharpeningPolygon = 79575;
     #endregion
 
 }

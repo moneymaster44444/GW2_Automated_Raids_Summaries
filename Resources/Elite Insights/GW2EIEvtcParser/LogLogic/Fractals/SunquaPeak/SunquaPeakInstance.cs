@@ -40,7 +40,7 @@ internal class SunquaPeakInstance : SunquaPeak
         var subCrMap = _aiKeeperOfThePeak.GetCombatMapInternal(log, arenaDecorations);
         AddArenaDecorationsPerEncounter(log, arenaDecorations, _aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.ElementalAiMask, CombatReplayAi, subCrMap);
         AddArenaDecorationsPerEncounter(log, arenaDecorations, _aiKeeperOfThePeak.LogID | AiKeeperOfThePeak.DarkAiMask, CombatReplayAi, subCrMap);
-        return crMap;
+        return CombatReplayMap.CreateSquareMapFrom(crMap);
     }
     internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {

@@ -73,16 +73,22 @@ internal static class WarriorHelper
         new BuffOnActorDamageModifier(Mod_BerserkersPower, BerserkersPower, "Berserker's Power", "7% per stack", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Warrior, ByStack, TraitImages.BerserkersPower, DamageModifierMode.All)
             .WithBuilds(GW2Builds.StartOfLife, GW2Builds.October2022Balance),
         new BuffOnActorDamageModifier(Mod_BerserkersPower, BerserkersPower, "Berserker's Power", "5.25% per stack", DamageSource.NoPets, 5.25, DamageType.Strike, DamageType.All, Source.Warrior, ByStack, TraitImages.BerserkersPower, DamageModifierMode.All)
-            .WithBuilds(GW2Builds.October2022Balance),
+            .WithBuilds(GW2Builds.October2022Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_BerserkersPower, BerserkersPower, "Berserker's Power", "5.25% per stack", DamageSource.NoPets, 5.25, DamageType.Strike, DamageType.All, Source.Warrior, ByStack, TraitImages.BerserkersPower, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_BerserkersPower, BerserkersPower, "Berserker's Power", "3.75% per stack", DamageSource.NoPets, 3.75, DamageType.Strike, DamageType.All, Source.Warrior, ByStack, TraitImages.BerserkersPower, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         
         // Defense
         // - Stalwart Strength
-        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "10%", DamageSource.NoPets, 10, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.BerserkersPower, DamageModifierMode.All)
+        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.StalwartStrength, DamageModifierMode.All)
             .WithBuilds(GW2Builds.October2022Balance, GW2Builds.June2025Balance),
-        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "12.5%", DamageSource.NoPets, 12.5, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.BerserkersPower, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.June2025Balance),
-        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "10%", DamageSource.NoPets, 10, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.BerserkersPower, DamageModifierMode.sPvPWvW)
-            .WithBuilds(GW2Builds.June2025Balance),
+        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "12.5%", DamageSource.NoPets, 12.5, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.StalwartStrength, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.June2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.StalwartStrength, DamageModifierMode.sPvPWvW)
+            .WithBuilds(GW2Builds.June2025Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnActorDamageModifier(Mod_StalwartStrength, Stability, "Stalwart Strength", "10%", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.StalwartStrength, DamageModifierMode.All)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // - Merciless Hammer
         new DamageLogDamageModifier(Mod_MercilessHammerDefiant, "Merciless Hammer", "20% to hammer and mace skills when hitting defiant foe", DamageSource.NoPets, 20.0, DamageType.Strike, DamageType.All, Source.Warrior, TraitImages.MercilessHammer, MercilessHammerChecker, DamageModifierMode.PvEInstanceOnly)
             .WithBuilds(GW2Builds.November2022Balance, GW2Builds.June2025Balance)
@@ -109,7 +115,9 @@ internal static class WarriorHelper
         new BuffOnFoeDamageModifier(Mod_LegSpecialist, [Crippled, Immobile, Chilled], "Leg Specialist", "7% to movement-impaired foes", DamageSource.NoPets, 7.0, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.LegSpecialist, DamageModifierMode.sPvPWvW)
             .WithBuilds(GW2Builds.May2021Balance),
         new BuffOnFoeDamageModifier(Mod_LegSpecialist, [Crippled, Immobile, Chilled], "Leg Specialist", "10% to movement-impaired foes", DamageSource.NoPets, 10.0, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.LegSpecialist, DamageModifierMode.PvE)
-            .WithBuilds(GW2Builds.May2021Balance),
+            .WithBuilds(GW2Builds.May2021Balance, GW2Builds.April2026Balancepocalypse),
+        new BuffOnFoeDamageModifier(Mod_LegSpecialist, [Crippled, Immobile, Chilled], "Leg Specialist", "5% to movement-impaired foes", DamageSource.NoPets, 5.0, DamageType.Strike, DamageType.All, Source.Warrior, ByPresence, TraitImages.LegSpecialist, DamageModifierMode.PvE)
+            .WithBuilds(GW2Builds.April2026Balancepocalypse),
         // - Empowered
         new BuffOnActorDamageModifier(Mod_Empowered, NumberOfBoons, "Empowered", "1% per boon", DamageSource.NoPets, 1.0, DamageType.Strike, DamageType.All, Source.Warrior, ByStack, TraitImages.Empowered, DamageModifierMode.All),
         // - Warrior's Cunning (Barrier)
