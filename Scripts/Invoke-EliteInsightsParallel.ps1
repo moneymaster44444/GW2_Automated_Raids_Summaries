@@ -39,8 +39,9 @@ if ($MaxParallel -le 0) {
 if ($MaxParallel -gt $logs.Count) { $MaxParallel = $logs.Count }
 
 # Decide if we can do the live UI. Falls back to plain line-by-line output if
-# stdout is redirected, the console doesn't expose cursor APIs, or the window
-# is too short to fit the full status table without buffer scrolling.
+# stdout is redirected or the console doesn't expose cursor APIs. If the
+# window is too short for the full table, try to grow it; if that fails,
+# still render interactively and let off-screen rows update via the buffer.
 $script:Interactive = $false
 $script:ConsoleWidth = 80
 try {
@@ -48,10 +49,33 @@ try {
         $null = [Console]::CursorTop
         $script:ConsoleWidth = [Console]::WindowWidth
         if ($script:ConsoleWidth -le 0) { $script:ConsoleWidth = 80 }
-        $minHeight = $logs.Count + 5
-        if ($minHeight -le [Console]::WindowHeight) {
-            $script:Interactive = $true
+
+        $needed = $logs.Count + 6
+        $winSize = $Host.UI.RawUI.WindowSize
+        if ($winSize.Height -lt $needed) {
+            try {
+                $maxSize = $Host.UI.RawUI.MaxPhysicalWindowSize
+                $targetH = [Math]::Min($needed, $maxSize.Height)
+
+                # BufferSize.Height must be >= WindowSize.Height, so grow the
+                # buffer first if needed.
+                $buf = $Host.UI.RawUI.BufferSize
+                if ($buf.Height -lt $targetH) {
+                    $buf.Height = $targetH
+                    $Host.UI.RawUI.BufferSize = $buf
+                }
+
+                $winSize.Height = $targetH
+                $Host.UI.RawUI.WindowSize = $winSize
+            } catch {
+                # Resize failed (e.g. Windows Terminal in some configs). The
+                # interactive renderer still works; some rows above the
+                # visible window just won't show their state transitions
+                # live, but the progress bar stays in view.
+            }
         }
+
+        $script:Interactive = $true
     }
 } catch {
     $script:Interactive = $false
