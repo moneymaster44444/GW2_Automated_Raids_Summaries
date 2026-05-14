@@ -117,7 +117,7 @@ function Write-ProgressBar([int]$row, [int]$done, [int]$total) {
 if ($script:Interactive) {
     for ($i = 0; $i -lt $logs.Count; $i++) {
         $script:StatusRows[$i] = [Console]::CursorTop
-        Write-StatusLine $script:StatusRows[$i] 'queued' 'Red' $logs[$i].Name
+        Write-StatusLine $script:StatusRows[$i] 'queued' 'Magenta' $logs[$i].Name
         [Console]::WriteLine()
     }
     $script:ProgressRow = [Console]::CursorTop
