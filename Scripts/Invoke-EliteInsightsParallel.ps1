@@ -124,6 +124,11 @@ if ($script:Interactive) {
     Write-ProgressBar $script:ProgressRow 0 $logs.Count
     [Console]::WriteLine()
     $script:SafeRow = [Console]::CursorTop
+
+    # Hold the all-queued frame for a beat so the user can see it before any
+    # row flips to [start]. Without this, MaxParallel >= logs.Count repaints
+    # the entire table in under a millisecond.
+    Start-Sleep -Milliseconds 500
 }
 
 function Drain-One {
