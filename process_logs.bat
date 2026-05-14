@@ -39,8 +39,10 @@ if not exist "%CONFIG_FILE%" (
 )
 set "GUILD_TAG="
 set "DISCORD_WEBHOOK_URL="
+set "MAX_PARALLEL_EI="
 call :load_config
 if not defined GUILD_TAG set "GUILD_TAG=OnLY"
+if not defined MAX_PARALLEL_EI set "MAX_PARALLEL_EI=0"
 
 set "DISCORD_POSTED=0"
 set "DISCORD_REASON="
@@ -151,16 +153,24 @@ echo [OK] Using EI CLI:
 echo      "%EI_CLI_EXE%"
 echo.
 
-echo [1/3] Parsing arcDPS logs with Elite Insights...
-set "FOUND_LOG=0"
-for %%F in ("%LOGS_DIR%\*.zevtc") do call :run_ei "%%~fF"
-for %%F in ("%LOGS_DIR%\*.evtc")  do call :run_ei "%%~fF"
+echo [1/3] Parsing arcDPS logs with Elite Insights (parallel)...
+set "EI_PARSE_RC=0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Invoke-EliteInsightsParallel.ps1" ^
+  -EiExe "%EI_CLI_EXE%" -EiConf "%EI_CONF%" -LogsDir "%LOGS_DIR%" -MaxParallel %MAX_PARALLEL_EI%
+set "EI_PARSE_RC=%ERRORLEVEL%"
 
-if not "%FOUND_LOG%"=="1" (
+if "%EI_PARSE_RC%"=="10" (
   echo [INFO] No .zevtc or .evtc files found in:
   echo        %LOGS_DIR%
   echo        Put logs there and re-run.
   goto :post_cleanup_success
+)
+if "%EI_PARSE_RC%"=="2" (
+  echo [ERROR] Parallel EI runner reported a configuration problem.
+  goto :fail
+)
+if not "%EI_PARSE_RC%"=="0" (
+  echo [WARN] One or more EI invocations failed; continuing with whatever JSON was produced.
 )
 
 echo [OK] EI parse step complete.
@@ -374,14 +384,6 @@ rem ==========================================
 rem Subroutines
 rem ==========================================
 
-:run_ei
-if not exist "%~1" goto :eof
-set "FOUND_LOG=1"
-echo     -^> "%~nx1"
-"%EI_CLI_EXE%" -c "%EI_CONF%" "%~1"
-if errorlevel 1 echo     [WARN] EI returned non-zero for %~nx1
-goto :eof
-
 :load_config
 rem Parse NAME=VALUE pairs from CONFIG_FILE. Lines starting with # are ignored.
 if not exist "%CONFIG_FILE%" goto :eof
@@ -397,6 +399,7 @@ if not defined CFG_LINE goto :eof
 if "%CFG_LINE:~0,1%"=="#" goto :eof
 if /i "%CFG_LINE:~0,10%"=="GUILD_TAG="           set "GUILD_TAG=%CFG_LINE:~10%"
 if /i "%CFG_LINE:~0,20%"=="DISCORD_WEBHOOK_URL=" set "DISCORD_WEBHOOK_URL=%CFG_LINE:~20%"
+if /i "%CFG_LINE:~0,16%"=="MAX_PARALLEL_EI=" set "MAX_PARALLEL_EI=%CFG_LINE:~16%"
 goto :eof
 
 :notify_discord

@@ -1,2 +1,5 @@
 GUILD_TAG=OnLY
 DISCORD_WEBHOOK_URL=
+# MAX_PARALLEL_EI: how many Elite Insights instances to run in parallel.
+# 0 (or unset) = auto (about half of your CPU cores). Set to 1 to disable parallelism.
+MAX_PARALLEL_EI=0
