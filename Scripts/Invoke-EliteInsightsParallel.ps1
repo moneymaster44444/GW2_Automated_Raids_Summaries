@@ -53,6 +53,9 @@ function Drain-One {
             if ($job.Process.HasExited) {
                 $script:running.RemoveAt($i)
                 $script:done++
+                # Forces async stdout/stderr redirection to flush to disk
+                # before we read the err file below.
+                $job.Process.WaitForExit()
                 $exitCode = $job.Process.ExitCode
                 $tag = if ($exitCode -eq 0) { 'done ' } else { 'FAIL ' }
                 Write-Host ("    [{0}] ({1}/{2}) {3}" -f $tag, $script:done, $logs.Count, $job.LogName)
@@ -90,6 +93,11 @@ foreach ($log in $logs) {
         -NoNewWindow -PassThru `
         -RedirectStandardOutput $outFile `
         -RedirectStandardError  $errFile
+
+    # Touch .Handle so PowerShell keeps the Win32 handle open; otherwise the
+    # handle is released as soon as Start-Process returns and ExitCode reads
+    # back as $null even after the process exits cleanly.
+    $null = $proc.Handle
 
     $running.Add([pscustomobject]@{
         Process = $proc
