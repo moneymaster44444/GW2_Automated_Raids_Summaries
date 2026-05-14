@@ -36,6 +36,13 @@ if not exist "%CONFIG_FILE%" (
     echo [SETUP] Creating config.txt from sample.config.txt...
     copy /y "%SAMPLE_CONFIG_FILE%" "%CONFIG_FILE%" >nul
   )
+) else (
+  if exist "%SAMPLE_CONFIG_FILE%" (
+    rem Migrate: append any new fields present in sample.config.txt but
+    rem missing from the user's config.txt. No-op when they're in sync.
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Sync-UserConfig.ps1" ^
+      -SamplePath "%SAMPLE_CONFIG_FILE%" -UserPath "%CONFIG_FILE%"
+  )
 )
 set "GUILD_TAG="
 set "DISCORD_WEBHOOK_URL="
