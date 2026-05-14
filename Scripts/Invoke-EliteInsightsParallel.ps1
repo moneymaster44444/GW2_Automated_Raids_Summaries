@@ -123,8 +123,11 @@ if ($script:Interactive) {
     foreach ($log in $logs) {
         [Console]::WriteLine((Format-StatusLine 'queued' $C_MAGENTA $log.Name))
     }
+    # After this WriteLine the cursor sits on the (empty) line directly below
+    # the progress bar -- that is the anchor Update-Row / Update-Progress
+    # measure their "up N" offsets against. Do NOT add another blank
+    # WriteLine here or every update will land one row too low.
     [Console]::WriteLine((Format-ProgressBar 0 $logs.Count))
-    [Console]::WriteLine('')
     Start-Sleep -Milliseconds 500
 }
 
