@@ -38,63 +38,39 @@ if ($MaxParallel -le 0) {
 }
 if ($MaxParallel -gt $logs.Count) { $MaxParallel = $logs.Count }
 
-# Decide if we can do the live UI. Falls back to plain line-by-line output if
-# stdout is redirected or the console doesn't expose cursor APIs. If the
-# window is too short for the full table, try to grow it; if that fails,
-# still render interactively and let off-screen rows update via the buffer.
-$script:Interactive = $false
+# Decide whether to render the live status table. Cursor positioning is done
+# with VT escape codes and *relative* moves (up N / down N), which conpty (the
+# pseudo-console powering Windows Terminal) handles correctly even when the
+# window scrolls. Absolute Win32 SetCursorPosition coords get re-anchored to
+# the visible window by conpty and desync when content scrolls -- which is
+# why we don't use them.
+$script:Interactive  = -not [Console]::IsOutputRedirected
 $script:ConsoleWidth = 80
 try {
-    if (-not [Console]::IsOutputRedirected) {
-        $null = [Console]::CursorTop
-        $script:ConsoleWidth = [Console]::WindowWidth
-        if ($script:ConsoleWidth -le 0) { $script:ConsoleWidth = 80 }
-
-        $needed = $logs.Count + 6
-        $winSize = $Host.UI.RawUI.WindowSize
-        if ($winSize.Height -lt $needed) {
-            try {
-                $maxSize = $Host.UI.RawUI.MaxPhysicalWindowSize
-                $targetH = [Math]::Min($needed, $maxSize.Height)
-
-                # BufferSize.Height must be >= WindowSize.Height, so grow the
-                # buffer first if needed.
-                $buf = $Host.UI.RawUI.BufferSize
-                if ($buf.Height -lt $targetH) {
-                    $buf.Height = $targetH
-                    $Host.UI.RawUI.BufferSize = $buf
-                }
-
-                $winSize.Height = $targetH
-                $Host.UI.RawUI.WindowSize = $winSize
-            } catch {
-                # Resize failed (e.g. Windows Terminal in some configs). The
-                # interactive renderer still works; some rows above the
-                # visible window just won't show their state transitions
-                # live, but the progress bar stays in view.
-            }
-        }
-
-        $script:Interactive = $true
-    }
+    $w = [Console]::WindowWidth
+    if ($w -gt 0) { $script:ConsoleWidth = $w }
 } catch {
     $script:Interactive = $false
 }
 
+$ESC = [char]27
+$C_RESET   = "$ESC[0m"
+$C_GREEN   = "$ESC[92m"
+$C_YELLOW  = "$ESC[93m"
+$C_RED     = "$ESC[91m"
+$C_MAGENTA = "$ESC[95m"
+
 Write-Host ("[INFO] Parsing {0} log(s) with up to {1} parallel EI instance(s)..." -f $logs.Count, $MaxParallel)
 
-$script:Total       = $logs.Count
-$script:Done        = 0
-$script:Failed      = 0
-$script:Failures    = New-Object System.Collections.Generic.List[object]
-$script:Running     = New-Object System.Collections.Generic.List[object]
-$script:StatusRows  = New-Object int[] $logs.Count
-$script:ProgressRow = -1
-$script:SafeRow     = -1
+$script:Total    = $logs.Count
+$script:Done     = 0
+$script:Failed   = 0
+$script:Failures = New-Object System.Collections.Generic.List[object]
+$script:Running  = New-Object System.Collections.Generic.List[object]
 
-# Truncate a log name so the rendered line fits on one console row. We need to
-# stay within WindowWidth or the cursor wraps and our row-index tracking
-# desyncs with the buffer.
+# Truncate a log name so the rendered line fits on one console row. If the
+# line wraps onto a second row, the cursor's relative position desyncs from
+# what we think we wrote.
 function Format-LogName([string]$name) {
     $maxNameLen = $script:ConsoleWidth - 14
     if ($maxNameLen -lt 10) { $maxNameLen = 10 }
@@ -104,54 +80,51 @@ function Format-LogName([string]$name) {
     return $name
 }
 
-function Write-StatusLine([int]$row, [string]$status, [ConsoleColor]$color, [string]$logName) {
-    if (-not $script:Interactive) { return }
-    [Console]::SetCursorPosition(0, $row)
-    [Console]::Write('    [')
-    $orig = [Console]::ForegroundColor
-    [Console]::ForegroundColor = $color
-    [Console]::Write($status.PadRight(6))
-    [Console]::ForegroundColor = $orig
-    [Console]::Write('] ')
-    [Console]::Write((Format-LogName $logName))
-    $remaining = $script:ConsoleWidth - [Console]::CursorLeft - 1
-    if ($remaining -gt 0) { [Console]::Write((' ' * $remaining)) }
+function Format-StatusLine([string]$status, [string]$colorSeq, [string]$logName) {
+    return ("    [{0}{1}{2}] {3}" -f $colorSeq, $status.PadRight(6), $C_RESET, (Format-LogName $logName))
 }
 
-function Write-ProgressBar([int]$row, [int]$done, [int]$total) {
-    if (-not $script:Interactive) { return }
-    [Console]::SetCursorPosition(0, $row)
+function Format-ProgressBar([int]$done, [int]$total) {
     $width = 30
     if ($total -le 0) { $filled = 0; $pct = 0 }
     else {
         $filled = [Math]::Floor($width * $done / $total)
         $pct = [Math]::Floor(100 * $done / $total)
     }
-    [Console]::Write('[')
-    $orig = [Console]::ForegroundColor
-    [Console]::ForegroundColor = 'Green'
-    [Console]::Write(('#' * $filled))
-    [Console]::ForegroundColor = $orig
-    [Console]::Write(('-' * ($width - $filled)))
-    [Console]::Write(("] {0}/{1} ({2}%)" -f $done, $total, $pct))
-    $remaining = $script:ConsoleWidth - [Console]::CursorLeft - 1
-    if ($remaining -gt 0) { [Console]::Write((' ' * $remaining)) }
+    return ("[{0}{1}{2}{3}] {4}/{5} ({6}%)" -f `
+        $C_GREEN, ('#' * $filled), $C_RESET, ('-' * ($width - $filled)), $done, $total, $pct)
 }
 
-if ($script:Interactive) {
-    for ($i = 0; $i -lt $logs.Count; $i++) {
-        $script:StatusRows[$i] = [Console]::CursorTop
-        Write-StatusLine $script:StatusRows[$i] 'queued' 'Magenta' $logs[$i].Name
-        [Console]::WriteLine()
-    }
-    $script:ProgressRow = [Console]::CursorTop
-    Write-ProgressBar $script:ProgressRow 0 $logs.Count
-    [Console]::WriteLine()
-    $script:SafeRow = [Console]::CursorTop
+# After the initial render, the cursor is on a blank line BELOW the progress
+# bar. From that anchor:
+#   - the progress bar is exactly 1 line above
+#   - log row $i (0-indexed) is ($Total + 1 - $i) lines above
+# Update-Row / Update-Progress save the cursor, move up to the target row,
+# clear it, write the new content, then restore the cursor. `\e7` / `\e8`
+# (DEC save/restore cursor) is supported by every modern Windows terminal
+# including conpty / Windows Terminal / cmd on Win10+.
+function Update-Row([int]$logIndex, [string]$status, [string]$colorSeq, [string]$logName) {
+    if (-not $script:Interactive) { return }
+    $up = $script:Total + 1 - $logIndex
+    $line = Format-StatusLine $status $colorSeq $logName
+    [Console]::Write("${ESC}7${ESC}[${up}A`r${ESC}[2K${line}${ESC}8")
+}
 
-    # Hold the all-queued frame for a beat so the user can see it before any
-    # row flips to [start]. Without this, MaxParallel >= logs.Count repaints
-    # the entire table in under a millisecond.
+function Update-Progress() {
+    if (-not $script:Interactive) { return }
+    $bar = Format-ProgressBar $script:Done $script:Total
+    [Console]::Write("${ESC}7${ESC}[1A`r${ESC}[2K${bar}${ESC}8")
+}
+
+# Initial render: a full magenta [queued] list followed by an empty progress
+# bar. Then a blank "anchor" line where the cursor will rest. Pause briefly
+# so the queued state is on screen even when MaxParallel >= logs.Count.
+if ($script:Interactive) {
+    foreach ($log in $logs) {
+        [Console]::WriteLine((Format-StatusLine 'queued' $C_MAGENTA $log.Name))
+    }
+    [Console]::WriteLine((Format-ProgressBar 0 $logs.Count))
+    [Console]::WriteLine('')
     Start-Sleep -Milliseconds 500
 }
 
@@ -170,14 +143,14 @@ function Drain-One {
 
                 if ($exitCode -eq 0) {
                     if ($script:Interactive) {
-                        Write-StatusLine $script:StatusRows[$job.LogIndex] 'done' 'Green' $job.LogName
+                        Update-Row $job.LogIndex 'done' $C_GREEN $job.LogName
                     } else {
                         Write-Host ("    [done ] ({0}/{1}) {2}" -f $script:Done, $script:Total, $job.LogName)
                     }
                 } else {
                     $script:Failed++
                     if ($script:Interactive) {
-                        Write-StatusLine $script:StatusRows[$job.LogIndex] 'FAIL' 'Red' $job.LogName
+                        Update-Row $job.LogIndex 'FAIL' $C_RED $job.LogName
                     } else {
                         Write-Host ("    [FAIL ] ({0}/{1}) {2}" -f $script:Done, $script:Total, $job.LogName)
                         Write-Host ("    [WARN] EI returned exit {0} for {1}" -f $exitCode, $job.LogName)
@@ -193,7 +166,7 @@ function Drain-One {
                     })
                 }
 
-                Write-ProgressBar $script:ProgressRow $script:Done $script:Total
+                Update-Progress
 
                 Remove-Item -ErrorAction SilentlyContinue -LiteralPath $job.OutFile
                 Remove-Item -ErrorAction SilentlyContinue -LiteralPath $job.ErrFile
@@ -216,7 +189,7 @@ for ($idx = 0; $idx -lt $logs.Count; $idx++) {
     $errFile = "$outFile.err"
 
     if ($script:Interactive) {
-        Write-StatusLine $script:StatusRows[$idx] 'start' 'Yellow' $logName
+        Update-Row $idx 'start' $C_YELLOW $logName
     } else {
         Write-Host ("    [start] ({0}/{1}) {2}" -f ($idx + 1), $logs.Count, $logName)
     }
@@ -243,10 +216,6 @@ for ($idx = 0; $idx -lt $logs.Count; $idx++) {
 
 while ($script:Running.Count -gt 0) {
     [void](Drain-One -Blocking $true)
-}
-
-if ($script:Interactive) {
-    [Console]::SetCursorPosition(0, $script:SafeRow)
 }
 
 Write-Host ("[INFO] Parallel EI parsing complete. {0} succeeded, {1} failed." -f ($logs.Count - $script:Failed), $script:Failed)
