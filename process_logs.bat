@@ -47,9 +47,12 @@ if not exist "%CONFIG_FILE%" (
 set "GUILD_TAG="
 set "DISCORD_WEBHOOK_URL="
 set "MAX_PARALLEL_EI="
+set "LOG_SOURCE_DIR="
+set "MIN_LOG_SIZE_KB="
 call :load_config
 if not defined GUILD_TAG set "GUILD_TAG=OnLY"
 if not defined MAX_PARALLEL_EI set "MAX_PARALLEL_EI=0"
+if not defined MIN_LOG_SIZE_KB set "MIN_LOG_SIZE_KB=900"
 
 set "DISCORD_POSTED=0"
 set "DISCORD_REASON="
@@ -122,6 +125,12 @@ echo.
 if not exist "%LOGS_DIR%"    mkdir "%LOGS_DIR%"
 if not exist "%EI_JSON_DIR%" mkdir "%EI_JSON_DIR%"
 if not exist "%DROP_DIR%"    mkdir "%DROP_DIR%"
+
+if defined LOG_SOURCE_DIR (
+  echo [INFO] Auto-copying today's logs from: "!LOG_SOURCE_DIR!"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Copy-TodaysLogs.ps1" ^
+    -SourceDir "!LOG_SOURCE_DIR!" -DestDir "%LOGS_DIR%" -MinSizeKB %MIN_LOG_SIZE_KB%
+)
 
 del /q "%ROOT%*.zevtc" >nul 2>&1
 del /q "%ROOT%*.evtc"  >nul 2>&1
@@ -406,7 +415,9 @@ if not defined CFG_LINE goto :eof
 if "%CFG_LINE:~0,1%"=="#" goto :eof
 if /i "%CFG_LINE:~0,10%"=="GUILD_TAG="           set "GUILD_TAG=%CFG_LINE:~10%"
 if /i "%CFG_LINE:~0,20%"=="DISCORD_WEBHOOK_URL=" set "DISCORD_WEBHOOK_URL=%CFG_LINE:~20%"
-if /i "%CFG_LINE:~0,16%"=="MAX_PARALLEL_EI=" set "MAX_PARALLEL_EI=%CFG_LINE:~16%"
+if /i "%CFG_LINE:~0,16%"=="MAX_PARALLEL_EI="     set "MAX_PARALLEL_EI=%CFG_LINE:~16%"
+if /i "%CFG_LINE:~0,15%"=="LOG_SOURCE_DIR="      set "LOG_SOURCE_DIR=%CFG_LINE:~15%"
+if /i "%CFG_LINE:~0,16%"=="MIN_LOG_SIZE_KB="     set "MIN_LOG_SIZE_KB=%CFG_LINE:~16%"
 goto :eof
 
 :notify_discord
