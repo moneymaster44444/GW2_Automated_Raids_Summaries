@@ -172,6 +172,18 @@ try {
     Set-Content -LiteralPath $versionFile -Value $tag -Encoding ASCII
     Write-Host "[INFO] VERSION set to $tag."
 
+    $syncScript = Join-Path $InstallRoot 'Scripts\Sync-UserConfig.ps1'
+    $samplePath = Join-Path $InstallRoot 'sample.config.txt'
+    $userPath   = Join-Path $InstallRoot 'config.txt'
+    if ((Test-Path -LiteralPath $syncScript) -and (Test-Path -LiteralPath $samplePath) -and (Test-Path -LiteralPath $userPath)) {
+        Write-Host "[INFO] Merging any new config fields into config.txt..."
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $syncScript `
+            -SamplePath $samplePath -UserPath $userPath
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[WARN] Config sync exited $LASTEXITCODE; new fields may not have been added. Run process_logs.bat to retry."
+        }
+    }
+
     Write-Host ""
     Write-Host "[OK] Updated to $tag. Run process_logs.bat to rebuild EI and regenerate configs."
     exit 0
