@@ -3,3 +3,14 @@ DISCORD_WEBHOOK_URL=
 # MAX_PARALLEL_EI: how many Elite Insights instances to run in parallel.
 # 0 (or unset) = auto (about half of your CPU cores). Set to 1 to disable parallelism.
 MAX_PARALLEL_EI=0
+# LOG_SOURCE_DIR: optional folder to auto-copy today's arcDPS logs from.
+# When set, each run of process_logs.bat clears Raid_Logs of any prior
+# .zevtc/.evtc files and copies today's .zevtc/.evtc files (searched
+# recursively) that are larger than MIN_LOG_SIZE_KB from this folder.
+# Leave blank to disable; the pipeline then processes whatever is already
+# in Raid_Logs.
+LOG_SOURCE_DIR=
+# MIN_LOG_SIZE_KB: minimum size (in KB) a log file must exceed to be
+# auto-copied. Useful for filtering out short fights / wipes. Only applies
+# when LOG_SOURCE_DIR is set. Defaults to 900.
+MIN_LOG_SIZE_KB=900
