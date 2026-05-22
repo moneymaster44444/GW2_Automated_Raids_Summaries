@@ -4,30 +4,21 @@
 # recursively and copies every .zevtc / .evtc whose LastWriteTime falls on
 # today's date and whose size is strictly greater than MinSizeKB.
 #
-# Designed to be safe to call on every run: missing source folders just skip
-# with a warning so the pipeline can fall back to whatever is already in
-# Raid_Logs.
-#
-# Exit codes: 0 = success (including "source missing" and "no matches"),
-#             2 = bad parameters.
+# Designed to be safe to call on every run: a missing source folder just
+# logs a warning and skips, so the pipeline can fall back to whatever is
+# already in Raid_Logs.
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][string]$SourceDir,
-    [Parameter(Mandatory = $true)][string]$DestDir,
-    [Parameter(Mandatory = $false)][int]$MinSizeKB = 900
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$SourceDir,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$DestDir,
+    [int]$MinSizeKB = 900
 )
 
 $ErrorActionPreference = 'Stop'
 
-if ([string]::IsNullOrWhiteSpace($SourceDir)) {
-    Write-Error "SourceDir is required."
-    exit 2
-}
-if ([string]::IsNullOrWhiteSpace($DestDir)) {
-    Write-Error "DestDir is required."
-    exit 2
-}
+# arcDPS writes .zevtc (compressed) by default; .evtc is the uncompressed variant.
+$LogExtensions = @('.zevtc', '.evtc')
 
 if (-not (Test-Path -LiteralPath $DestDir)) {
     New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
@@ -35,7 +26,7 @@ if (-not (Test-Path -LiteralPath $DestDir)) {
 
 # Always clear prior-run logs so each run starts from a clean slate.
 Get-ChildItem -LiteralPath $DestDir -File -ErrorAction SilentlyContinue |
-    Where-Object { $_.Extension -eq '.zevtc' -or $_.Extension -eq '.evtc' } |
+    Where-Object { $_.Extension -in $LogExtensions } |
     Remove-Item -Force -ErrorAction SilentlyContinue
 
 if (-not (Test-Path -LiteralPath $SourceDir)) {
@@ -47,10 +38,11 @@ if (-not (Test-Path -LiteralPath $SourceDir)) {
 $today    = (Get-Date).Date
 $minBytes = [long]$MinSizeKB * 1024
 
+# @( ... ) keeps a single match as an array so the foreach below behaves consistently.
 $logFiles = @(
     Get-ChildItem -LiteralPath $SourceDir -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object {
-            ($_.Extension -eq '.zevtc' -or $_.Extension -eq '.evtc') -and
+            $_.Extension -in $LogExtensions -and
             $_.LastWriteTime.Date -eq $today -and
             $_.Length -gt $minBytes
         }
