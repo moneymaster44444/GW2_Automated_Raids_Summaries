@@ -11,7 +11,8 @@ MAX_PARALLEL_EI=0
 # whose LastWriteTime falls inside the active raid window (see RAID_HOURS_*)
 # and that are larger than MIN_LOG_SIZE_KB.
 # Leave blank to disable; the pipeline then processes whatever is already
-# in Raid_Logs.
+# in Raid_Logs. Must be an absolute path, e.g.:
+# LOG_SOURCE_DIR=C:\Users\YOUR_USER_NAME\Documents\Guild Wars 2\addons\arcdps\arcdps.cbtlogs\WvW (1)
 LOG_SOURCE_DIR=
 # MIN_LOG_SIZE_KB: minimum size (in KB) a log file must exceed to be
 # auto-copied. Useful for filtering out short fights / wipes. Only applies
