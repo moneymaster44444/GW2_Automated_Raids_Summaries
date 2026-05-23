@@ -77,6 +77,19 @@ $script:Failures = New-Object System.Collections.Generic.List[object]
 $script:Running  = New-Object System.Collections.Generic.List[object]
 
 # ---------------------------------------------------------------------------
+# dps.report /uploadContent rate limit: 25 requests per 60 seconds.
+# Each EI invocation performs exactly one upload, so we cap process launches
+# to 25 per rolling 60s window whenever parallelism is on. Single-threaded
+# runs (MaxParallel == 1) bypass this since one upload at a time can't exceed
+# the limit on any realistic hardware.
+# See https://dps.report/api
+# ---------------------------------------------------------------------------
+$script:RateLimitEnabled    = ($MaxParallel -ne 1)
+$script:RateLimitMax        = 25
+$script:RateLimitWindowSec  = 60
+$script:LaunchTimestamps    = New-Object System.Collections.Generic.Queue[DateTime]
+
+# ---------------------------------------------------------------------------
 # Rendering helpers
 # ---------------------------------------------------------------------------
 
@@ -132,6 +145,36 @@ function Report-Status([int]$logIndex, [string]$status, [string]$colorSeq, [stri
         $progress = if ($status -eq 'start') { $logIndex + 1 } else { $script:Done }
         Write-Host ("    [{0}] ({1}/{2}) {3}" -f $status.PadRight(5), $progress, $script:Total, $logName)
     }
+}
+
+if ($script:RateLimitEnabled) {
+    Write-Host ("[INFO] Throttling EI launches to {0}/{1}s to respect dps.report /uploadContent rate limit." -f $script:RateLimitMax, $script:RateLimitWindowSec)
+}
+
+# ---------------------------------------------------------------------------
+# Rate limiter
+# ---------------------------------------------------------------------------
+
+# Block until the rolling 60s window can admit another /uploadContent POST,
+# then record this launch's timestamp. UTC for monotonicity across DST shifts.
+function Wait-RateLimit {
+    if (-not $script:RateLimitEnabled) { return }
+    $announced = $false
+    while ($script:LaunchTimestamps.Count -ge $script:RateLimitMax) {
+        $oldest = $script:LaunchTimestamps.Peek()
+        $elapsed = ([DateTime]::UtcNow - $oldest).TotalSeconds
+        if ($elapsed -ge $script:RateLimitWindowSec) {
+            [void]$script:LaunchTimestamps.Dequeue()
+            continue
+        }
+        if (-not $announced -and -not $script:Interactive) {
+            $remaining = $script:RateLimitWindowSec - $elapsed
+            Write-Host ("    [RATE] Pausing ~{0:0.0}s (25 uploads in the last 60s)..." -f $remaining)
+            $announced = $true
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    $script:LaunchTimestamps.Enqueue([DateTime]::UtcNow)
 }
 
 # ---------------------------------------------------------------------------
@@ -210,6 +253,9 @@ for ($idx = 0; $idx -lt $script:Total; $idx++) {
     }
 
     $log = $logs[$idx]
+
+    Wait-RateLimit
+
     $outFile = [System.IO.Path]::GetTempFileName()
     $errFile = "$outFile.err"
 
