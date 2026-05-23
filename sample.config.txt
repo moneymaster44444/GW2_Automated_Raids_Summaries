@@ -2,11 +2,14 @@ GUILD_TAG=OnLY
 DISCORD_WEBHOOK_URL=
 # MAX_PARALLEL_EI: how many Elite Insights instances to run in parallel.
 # 0 (or unset) = auto (about half of your CPU cores). Set to 1 to disable parallelism.
+# When > 1, uploads to dps.report are throttled to 25 per 60 seconds to respect
+# the /uploadContent rate limit (see https://dps.report/api).
 MAX_PARALLEL_EI=0
-# LOG_SOURCE_DIR: optional folder to auto-copy today's arcDPS logs from.
+# LOG_SOURCE_DIR: optional folder to auto-copy raid logs from.
 # When set, each run of process_logs.bat clears Raid_Logs of any prior
-# .zevtc/.evtc files and copies today's .zevtc/.evtc files (searched
-# recursively) that are larger than MIN_LOG_SIZE_KB from this folder.
+# .zevtc/.evtc files and copies the .zevtc/.evtc files (searched recursively)
+# whose LastWriteTime falls inside the active raid window (see RAID_HOURS_*)
+# and that are larger than MIN_LOG_SIZE_KB.
 # Leave blank to disable; the pipeline then processes whatever is already
 # in Raid_Logs.
 LOG_SOURCE_DIR=
@@ -14,3 +17,30 @@ LOG_SOURCE_DIR=
 # auto-copied. Useful for filtering out short fights / wipes. Only applies
 # when LOG_SOURCE_DIR is set. Defaults to 900.
 MIN_LOG_SIZE_KB=900
+# RAID_HOURS_<DAY>: weekly raid windows used to pick which logs to auto-copy
+# when LOG_SOURCE_DIR is set. Format: "START-END" using 12-hour local time
+# (e.g. "7:30PM-9:30PM"). 24-hour ("19:30-21:30") and spaces ("7:30 PM - 9:30 PM")
+# are also accepted. A blank value means "no raid that day" - those logs are
+# never copied. Windows may cross midnight (e.g. "9:00PM-1:30AM"); the resulting
+# summary HTML is still dated by the raid's START date.
+#
+# When run after a raid ends, process_logs.bat picks the most recent window
+# whose start time is in the past, and copies logs from window-start up to "now"
+# (capped by the start of the next non-empty raid day). RAID_LOGS_GRACE_HOURS
+# bounds how far back we'll reach.
+#
+# RAID_HOURS_FRIDAY supports the special value "RESET" - resolved to the local
+# time corresponding to the upcoming Saturday 02:00 UTC (the WvW reset), so it
+# automatically shifts between 10:00PM (DST on) and 9:00PM (DST off) for users
+# whose machine clock is set to US Eastern. End is RESET + 2 hours.
+RAID_HOURS_MONDAY=
+RAID_HOURS_TUESDAY=7:30PM-9:30PM
+RAID_HOURS_WEDNESDAY=7:00PM-9:00PM
+RAID_HOURS_THURSDAY=7:30PM-9:30PM
+RAID_HOURS_FRIDAY=RESET
+RAID_HOURS_SATURDAY=7:30PM-9:30PM
+RAID_HOURS_SUNDAY=7:30PM-9:30PM
+# RAID_LOGS_GRACE_HOURS: if the most recent completed raid window ended more
+# than this many hours ago, no logs are copied. Prevents running process_logs.bat
+# on a quiet day from pulling in stale logs from days earlier.
+RAID_LOGS_GRACE_HOURS=24

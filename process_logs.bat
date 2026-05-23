@@ -49,6 +49,7 @@ set "DISCORD_WEBHOOK_URL="
 set "MAX_PARALLEL_EI="
 set "LOG_SOURCE_DIR="
 set "MIN_LOG_SIZE_KB="
+set "RAID_LOGS_GRACE_HOURS="
 call :load_config
 if not defined GUILD_TAG set "GUILD_TAG=OnLY"
 if not defined MAX_PARALLEL_EI set "MAX_PARALLEL_EI=0"
@@ -126,10 +127,41 @@ if not exist "%LOGS_DIR%"    mkdir "%LOGS_DIR%"
 if not exist "%EI_JSON_DIR%" mkdir "%EI_JSON_DIR%"
 if not exist "%DROP_DIR%"    mkdir "%DROP_DIR%"
 
+set "RAID_DATE_OVERRIDE="
 if defined LOG_SOURCE_DIR (
-  echo [INFO] Auto-copying today's logs from: "!LOG_SOURCE_DIR!"
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Copy-TodaysLogs.ps1" ^
-    -SourceDir "!LOG_SOURCE_DIR!" -DestDir "%LOGS_DIR%" -MinSizeKB %MIN_LOG_SIZE_KB%
+  echo [INFO] Resolving active raid window from config...
+  set "RW_TMP=%TEMP%\raidwindow_%RANDOM%_%RANDOM%.out"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Resolve-RaidWindow.ps1" ^
+    -ConfigFile "%CONFIG_FILE%" > "!RW_TMP!"
+  set "RW_STATUS="
+  set "RW_START="
+  set "RW_END="
+  set "RW_RAID_DATE="
+  set "RW_REASON="
+  set "RW_DAY_NAME="
+  for /f "usebackq tokens=1,* delims==" %%A in ("!RW_TMP!") do (
+    if /i "%%A"=="STATUS"    set "RW_STATUS=%%B"
+    if /i "%%A"=="START"     set "RW_START=%%B"
+    if /i "%%A"=="END"       set "RW_END=%%B"
+    if /i "%%A"=="RAID_DATE" set "RW_RAID_DATE=%%B"
+    if /i "%%A"=="DAY_NAME"  set "RW_DAY_NAME=%%B"
+    if /i "%%A"=="REASON"    set "RW_REASON=%%B"
+    if /i "%%A"=="REMARK"    echo [WARN] %%B
+  )
+  del /q "!RW_TMP!" >nul 2>&1
+  if /i "!RW_STATUS!"=="ok" (
+    echo [INFO] Active raid: !RW_DAY_NAME! ^(!RW_RAID_DATE!^) - !RW_REASON!
+    echo [INFO] Copy window: !RW_START!  -^>  !RW_END!
+    set "RAID_DATE_OVERRIDE=!RW_RAID_DATE!"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Copy-RaidLogs.ps1" ^
+      -SourceDir "!LOG_SOURCE_DIR!" -DestDir "%LOGS_DIR%" ^
+      -WindowStart "!RW_START!" -WindowEnd "!RW_END!" -MinSizeKB %MIN_LOG_SIZE_KB%
+  ) else (
+    echo [INFO] No raid logs to copy: !RW_REASON!
+    rem Clear Raid_Logs so we don't reprocess stale files from a prior run.
+    del /q "%LOGS_DIR%\*.zevtc" >nul 2>&1
+    del /q "%LOGS_DIR%\*.evtc"  >nul 2>&1
+  )
 )
 
 del /q "%ROOT%*.zevtc" >nul 2>&1
@@ -302,7 +334,10 @@ if exist "%TW_OUT%" (
   echo      %TW_OUT%
 
   set "DATE_TAG="
-  for /f "usebackq delims=" %%D in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Get-DateTag.ps1"`) do set "DATE_TAG=%%D"
+  if defined RAID_DATE_OVERRIDE set "DATE_TAG=!RAID_DATE_OVERRIDE!"
+  if not defined DATE_TAG (
+    for /f "usebackq delims=" %%D in (`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Get-DateTag.ps1"`) do set "DATE_TAG=%%D"
+  )
   if not defined DATE_TAG set "DATE_TAG=unknown"
   echo [INFO] Using date tag: !DATE_TAG!
 
@@ -413,11 +448,13 @@ goto :eof
 :parse_config_line
 if not defined CFG_LINE goto :eof
 if "%CFG_LINE:~0,1%"=="#" goto :eof
-if /i "%CFG_LINE:~0,10%"=="GUILD_TAG="           set "GUILD_TAG=%CFG_LINE:~10%"
-if /i "%CFG_LINE:~0,20%"=="DISCORD_WEBHOOK_URL=" set "DISCORD_WEBHOOK_URL=%CFG_LINE:~20%"
-if /i "%CFG_LINE:~0,16%"=="MAX_PARALLEL_EI="     set "MAX_PARALLEL_EI=%CFG_LINE:~16%"
-if /i "%CFG_LINE:~0,15%"=="LOG_SOURCE_DIR="      set "LOG_SOURCE_DIR=%CFG_LINE:~15%"
-if /i "%CFG_LINE:~0,16%"=="MIN_LOG_SIZE_KB="     set "MIN_LOG_SIZE_KB=%CFG_LINE:~16%"
+if /i "%CFG_LINE:~0,10%"=="GUILD_TAG="            set "GUILD_TAG=%CFG_LINE:~10%"
+if /i "%CFG_LINE:~0,20%"=="DISCORD_WEBHOOK_URL="  set "DISCORD_WEBHOOK_URL=%CFG_LINE:~20%"
+if /i "%CFG_LINE:~0,16%"=="MAX_PARALLEL_EI="      set "MAX_PARALLEL_EI=%CFG_LINE:~16%"
+if /i "%CFG_LINE:~0,15%"=="LOG_SOURCE_DIR="       set "LOG_SOURCE_DIR=%CFG_LINE:~15%"
+if /i "%CFG_LINE:~0,16%"=="MIN_LOG_SIZE_KB="      set "MIN_LOG_SIZE_KB=%CFG_LINE:~16%"
+if /i "%CFG_LINE:~0,22%"=="RAID_LOGS_GRACE_HOURS=" set "RAID_LOGS_GRACE_HOURS=%CFG_LINE:~22%"
+rem RAID_HOURS_* are not loaded into this batch; Resolve-RaidWindow.ps1 reads them directly.
 goto :eof
 
 :notify_discord
