@@ -33,14 +33,14 @@ MIN_LOG_SIZE_KB=900
 # RAID_HOURS_FRIDAY supports the special value "RESET" - resolved to the local
 # time corresponding to the upcoming Saturday 02:00 UTC (the WvW reset), so it
 # automatically shifts between 10:00PM (DST on) and 9:00PM (DST off) for users
-# whose machine clock is set to US Eastern. End is RESET + 2 hours.
+# whose machine clock is set to US Eastern. End is RESET + 2.5 hours.
 RAID_HOURS_MONDAY=
-RAID_HOURS_TUESDAY=7:30PM-9:30PM
-RAID_HOURS_WEDNESDAY=7:00PM-9:00PM
-RAID_HOURS_THURSDAY=7:30PM-9:30PM
+RAID_HOURS_TUESDAY=7:30PM-10:00PM
+RAID_HOURS_WEDNESDAY=7:00PM-9:30PM
+RAID_HOURS_THURSDAY=7:30PM-10:00PM
 RAID_HOURS_FRIDAY=RESET
-RAID_HOURS_SATURDAY=7:30PM-9:30PM
-RAID_HOURS_SUNDAY=7:30PM-9:30PM
+RAID_HOURS_SATURDAY=7:30PM-10:00PM
+RAID_HOURS_SUNDAY=7:30PM-10:00PM
 # RAID_LOGS_GRACE_HOURS: if the most recent completed raid window ended more
 # than this many hours ago, no logs are copied. Prevents running process_logs.bat
 # on a quiet day from pulling in stale logs from days earlier.
