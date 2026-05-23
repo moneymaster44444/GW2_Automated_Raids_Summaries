@@ -1,17 +1,20 @@
-# Auto-populates Raid_Logs from a user-configured arcDPS log folder.
+# Auto-populates Raid_Logs from a user-configured arcDPS log folder, filtered
+# by the active raid window resolved by Resolve-RaidWindow.ps1.
 #
 # Clears any existing .zevtc / .evtc files from DestDir, then walks SourceDir
-# recursively and copies every .zevtc / .evtc whose LastWriteTime falls on
-# today's date and whose size is strictly greater than MinSizeKB.
+# recursively and copies every .zevtc / .evtc whose LastWriteTime falls inside
+# [WindowStart, WindowEnd] and whose size is strictly greater than MinSizeKB.
 #
-# Designed to be safe to call on every run: a missing source folder just
-# logs a warning and skips, so the pipeline can fall back to whatever is
-# already in Raid_Logs.
+# Designed to be safe to call on every run: a missing source folder just logs
+# a warning and skips, so the pipeline can fall back to whatever is already in
+# Raid_Logs.
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$SourceDir,
     [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$DestDir,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$WindowStart,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$WindowEnd,
     [int]$MinSizeKB = 900
 )
 
@@ -35,7 +38,9 @@ if (-not (Test-Path -LiteralPath $SourceDir)) {
     exit 0
 }
 
-$today    = (Get-Date).Date
+$invariant = [System.Globalization.CultureInfo]::InvariantCulture
+$start = [DateTime]::Parse($WindowStart, $invariant)
+$end   = [DateTime]::Parse($WindowEnd,   $invariant)
 $minBytes = [long]$MinSizeKB * 1024
 
 # @( ... ) keeps a single match as an array so the foreach below behaves consistently.
@@ -43,7 +48,8 @@ $logFiles = @(
     Get-ChildItem -LiteralPath $SourceDir -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object {
             $_.Extension -in $LogExtensions -and
-            $_.LastWriteTime.Date -eq $today -and
+            $_.LastWriteTime -ge $start -and
+            $_.LastWriteTime -le $end -and
             $_.Length -gt $minBytes
         }
 )
@@ -58,5 +64,5 @@ foreach ($file in $logFiles) {
     }
 }
 
-Write-Host ("[INFO] Auto-copied {0} log file(s) from '{1}' (today, > {2} KB)." -f $copied, $SourceDir, $MinSizeKB)
+Write-Host ("[INFO] Auto-copied {0} log file(s) from '{1}' (window {2:yyyy-MM-dd HH:mm} -> {3:yyyy-MM-dd HH:mm}, > {4} KB)." -f $copied, $SourceDir, $start, $end, $MinSizeKB)
 exit 0
