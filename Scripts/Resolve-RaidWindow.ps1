@@ -70,13 +70,14 @@ function ConvertFrom-TimeSpec {
 # Friday "RESET" -> local time corresponding to the Saturday 02:00 UTC that
 # immediately follows the target Friday. WvW reset is fixed at that UTC moment
 # regardless of DST, so converting through ToLocalTime() yields 9PM or 10PM
-# (Eastern) automatically.
+# (Eastern) automatically. Window length matches the other default raid days
+# (start through start + 2.5 hours).
 function Get-FridayResetWindow {
     param([datetime]$FridayDate)
     $sat = $FridayDate.Date.AddDays(1)
     $resetUtc = [DateTime]::new($sat.Year, $sat.Month, $sat.Day, 2, 0, 0, [DateTimeKind]::Utc)
     $start = [DateTime]::SpecifyKind($resetUtc.ToLocalTime(), [DateTimeKind]::Unspecified)
-    return @{ Start = $start; End = $start.AddHours(2) }
+    return @{ Start = $start; End = $start.AddMinutes(150) }
 }
 
 # Returns @{ Start; End } in local time, or $null when the day is disabled or
