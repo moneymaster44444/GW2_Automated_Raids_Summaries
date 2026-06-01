@@ -7,12 +7,11 @@ using GW2EIBuilders.HtmlModels.HTMLCharts;
 using GW2EIBuilders.HtmlModels.HTMLMetaData;
 using GW2EIEvtcParser;
 using GW2EIEvtcParser.EIData;
-using GW2EIEvtcParser.LogLogic;
 using GW2EIEvtcParser.Extensions;
+using GW2EIEvtcParser.LogLogic;
 using GW2EIEvtcParser.ParsedData;
 using Tracing;
 using static GW2EIEvtcParser.ParserHelper;
-using static GW2EIEvtcParser.SkillIDs;
 
 [assembly: InternalsVisibleTo("GW2EIParser.tst")]
 namespace GW2EIBuilders.HtmlModels;
@@ -97,7 +96,7 @@ internal class LogDataDto
             InstanceStart = log.LogMetadata.DateInstanceStartStd;
             InstanceIP = log.LogMetadata.LogInstanceIP;
         }
-        var mapIDEvent = log.CombatData.GetMapIDEvents().FirstOrDefault();
+        var mapIDEvent = log.CombatData.GetMapIDEvent();
         if (mapIDEvent != null)
         {
             MapID = mapIDEvent.MapID;
@@ -113,14 +112,10 @@ internal class LogDataDto
         RecordedAccountBy = log.LogMetadata.PoVAccount;
         var fractaleScaleEvent = log.CombatData.GetFractalScaleEvent();
         FractalScale = fractaleScaleEvent != null ? fractaleScaleEvent.Scale : 0;
-        var shardEvent = log.CombatData.GetShardEvents().FirstOrDefault();
-        if (shardEvent != null)
+        var region = log.LogMetadata.Region;
+        if (region != ArcDPSEnums.RegionEnum.Unknown)
         {
-            var region = shardEvent.RegionToString();
-            if (region != null)
-            {
-                Region = region;
-            }
+            Region = ArcDPSEnums.RegionToString(region);
         }
         UploadLinks = [uploadLinks.DPSReportEILink];
         if (log.LogMetadata.UsedExtensions.Any())

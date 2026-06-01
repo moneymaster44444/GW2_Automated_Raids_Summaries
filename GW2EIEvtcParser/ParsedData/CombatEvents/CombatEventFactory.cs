@@ -105,7 +105,7 @@ internal static class CombatEventFactory
                 metaDataEvents.GW2BuildEvent = new GW2BuildEvent(stateChangeEvent);
                 break;
             case StateChange.ShardID:
-                metaDataEvents.ShardEvents.Add(new ShardEvent(stateChangeEvent, metaDataEvents.MapIDEvents.FirstOrDefault(), apiController));
+                metaDataEvents.ShardEvent = new ShardEvent(stateChangeEvent, metaDataEvents.MapIDEvent, apiController);
                 break;
             case StateChange.Reward:
 #if !NO_REWARDS
@@ -123,11 +123,41 @@ internal static class CombatEventFactory
                 metaDataEvents.AttackTargetEventByAttackTarget[aTEvt.AttackTarget] = aTEvt;
                 break;
             case StateChange.Targetable:
-                var tarEvt = new TargetableEvent(stateChangeEvent, agentData);
-                Add(statusEvents.TargetableEventsBySrc, tarEvt.Src, tarEvt);
+                if (stateChangeEvent.DstAgent < 2) // 2 means unsupported, we ignore those
+                {
+                    var tarEvt = new TargetableEvent(stateChangeEvent, agentData);
+                    if (statusEvents.TargetableEventsBySrc.TryGetValue(tarEvt.Src, out var targetableEvents))
+                    {
+                        var lastTargetable = targetableEvents[^1];
+                        if (lastTargetable.Targetable != tarEvt.Targetable)
+                        {
+                            targetableEvents.Add(tarEvt);
+                        }
+                    }
+                    else
+                    {
+                        Add(statusEvents.TargetableEventsBySrc, tarEvt.Src, tarEvt);
+                    }
+                }
+                if (evtcVersion.Build >= ArcDPSBuilds.VisibilityInTargetableStateChange && evtcVersion.Build < ArcDPSBuilds.VisibilityOnStateChange && stateChangeEvent.Value < 2) // 2 means unsupported, we ignore those
+                {
+                    var visEvt = new VisibilityEvent(stateChangeEvent, agentData);
+                    if (statusEvents.VisibilityEventsBySrc.TryGetValue(visEvt.Src, out var visibilityEvents))
+                    {
+                        var lastVisibility = visibilityEvents[^1];
+                        if (lastVisibility.Visible != visEvt.Visible)
+                        {
+                            visibilityEvents.Add(visEvt);
+                        }
+                    }
+                    else
+                    {
+                        Add(statusEvents.VisibilityEventsBySrc, visEvt.Src, visEvt);
+                    }
+                }
                 break;
             case StateChange.MapID:
-                metaDataEvents.MapIDEvents.Add(new MapIDEvent(stateChangeEvent));
+                metaDataEvents.MapIDEvent = new MapIDEvent(stateChangeEvent);
                 break;
             case StateChange.MapChange:
                 metaDataEvents.MapChangeEvents.Add(new MapChangeEvent(stateChangeEvent));
@@ -361,6 +391,11 @@ internal static class CombatEventFactory
                             metaDataEvents.EmoteGUIDEventsByEmoteID[emoteGUID.EmoteID] = emoteGUID;
                             metaDataEvents.EmoteGUIDEventsByGUID[emoteGUID.GUID] = emoteGUID;
                             break;
+                        case ContentLocal.Transformation:
+                            var transformationGUID = new TransformationGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.TransformationGUIDEventsByTransformationID[transformationGUID.TransformationID] = transformationGUID;
+                            metaDataEvents.TransformationGUIDEventsByGUID[transformationGUID.GUID] = transformationGUID;
+                            break;
                         default:
                             break;
                     }
@@ -483,6 +518,71 @@ internal static class CombatEventFactory
             case StateChange.EffectAgentRemove:
                 _ = new EffectEventAgentRemove(stateChangeEvent, agentData, statusEvents.AgentEffectEventsByTrackingID);
                 break;
+            case StateChange.Transformation:
+                var transformationEvent = new TransformationEvent(stateChangeEvent, agentData, metaDataEvents.TransformationGUIDEventsByTransformationID);
+                if (transformationEvent.IsEnd)
+                {
+                    // Set end to transformation
+                    if (statusEvents.TransformationEventsBySrc.TryGetValue(transformationEvent.Src, out var srcTransformations))
+                    {
+                        var last = srcTransformations.LastOrDefault();
+                        last?.SetEndTime(transformationEvent.Time);
+                    }
+                } 
+                else
+                {
+                    if (statusEvents.TransformationEventsBySrc.TryGetValue(transformationEvent.Src, out var srcTransformations))
+                    {
+                        // sanity check
+                        // A new transformation but the previous one did not get an end event, set it to end at new transformation time
+                        var last = srcTransformations.LastOrDefault();
+                        if (last != null && last.EndNotSet)
+                        {
+                            last.SetEndTime(transformationEvent.Time);
+                        }
+                    }
+                    Add(statusEvents.TransformationEventsBySrc, transformationEvent.Src, transformationEvent);
+                    Add(statusEvents.TransformationEventsByTransformationID, transformationEvent.TransformationID, transformationEvent);
+                }
+                break;
+            case StateChange.WvWTeams:
+                metaDataEvents.WvWTeamsEvent = new WvWTeamsEvent(stateChangeEvent);
+                break;
+            case StateChange.WvWObjectiveStatus:
+                var wvwObjectiveStatus = new WvWObjectiveStatusEvent(stateChangeEvent);
+                if (wvwObjectiveStatus.IsUnknown)
+                {
+                    break;
+                }
+                long key = (wvwObjectiveStatus.MapID << 16) + wvwObjectiveStatus.ObjectiveID;
+                if (statusEvents.WvWObjectiveStatusEventsByKey.TryGetValue(key, out var existingStatus))
+                {
+                    existingStatus.AddOwners(wvwObjectiveStatus);
+                } 
+                else
+                {
+                    statusEvents.WvWObjectiveStatusEventsByKey[key] = wvwObjectiveStatus;
+                    statusEvents.WvWObjectiveStatusEvents.Add(wvwObjectiveStatus);
+                }
+                break;
+            case StateChange.StealthChange:
+                if (stateChangeEvent.DstAgent < 2) // 2 means unsupported, we ignore those
+                {
+                    var visEvt = new VisibilityEvent(stateChangeEvent, agentData);
+                    if (statusEvents.VisibilityEventsBySrc.TryGetValue(visEvt.Src, out var visibilityEvents))
+                    {
+                        var lastVisibility = visibilityEvents[^1];
+                        if (lastVisibility.Visible != visEvt.Visible)
+                        {
+                            visibilityEvents.Add(visEvt);
+                        }
+                    }
+                    else
+                    {
+                        Add(statusEvents.VisibilityEventsBySrc, visEvt.Src, visEvt);
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -570,6 +670,7 @@ internal static class CombatEventFactory
         {
             SkillIDs.ArcDPSGenericEmote => new EmoteEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd, emoteGUIDict),
             SkillIDs.ArcDPSGenericGadgetInteract => new GadgetInteractEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd),
+            SkillIDs.ArcDPSGenericPickUp => new BundlePickUpEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd),
             _ => new AnimatedCastEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd),
         };
     }
