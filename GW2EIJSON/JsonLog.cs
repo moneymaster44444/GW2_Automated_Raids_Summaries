@@ -196,6 +196,11 @@ public class JsonLog
         public bool NonMultiplier;
 
         /// <summary>
+        /// True if the modifier is just a counter, its <see cref="JsonDamageModifierData.JsonDamageModifierItem.DamageGain"/> will be damage done under the conditions of the counter
+        /// </summary>
+        public bool IsCounter;
+
+        /// <summary>
         /// True if the modifier is skill based
         /// </summary>
         public bool SkillBased;
@@ -296,7 +301,6 @@ public class JsonLog
     /// <summary>
     /// Region on which the PoV is located. \n
     /// Unknown if missing. \n
-    /// China is not currently tested.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Region;
@@ -508,5 +512,13 @@ public class JsonLog
     /// Contains combat replay related meta data
     /// </summary>
     /// <seealso cref="JsonCombatReplayMetaData"/>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public JsonCombatReplayMetaData? CombatReplayMetaData;
+
+    /// <summary>
+    /// WvW map data, only relevant for WvW logs. \n
+    /// <see cref="JsonWvWMapData"/>>
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public JsonWvWMapData? WvWMapData;
 }

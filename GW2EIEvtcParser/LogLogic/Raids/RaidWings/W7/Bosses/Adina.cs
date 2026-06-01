@@ -1,5 +1,4 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
@@ -60,7 +59,7 @@ internal class Adina : TheKeyOfAhdashim
         // Handle potentially wrongly associated logs
         if (logStartNPCUpdate != null)
         {
-            if (agentData.GetNPCsByID(TargetID.Sabir).Any(sabir => combatData.Any(evt => evt.IsNonZeroDamageEvent() && evt.DstMatchesAgent(sabir) && agentData.GetAgent(evt.SrcAgent, evt.Time).GetFinalMaster().IsPlayer)))
+            if (agentData.GetStableSpeciesByID(TargetID.Sabir).Any(sabir => combatData.Any(evt => evt.IsNonZeroDamageEvent() && evt.DstMatchesAgent(sabir) && agentData.GetAgent(evt.SrcAgent, evt.Time).GetFinalMaster().IsPlayer)))
             {
                 return new Sabir((int)TargetID.Sabir);
             }
@@ -164,7 +163,7 @@ internal class Adina : TheKeyOfAhdashim
 
     internal static void FindPlatforms(AgentData agentData)
     {
-        foreach (var agent in agentData.GetAgentByType(AgentItem.AgentType.Gadget))
+        foreach (var agent in agentData.GetAgentByType(AgentItem.AgentType.VolatileSpecies))
         {
             if (agent.IsUnamedSpecies() && (agent.HitboxWidth == 170 || agent.HitboxWidth == 232) && agent.HitboxHeight == 2)
             {
@@ -235,7 +234,7 @@ internal class Adina : TheKeyOfAhdashim
             foreach (var pillarShockwave in pillarShockwaves)
             {
                 long start = pillarShockwave.Time;
-                var currentAdina = log.AgentData.GetNPCsByID(TargetID.Adina).FirstOrDefault(x => x.InAwareTimes(start));
+                var currentAdina = log.AgentData.GetStableSpeciesByID(TargetID.Adina).FirstOrDefault(x => x.InAwareTimes(start));
                 if (currentAdina == null)
                 {
                     continue;
@@ -255,7 +254,7 @@ internal class Adina : TheKeyOfAhdashim
             foreach ( var destroyed in explicitelyDestroyed)
             {
                 long end = destroyed.Time;
-                var currentAdina = log.AgentData.GetNPCsByID(TargetID.Adina).FirstOrDefault(x => x.InAwareTimes(end));
+                var currentAdina = log.AgentData.GetStableSpeciesByID(TargetID.Adina).FirstOrDefault(x => x.InAwareTimes(end));
                 if (currentAdina == null)
                 {
                     continue;
@@ -515,7 +514,7 @@ internal class Adina : TheKeyOfAhdashim
         return phases;
     }
 
-    internal override CombatReplayMap GetCombatMapInternal(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations)
+    internal override CombatReplayMap GetCombatMapInternal(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations, CombatReplayMap? parentMap = null)
     {
         string mainPhase1;
         if (log.CombatData.TryGetEffectEventsByGUIDs([EffectGUIDs.AdinaPillarDestroyedByProjectiles, EffectGUIDs.AdinaPillarDestroyedByAdina], out _))
@@ -595,7 +594,10 @@ internal class Adina : TheKeyOfAhdashim
             {
                 arenaDecorations.Add(new ArenaDecoration((start, log.LogData.LogEnd), mainPhase1, crMap));
             }
-
+            if (parentMap != null)
+            {
+                AddDefaultViewpointOnParentFromChild(crMap, parentMap, LogID);
+            }
         }
         catch (Exception)
         {
