@@ -113,6 +113,7 @@ internal static class JsonLogBuilder
             Icon = damageModifier.Icon,
             Description = damageModifier.Tooltip,
             NonMultiplier = !damageModifier.Multiplier,
+            IsCounter = damageModifier.IsCounter,
             SkillBased = damageModifier.SkillBased,
             Approximate = damageModifier.Approximate,
             Incoming = damageModifier.Incoming,
@@ -138,7 +139,7 @@ internal static class JsonLogBuilder
         jsonLog.IsInstanceLog = log.LogData.IsInstance;
         jsonLog.EIEncounterID = log.LogData.Logic.LogID;
         jsonLog.EILogID = log.LogData.Logic.LogID;
-        var mapIDEvent = log.CombatData.GetMapIDEvents().FirstOrDefault();
+        var mapIDEvent = log.CombatData.GetMapIDEvent();
         if (mapIDEvent != null)
         {
             jsonLog.MapID = mapIDEvent.MapID;
@@ -189,17 +190,13 @@ internal static class JsonLogBuilder
         jsonLog.Targetless = log.LogData.Logic.Targetless;
         jsonLog.GW2Build = log.LogMetadata.GW2Build;
         jsonLog.UploadLinks = [uploadLinks.DPSReportEILink];
-        jsonLog.Language = log.LogMetadata.Language;
-        jsonLog.LanguageID = (byte)log.LogMetadata.LanguageID;
+        jsonLog.Language = ArcDPSEnums.LanguageToString(log.LogMetadata.Language);
+        jsonLog.LanguageID = (byte)log.LogMetadata.Language;
         jsonLog.FractalScale = log.CombatData.GetFractalScaleEvent() != null ? log.CombatData.GetFractalScaleEvent()!.Scale : 0;
-        var shardEvent = log.CombatData.GetShardEvents().FirstOrDefault();
-        if (shardEvent != null)
+        var region = log.LogMetadata.Region;
+        if (region != ArcDPSEnums.RegionEnum.Unknown)
         {
-            var region = shardEvent.RegionToString();
-            if (region != null)
-            {
-                jsonLog.Region = region;
-            }
+            jsonLog.Region = ArcDPSEnums.RegionToString(region);
         }
         jsonLog.IsCM = mainPhase.IsCM || mainPhase.IsLegendaryCM;
         jsonLog.IsLegendaryCM = mainPhase.IsLegendaryCM;
@@ -293,6 +290,15 @@ internal static class JsonLogBuilder
             }
             jsonLog.UsedExtensions = usedExtensions;
         }
+        if (log.CanCombatReplay)
+        {
+            jsonLog.CombatReplayMetaData = JsonCombatReplayMetaDataBuilder.BuildJsonCombatReplayMetaData(log, settings);
+        }
+        var wvwTeams = log.CombatData.GetWvWTeamsEvent();
+        if (wvwTeams != null)
+        {
+            jsonLog.WvWMapData = JsonWvWMapDataBuilder.BuildJsonWvWMapData(log, wvwTeams, teamMap);
+        }
         //
         jsonLog.PersonalBuffs = personalBuffs.ToDictionary(x => x.Key, x => (IReadOnlyCollection<long>)x.Value);
         jsonLog.PersonalDamageMods = personalDamageMods.ToDictionary(x => x.Key, x => (IReadOnlyCollection<long>)x.Value);
@@ -324,10 +330,6 @@ internal static class JsonLogBuilder
             jsonLog.TeamMap = teamDesc;
         }
         //
-        if (log.CanCombatReplay)
-        {
-            jsonLog.CombatReplayMetaData = JsonCombatReplayMetaDataBuilder.BuildJsonCombatReplayMetaData(log, settings);
-        }
         return jsonLog;
     }
 
