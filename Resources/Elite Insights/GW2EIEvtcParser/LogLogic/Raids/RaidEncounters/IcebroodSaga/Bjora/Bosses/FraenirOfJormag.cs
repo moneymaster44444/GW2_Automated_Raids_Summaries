@@ -5,7 +5,6 @@ using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.LogLogic.LogLogicUtils;
 using static GW2EIEvtcParser.LogLogic.LogLogicPhaseUtils;
-using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.ParserHelpers.LogImages;
 using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.SpeciesIDs;
@@ -50,12 +49,12 @@ internal class FraenirOfJormag : Bjora
         LogID |= 0x000002;
     }
 
-    internal override CombatReplayMap GetCombatMapInternal(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations)
+    internal override CombatReplayMap GetCombatMapInternal(ParsedEvtcLog log, CombatReplayDecorationContainer arenaDecorations, CombatReplayMap? parentMap = null)
     {
         var crMap = new CombatReplayMap(
                         (905, 789),
                         (-833, -1780, 2401, 1606));
-        AddArenaDecorationsPerEncounter(log, arenaDecorations, LogID, CombatReplayFraenirOfJormag, crMap);
+        AddArenaDecorationsPerEncounter(log, arenaDecorations, LogID, CombatReplayFraenirOfJormag, crMap, parentMap);
         return crMap;
     }
 
@@ -165,12 +164,11 @@ internal class FraenirOfJormag : Bjora
 
     internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, LogData logData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, ExtensionHandler> extensions)
     {
-        var boundElementals = combatData.Where(x => MaxHealthUpdateEvent.GetMaxHealth(x) == 14940 && x.IsStateChange == StateChange.MaxHealthUpdate).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Where(x => x.Type == AgentItem.AgentType.Gadget && x.HitboxHeight == 300 && x.HitboxWidth == 100 && x.FirstAware > 10);
-        IReadOnlyList<AgentItem> spawnedElementals = agentData.GetNPCsByID(TargetID.IcebroodElemental);
+        var boundElementals = combatData.Where(x => MaxHealthUpdateEvent.GetMaxHealth(x) == 14940 && x.IsStateChange == StateChange.MaxHealthUpdate).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Where(x => x.Type == AgentItem.AgentType.VolatileSpecies && x.HitboxHeight == 300 && x.HitboxWidth == 100 && x.FirstAware > 10);
+        IReadOnlyList<AgentItem> spawnedElementals = agentData.GetStableSpeciesByID(TargetID.IcebroodElemental);
         foreach (AgentItem boundElemental in boundElementals)
         {
             IEnumerable<CombatItem> boundElementalKilled = combatData.Where(x => x.SrcMatchesAgent(boundElemental) && x.IsStateChange == StateChange.HealthUpdate && HealthUpdateEvent.GetHealthPercent(x) == 0);
-            boundElemental.OverrideType(AgentItem.AgentType.NPC, agentData);
             boundElemental.OverrideID(TargetID.BoundIcebroodElemental, agentData);
 
             // If a Bound Icebrood Elemental gets killed, the log contains a Health update event of 0
