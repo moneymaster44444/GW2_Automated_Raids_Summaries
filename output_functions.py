@@ -1801,6 +1801,11 @@ def build_personal_damage_modifier_summary(top_stats: dict, personal_damage_mod_
 		# Add the columns to the header
 		header += "|!Party |!Name | !Prof | !{{FightTime}} |"
 		
+		# Sort modifier IDs by their display name
+		prof_mod_list = sorted(
+			prof_mod_list,
+			key=lambda mod_id: damage_mod_data[mod_id]["name"]
+		)
 		for mod_id in prof_mod_list:
 			# Get the icon and name of the modifier
 			icon = damage_mod_data[mod_id]["icon"]
@@ -1876,12 +1881,22 @@ def build_shared_damage_modifier_summary(top_stats: dict, damage_mod_data: dict,
 	The function then pushes the table to the tid_list for output.
 	"""
 	shared_mod_list = []
-	for modifier in damage_mod_data:
-		if damage_mod_data[modifier]['shared'] and modifier not in shared_mod_list:
-			shared_mod_list.append(modifier)
+	if caption == "Shared Incoming Damage Modifiers":
+		for modifier in damage_mod_data:
+			if damage_mod_data[modifier]['shared'] and damage_mod_data[modifier]['incoming'] and modifier not in shared_mod_list:
+				shared_mod_list.append(modifier)
+	else:
+		for modifier in damage_mod_data:
+			if damage_mod_data[modifier]['shared'] and not damage_mod_data[modifier]['incoming'] and modifier not in shared_mod_list:
+				shared_mod_list.append(modifier)
 
 	rows = []
 	
+	# Sort modifier IDs by their display name
+	shared_mod_list = sorted(
+		shared_mod_list,
+		key=lambda mod_id: damage_mod_data[mod_id]["name"]
+	)	
 	rows.append('<div style="overflow-y: auto; width: 100%; overflow-x:auto;">\n\n')
 	header = "|thead-dark table-caption-top table-hover sortable|k\n"
 	header += f"| {caption} |c\n"
@@ -1915,7 +1930,7 @@ def build_shared_damage_modifier_summary(top_stats: dict, damage_mod_data: dict,
 			else:
 				row += f" - |"
 		rows.append(row)
-	rows.append(f"|{caption} Damage Modifiers Table|c")
+	rows.append(f"|{caption} Table|c")
 
 	rows.append("\n\n</div>")
 
@@ -1951,7 +1966,7 @@ def build_skill_cast_summary(skill_casts_by_role: dict, skill_data: dict, captio
 		header = "|thead-dark table-caption-top table-hover sortable|k\n"
 		header += f"| {caption} |c\n"
 		header += "|!Name | !Prof |!Account | !{{FightTime}} |!"
-		apm_entry = f'<div class="xtooltip"> APM <span class="xtooltiptext" style="padding-left: 5px">Total Actions per Minute /<br>APM without Autos /<br>APM without Autos & Procs</span></div>'
+		apm_entry = f'<div class="xtooltip"> APM <span class="xtooltiptext" style="padding-left: 5px"> APM without Autos & Procs/<br>APM without Autos /<br>Total Actions per Minute</span></div>'
 		header += f" {apm_entry}|"
 		# Add the skill names to the header
 		i = 0
@@ -1983,7 +1998,7 @@ def build_skill_cast_summary(skill_casts_by_role: dict, skill_data: dict, captio
 			apm_no_auto = round(player_data['total_no_auto']/time_mins)
 			apm_no_auto_no_procs = round(player_data['total_no_auto_no_proc']/time_mins)
 		
-			row = f"|{name} |" + " " + f"{profession} " + f"|{account} |" + f"{time_secs:,.1f}|" + f" {apm}/{apm_no_auto}/{apm_no_auto_no_procs} |"
+			row = f"|{name} |" + " " + f"{profession} " + f"|{account} |" + f"{time_secs:,.1f}|" + f" {apm_no_auto_no_procs}/{apm_no_auto}/{apm} |"
 			# Add the skill casts per minute to the row
 			i = 0
 			for skill, count in sorted_cast_skills:
@@ -2298,8 +2313,8 @@ def build_damage_modifiers_menu_tid(datetime: str) -> None:
 	caption = "Damage Modifiers"
 	creator = "Drevarr@github.com"
 
-	text = (f"<<tabs '[[{datetime}-Shared-Damage-Mods]] [[{datetime}-Profession_Damage_Mods]]' "
-			f"'{datetime}-Shared-Damage-Mods' '$:/temp/tab1'>>")
+	text = (f"<<tabs '[[{datetime}-Shared-Incoming-Damage-Modifiers]] [[{datetime}-Shared-Outgoing-Damage-Modifiers]] [[{datetime}-Profession_Damage_Mods]]' "
+			f"'{datetime}-Shared-Incoming-Damage-Modifiers' '$:/temp/tab1'>>")
 
 	append_tid_for_output(
 		create_new_tid_from_template(title, caption, text, tags, creator=creator),
