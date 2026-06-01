@@ -1,5 +1,4 @@
 ﻿using GW2EIEvtcParser.EIData;
-using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
@@ -614,7 +613,7 @@ public static class ParserHelper
 
     public static bool IsKnownMinionID(AgentItem minion, Spec spec)
     {
-        if (minion.Type == AgentItem.AgentType.Gadget)
+        if (minion.Type == AgentItem.AgentType.VolatileSpecies)
         {
             return false;
         }
