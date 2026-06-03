@@ -1,0 +1,13 @@
+# Python dependencies required to run the EI Combiner (Resources\EI Combiner\tw5_top_stats.py).
+#
+# This file is intentionally kept at the repo root, NOT inside Resources\EI Combiner,
+# because that folder is a pristine git subtree of the upstream EI Combiner project.
+# We layer our own dependency manifest on top of it here.
+#
+# process_logs.bat checks for these on startup and installs any that are missing
+# (a one-time install; subsequent runs detect them and skip).
+#
+# Left unpinned so a fresh Python install just pulls compatible wheels.
+requests
+xlsxwriter
+glicko2
