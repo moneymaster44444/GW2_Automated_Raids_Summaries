@@ -27,6 +27,7 @@ set "EI_CSPROJ=%ROOT%Resources\Elite Insights\GW2EIParserCLI\GW2EIParserCLI.cspr
 rem --- EI Combiner (Python) ---
 set "PYTHON_EXE=python"
 set "COMBINER_PY=%ROOT%Resources\EI Combiner\tw5_top_stats.py"
+set "REQUIREMENTS_TXT=%ROOT%requirements.txt"
 
 rem --- User config (NAME=VALUE pairs; lines starting with # are ignored) ---
 set "CONFIG_FILE=%ROOT%config.txt"
@@ -109,6 +110,55 @@ if "%NEED_EI_BUILD%"=="1" (
     echo         %ROOT%build_elite_insights.bat
     goto :fail
   )
+)
+
+rem ==========================================
+rem Ensure Python deps for EI Combiner (idempotent)
+rem ==========================================
+
+echo [SETUP] Checking Python dependencies for EI Combiner...
+"%PYTHON_EXE%" -c "import requests, xlsxwriter, glicko2" >nul 2>&1
+if errorlevel 1 (
+  echo [SETUP] One or more packages missing; installing...
+  if exist "%REQUIREMENTS_TXT%" (
+    "%PYTHON_EXE%" -m pip install --disable-pip-version-check -r "%REQUIREMENTS_TXT%"
+  ) else (
+    "%PYTHON_EXE%" -m pip install --disable-pip-version-check requests xlsxwriter glicko2
+  )
+  if errorlevel 1 (
+    echo [WARN] Could not install Python dependencies automatically.
+    echo        The EI Combiner step may fail. Install manually with:
+    echo            "%PYTHON_EXE%" -m pip install -r "%REQUIREMENTS_TXT%"
+  ) else (
+    echo [OK] Python dependencies installed.
+  )
+) else (
+  echo [OK] Python dependencies already present.
+)
+
+rem ==========================================
+rem Ensure TiddlyWiki CLI (idempotent)
+rem ==========================================
+
+echo [SETUP] Checking TiddlyWiki CLI...
+where tiddlywiki >nul 2>&1
+if errorlevel 1 (
+  echo [SETUP] tiddlywiki not found; installing globally via npm...
+  where npm >nul 2>&1
+  if errorlevel 1 (
+    echo [WARN] npm not found on PATH. Install Node.js from https://nodejs.org and re-run.
+  ) else (
+    call npm install -g tiddlywiki
+    where tiddlywiki >nul 2>&1
+    if errorlevel 1 (
+      echo [WARN] tiddlywiki still not found after install.
+      echo        Open a NEW terminal so PATH refreshes, then re-run.
+    ) else (
+      echo [OK] tiddlywiki installed.
+    )
+  )
+) else (
+  echo [OK] tiddlywiki already present.
 )
 
 rem ==========================================
@@ -287,7 +337,9 @@ set "AUTO_TID=%ROOT%auto-import.tid"
 
 where tiddlywiki >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] "tiddlywiki" not found on PATH. Did you run: npm install -g tiddlywiki ?
+  echo [ERROR] "tiddlywiki" not found on PATH.
+  echo         Auto-install may have failed, or PATH has not refreshed yet.
+  echo         Run: npm install -g tiddlywiki  then open a new terminal and re-run.
   goto :fail
 )
 
