@@ -571,33 +571,78 @@ public partial class MainForm : Form
         txtConsole.Clear();
         lblStatus.Text = "Updating…";
         AppendConsole($"[GUI] Updating to {latest}…");
+
+        int code;
         try
         {
             using var cts = new CancellationTokenSource();
-            var code = await _updateService.RunUpdateAsync(AppendConsole, cts.Token);
-            if (code == 0)
-            {
-                lblStatus.Text = $"Updated to {latest} — restart via setup.bat.";
-                MessageBox.Show(this,
-                    $"Updated to {latest}.\n\nClose GW2 Raid Summaries and run setup.bat to finish applying the " +
-                    "update (it rebuilds Elite Insights and the GUI).",
-                    "Update complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                lblStatus.Text = $"Update failed (exit {code}).";
-                MessageBox.Show(this, $"The update did not complete (exit {code}).\nSee the Output pane for details.",
-                    "Update failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            code = await _updateService.RunUpdateAsync(AppendConsole, cts.Token);
         }
         catch (Exception ex)
         {
+            SetUpdating(false);
             lblStatus.Text = "Update failed.";
             AppendConsole("[GUI] Update error: " + ex.Message);
+            MessageBox.Show(this, "Update failed:\n\n" + ex.Message,
+                "Update failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
         }
-        finally
+        SetUpdating(false);
+
+        if (code != 0)
         {
-            SetUpdating(false);
+            lblStatus.Text = $"Update failed (exit {code}).";
+            MessageBox.Show(this, $"The update did not complete (exit {code}).\nSee the Output pane for details.",
+                "Update failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        lblStatus.Text = $"Updated to {latest}.";
+        var restart = MessageBox.Show(this,
+            $"Updated to {latest}.\n\nThe app needs to restart to finish applying the update — this rebuilds " +
+            "Elite Insights and the GUI. Restart now?",
+            "Update complete", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+        if (restart == DialogResult.Yes)
+        {
+            RelaunchViaSetup();
+        }
+        else
+        {
+            lblStatus.Text = "Update downloaded — run setup.bat to finish.";
+            MessageBox.Show(this,
+                "When you're ready, close GW2 Raid Summaries and run setup.bat to finish applying the update " +
+                "(it rebuilds Elite Insights and the GUI).",
+                "Finish the update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
+    // Launches a detached helper that waits for THIS process to exit (so the
+    // rebuild isn't blocked by the locked exe), then runs setup.bat - which
+    // rebuilds and relaunches the GUI. Then closes the app.
+    private void RelaunchViaSetup()
+    {
+        try
+        {
+            var pid = Environment.ProcessId;
+            var setupBat = Path.Combine(_paths.RepoRoot, "setup.bat").Replace("'", "''");
+            var command =
+                $"Wait-Process -Id {pid} -Timeout 120 -ErrorAction SilentlyContinue; & '{setupBat}'";
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("powershell.exe")
+            {
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{command}\"",
+                UseShellExecute = true,
+                WorkingDirectory = _paths.RepoRoot,
+            });
+            Application.Exit();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this,
+                "Couldn't restart automatically:\n\n" + ex.Message +
+                "\n\nPlease close the app and run setup.bat to finish the update.",
+                "Restart needed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
