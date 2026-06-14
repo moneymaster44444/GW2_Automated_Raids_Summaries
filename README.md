@@ -24,6 +24,41 @@ A batch process that automates [Elite Insights](https://github.com/baaron4/GW2-E
    ```
    You will find the resulting HTML file in `Raids_Summaries`.
 
+## GUI
+
+The GUI is the main way to use this project. To set it up and launch it, run:
+```bat
+setup.bat
+```
+This builds the GUI app and starts it. On the first launch the GUI also runs the
+one-time setup (Elite Insights, config files, dependencies) for you. It is a
+small Windows app that wraps `process_logs.bat`:
+
+- **Logs tab** — drag and drop `.zevtc` / `.evtc` files into `Raid_Logs`, remove a
+  selection, or clear the folder.
+- **Settings tab** — edit `config.txt` (guild tag, Discord webhook, log source
+  folder, parallelism, and the weekly raid windows) with checkboxes, number
+  fields, and time pickers. Comments in `config.txt` are preserved on save.
+- **Run these logs** processes whatever is currently in `Raid_Logs`.
+  **Run scheduled logs** first auto-copies from `LOG_SOURCE_DIR` for the active
+  raid window (the same behavior a scheduled run uses), then processes. The live
+  pipeline output streams in the Output pane.
+
+For an app-like launcher with the guild icon (and no console window), run this
+once:
+```bat
+powershell -ExecutionPolicy Bypass -File Scripts\Create-Launcher-Shortcut.ps1
+```
+It builds the app and creates a **GW2 Raid Summaries** shortcut at the repo root
+that you can double-click like any other program. Add `-Desktop` to also place a
+copy on your Desktop.
+
+The GUI requires the **.NET 8 SDK**, which you already need to build Elite
+Insights. The first launch compiles the app, so it may take a moment. On a
+brand-new install, the first time you open the GUI it runs one-time setup
+(building Elite Insights and installing tools) in a progress window before the
+main app is ready — this only happens once.
+
 ## Updating
 
 To pull the latest release:
@@ -71,6 +106,13 @@ fields to `sample.config.txt`, copy them into your `config.txt` manually.
 - `process_logs.bat`
   
   Processes your arcDPS logs by running them through Elite Insights and EI Combiner.  
+  Accepts an optional run mode as its first argument:
+  - *(no argument)* — auto-copy from `LOG_SOURCE_DIR` when it is set, otherwise
+    process whatever is already in `Raid_Logs` (unchanged legacy behavior).
+  - `--manual` — skip the auto-copy and process the current `Raid_Logs` contents.
+  - `--scheduled` — force the raid-window auto-copy from `LOG_SOURCE_DIR`
+    (requires it to be set), then process. Used by the GUI's two run buttons.
+  
   Produces a combined JSON file (`Drag_and_Drop_Log_Summary_for_############.json`) in (`Raids_Summaries`) that can be dragged into:  
   ```
   Resources\EI Combiner\Example_Output\Top_Stats_Index.html

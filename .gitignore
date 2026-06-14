@@ -35,6 +35,9 @@ packages/
 Thumbs.db
 Desktop.ini
 
+# Generated launcher shortcut (machine-specific absolute paths)
+*.lnk
+
 # === IDE configs ===
 .vscode/
 .idea/
