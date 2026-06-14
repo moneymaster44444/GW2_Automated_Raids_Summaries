@@ -25,6 +25,7 @@ public partial class MainForm
     // Run bar
     private Button btnRunManual = null!;
     private Button btnRunScheduled = null!;
+    private ToolTip runBarTooltip = null!;
     private Button btnCancel = null!;
     private Label lblStatus = null!;
     private GifIndicator runSpinner = null!;
@@ -222,6 +223,12 @@ public partial class MainForm
 
         btnRunScheduled = MakeButton("▶  Run scheduled logs", OnRunScheduled);
         btnRunScheduled.MinimumSize = new Size(170, 36);
+
+        runBarTooltip = new ToolTip { ShowAlways = true, InitialDelay = 400, AutoPopDelay = 9000, ReshowDelay = 100 };
+        runBarTooltip.SetToolTip(btnRunManual,
+            "Process the logs currently listed above (the contents of the Raid_Logs folder).");
+        runBarTooltip.SetToolTip(btnRunScheduled,
+            "Auto-copy logs from your log source folder for the current raid window, then process them.");
 
         btnCancel = MakeButton("Cancel", OnCancel);
         btnCancel.MinimumSize = new Size(80, 36);
