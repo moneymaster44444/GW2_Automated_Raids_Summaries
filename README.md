@@ -44,14 +44,13 @@ small Windows app that wraps `process_logs.bat`:
   raid window (the same behavior a scheduled run uses), then processes. The live
   pipeline output streams in the Output pane.
 
-For an app-like launcher with the guild icon (and no console window), run this
-once:
+On the first run, `setup.bat` also creates an app-like **GW2 Raid Summaries**
+shortcut (with the guild icon, no console window) at the repo root that you can
+double-click like any other program. To recreate it later, or to also place a
+copy on your Desktop, run:
 ```bat
-powershell -ExecutionPolicy Bypass -File Scripts\Create-Launcher-Shortcut.ps1
+powershell -ExecutionPolicy Bypass -File Scripts\Create-Launcher-Shortcut.ps1 -Desktop
 ```
-It builds the app and creates a **GW2 Raid Summaries** shortcut at the repo root
-that you can double-click like any other program. Add `-Desktop` to also place a
-copy on your Desktop.
 
 The GUI requires the **.NET 8 SDK**, which you already need to build Elite
 Insights. The first launch compiles the app, so it may take a moment. On a

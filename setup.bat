@@ -36,6 +36,13 @@ if not exist "%EXE%" (
   exit /b 1
 )
 
+rem --- Create an app-like launcher shortcut at the repo root (first run only) ---
+set "LNK=%ROOT%GW2 Raid Summaries.lnk"
+if not exist "%LNK%" (
+  echo [SETUP] Creating "GW2 Raid Summaries" launcher shortcut...
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%Scripts\Create-Launcher-Shortcut.ps1"
+)
+
 start "" "%EXE%" "%ROOT_NOBS%"
 endlocal
 exit /b 0
