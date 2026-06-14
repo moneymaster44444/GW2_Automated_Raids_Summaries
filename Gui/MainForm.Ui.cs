@@ -228,7 +228,7 @@ public partial class MainForm
         runBarTooltip.SetToolTip(btnRunManual,
             "Process the logs currently listed above (the contents of the Raid_Logs folder).");
         runBarTooltip.SetToolTip(btnRunScheduled,
-            "Auto-copy logs from your log source folder for the current raid window, then process them.");
+            "Auto-copy logs from your log source folder to Raid_Logs folder, then process them.");
 
         btnCancel = MakeButton("Cancel", OnCancel);
         btnCancel.MinimumSize = new Size(80, 36);
