@@ -38,7 +38,10 @@ small Windows app that wraps `process_logs.bat`:
   selection, or clear the folder.
 - **Settings tab** — edit `config.txt` (guild tag, Discord webhook, log source
   folder, parallelism, and the weekly raid windows) with checkboxes, number
-  fields, and time pickers. Comments in `config.txt` are preserved on save.
+  fields, and time pickers. Comments in `config.txt` are preserved on save. It
+  also shows the current version and has a **Check for updates** button that
+  applies the latest release (the same as `update.bat`, with progress shown in
+  the Output pane); your logs, summaries, and `config.txt` are preserved.
 - **Run these logs** processes whatever is currently in `Raid_Logs`.
   **Run scheduled logs** first auto-copies from `LOG_SOURCE_DIR` for the active
   raid window (the same behavior a scheduled run uses), then processes. The live

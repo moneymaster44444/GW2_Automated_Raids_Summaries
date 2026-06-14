@@ -13,6 +13,7 @@ public partial class MainForm : Form
     private readonly AppPaths _paths;
     private readonly RaidLogsManager _logs;
     private readonly PipelineRunner _runner;
+    private readonly UpdateService _updateService;
     private ConfigFile _config;
 
     // Per-day state for round-tripping unmodified raid-hours values.
@@ -29,6 +30,7 @@ public partial class MainForm : Form
         _paths = paths;
         _logs = new RaidLogsManager(paths);
         _runner = new PipelineRunner(paths);
+        _updateService = new UpdateService(paths);
         _config = ConfigFile.Load(paths);
 
         BuildUi();
@@ -509,6 +511,106 @@ public partial class MainForm : Form
         if (Directory.Exists(txtLogSource.Text)) dlg.SelectedPath = txtLogSource.Text;
         if (dlg.ShowDialog(this) == DialogResult.OK)
             txtLogSource.Text = dlg.SelectedPath;
+    }
+
+    // ------------------------------------------------------------- Updates ---
+
+    private async void OnCheckForUpdates(object? sender, EventArgs e)
+    {
+        if (_runner.IsRunning) return;
+
+        btnCheckUpdates.Enabled = false;
+        btnRunManual.Enabled = false;
+        btnRunScheduled.Enabled = false;
+        lblStatus.Text = "Checking for updates…";
+        runSpinner.Start();
+
+        UpdateService.CheckResult result;
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            result = await _updateService.CheckAsync(cts.Token);
+        }
+        finally
+        {
+            runSpinner.Stop();
+            btnCheckUpdates.Enabled = true;
+            btnRunManual.Enabled = true;
+            btnRunScheduled.Enabled = true;
+        }
+
+        if (result.Error != null)
+        {
+            lblStatus.Text = "Update check failed.";
+            MessageBox.Show(this, "Couldn't check for updates:\n\n" + result.Error,
+                "Check for updates", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (!result.UpdateAvailable)
+        {
+            lblStatus.Text = $"Up to date ({result.Current}).";
+            MessageBox.Show(this, $"You're on the latest version ({result.Current}).",
+                "Check for updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        lblStatus.Text = $"Update available: {result.Latest}.";
+        var go = MessageBox.Show(this,
+            $"An update is available.\n\n    Current:  {result.Current}\n    Latest:   {result.Latest}\n\n" +
+            "Download and apply it now? Your Raid_Logs, Raids_Summaries, and config.txt are preserved.\n\n" +
+            "After updating, close the app and run setup.bat to finish (it rebuilds Elite Insights and the GUI).",
+            "Update available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        if (go == DialogResult.Yes)
+            await RunUpdateAsync(result.Latest!);
+    }
+
+    private async Task RunUpdateAsync(string latest)
+    {
+        SetUpdating(true);
+        txtConsole.Clear();
+        lblStatus.Text = "Updating…";
+        AppendConsole($"[GUI] Updating to {latest}…");
+        try
+        {
+            using var cts = new CancellationTokenSource();
+            var code = await _updateService.RunUpdateAsync(AppendConsole, cts.Token);
+            if (code == 0)
+            {
+                lblStatus.Text = $"Updated to {latest} — restart via setup.bat.";
+                MessageBox.Show(this,
+                    $"Updated to {latest}.\n\nClose GW2 Raid Summaries and run setup.bat to finish applying the " +
+                    "update (it rebuilds Elite Insights and the GUI).",
+                    "Update complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                lblStatus.Text = $"Update failed (exit {code}).";
+                MessageBox.Show(this, $"The update did not complete (exit {code}).\nSee the Output pane for details.",
+                    "Update failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            lblStatus.Text = "Update failed.";
+            AppendConsole("[GUI] Update error: " + ex.Message);
+        }
+        finally
+        {
+            SetUpdating(false);
+        }
+    }
+
+    // Like a run, but no Cancel: a release update should not be interrupted
+    // mid-replace, so once confirmed it runs to completion.
+    private void SetUpdating(bool updating)
+    {
+        btnRunManual.Enabled = !updating;
+        btnRunScheduled.Enabled = !updating;
+        tabSettings.Enabled = !updating;
+        UseWaitCursor = updating;
+        if (updating) runSpinner.Start();
+        else runSpinner.Stop();
     }
 
     private int GetInt(string key, int fallback)

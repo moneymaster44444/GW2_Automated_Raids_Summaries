@@ -14,6 +14,28 @@ public sealed class AppPaths
     public string ConfigFile => Path.Combine(RepoRoot, "config.txt");
     public string SampleConfigFile => Path.Combine(RepoRoot, "sample.config.txt");
 
+    public string VersionFile => Path.Combine(RepoRoot, "VERSION");
+    public string CheckReleaseScript => Path.Combine(RepoRoot, "Scripts", "Check-Latest-Release.ps1");
+    public string UpdateScript => Path.Combine(RepoRoot, "Scripts", "Update-FromRelease.ps1");
+
+    /// <summary>Reads the first non-blank line of the VERSION file, or "(unknown)".</summary>
+    public string ReadVersion()
+    {
+        try
+        {
+            if (File.Exists(VersionFile))
+            {
+                foreach (var line in File.ReadAllLines(VersionFile))
+                    if (!string.IsNullOrWhiteSpace(line)) return line.Trim();
+            }
+        }
+        catch
+        {
+            // Fall through to the unknown sentinel.
+        }
+        return "(unknown)";
+    }
+
     private string EiRootDir => Path.Combine(RepoRoot, "Resources", "Elite Insights");
     private string EiCliDir => Path.Combine(EiRootDir, "GW2EI.bin", "Release", "CLI");
     public string EliteInsightsConf => Path.Combine(RepoRoot, "Resources", "Config", "EliteInsights.conf");
