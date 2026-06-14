@@ -51,6 +51,8 @@ public partial class MainForm
     private ToolTip raidHoursTooltip = null!;
     private Button btnSaveConfig = null!;
     private Button btnRevertConfig = null!;
+    private Label lblVersion = null!;
+    private Button btnCheckUpdates = null!;
 
     private void BuildUi()
     {
@@ -342,8 +344,18 @@ public partial class MainForm
         btnSaveConfig = MakeButton("Save settings", OnSaveConfig);
         btnSaveConfig.Font = new Font(Font, FontStyle.Bold);
         btnRevertConfig = MakeButton("Reload from config file", OnRevertConfig);
+        lblVersion = new Label
+        {
+            Text = "Version " + _paths.ReadVersion(),
+            AutoSize = true,
+            ForeColor = SystemColors.GrayText,
+            Margin = new Padding(28, 9, 8, 0),
+        };
+        btnCheckUpdates = MakeButton("Check for updates", OnCheckForUpdates);
         saveBar.Controls.Add(btnSaveConfig);
         saveBar.Controls.Add(btnRevertConfig);
+        saveBar.Controls.Add(lblVersion);
+        saveBar.Controls.Add(btnCheckUpdates);
 
         tabSettings.Controls.Add(body);
         tabSettings.Controls.Add(saveBar);
