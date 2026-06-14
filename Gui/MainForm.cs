@@ -180,10 +180,10 @@ public partial class MainForm : Form
         if (mode == RunMode.Scheduled && string.IsNullOrWhiteSpace(_config.Get("LOG_SOURCE_DIR")))
         {
             MessageBox.Show(
-                "Scheduled runs auto-copy logs from LOG_SOURCE_DIR, but it is not set.\n\n" +
-                "Set LOG_SOURCE_DIR on the Settings tab, or use \"Run these logs\" to process " +
+                "Scheduled runs auto-copy logs from your log source folder, but it isn't set.\n\n" +
+                "Set \"Log source folder\" on the Settings tab, or use \"Run these logs\" to process " +
                 "the logs currently in Raid_Logs.",
-                "LOG_SOURCE_DIR not set", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                "Log source folder not set", MessageBoxButtons.OK, MessageBoxIcon.Information);
             tabs.SelectedTab = tabSettings;
             return;
         }
@@ -507,7 +507,7 @@ public partial class MainForm : Form
 
     private void OnBrowseLogSource(object? sender, EventArgs e)
     {
-        using var dlg = new FolderBrowserDialog { Description = "Select your arcDPS log folder (LOG_SOURCE_DIR)" };
+        using var dlg = new FolderBrowserDialog { Description = "Select your arcDPS log folder" };
         if (Directory.Exists(txtLogSource.Text)) dlg.SelectedPath = txtLogSource.Text;
         if (dlg.ShowDialog(this) == DialogResult.OK)
             txtLogSource.Text = dlg.SelectedPath;
