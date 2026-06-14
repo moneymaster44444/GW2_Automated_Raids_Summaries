@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>GW2RaidsGui</RootNamespace>
+    <AssemblyName>GW2RaidsGui</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Deterministic>true</Deterministic>
+    <!-- Icon for the .exe (Explorer / taskbar). Regenerate with Scripts\Build-GuiIcon.ps1. -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Same icon embedded so the form can set its window icon at runtime. -->
+    <EmbeddedResource Include="app.ico" />
+    <!-- Bongo cat "working" indicator, embedded so it ships with the exe. -->
+    <EmbeddedResource Include="..\bongo-cat.gif">
+      <LogicalName>GW2RaidsGui.bongo-cat.gif</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

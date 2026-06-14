@@ -8,6 +8,31 @@ rem ==========================================
 rem --- Resolve repo root (this script must live at repo root) ---
 set "ROOT=%~dp0"
 
+rem --- Run mode (optional first arg): --manual | --scheduled ---
+rem   (no arg)      Legacy behavior: auto-copy from LOG_SOURCE_DIR if it is set
+rem                 in config.txt, otherwise process whatever is in Raid_Logs.
+rem   --manual / -m Skip the auto-copy; process the current Raid_Logs contents.
+rem   --scheduled   Force the raid-window auto-copy from LOG_SOURCE_DIR
+rem        / -s     (requires LOG_SOURCE_DIR to be set), then process.
+set "RUN_MODE="
+if /i "%~1"=="--manual"    set "RUN_MODE=manual"
+if /i "%~1"=="--scheduled" set "RUN_MODE=scheduled"
+if /i "%~1"=="--setup"     set "RUN_MODE=setup"
+if /i "%~1"=="-m"          set "RUN_MODE=manual"
+if /i "%~1"=="-s"          set "RUN_MODE=scheduled"
+if /i "%~1"=="--help"      set "RUN_MODE=help"
+if /i "%~1"=="-h"          set "RUN_MODE=help"
+if /i "%~1"=="/?"          set "RUN_MODE=help"
+if "%RUN_MODE%"=="help" (
+  call :print_usage
+  exit /b 0
+)
+if not "%~1"=="" if not defined RUN_MODE (
+  echo [ERROR] Unknown argument: %~1
+  call :print_usage
+  exit /b 1
+)
+
 rem --- Canonical paths ---
 set "LOGS_DIR=%ROOT%Raid_Logs"
 set "EI_JSON_DIR=%ROOT%Raids_Summaries\EI_json_output"
@@ -162,6 +187,17 @@ if errorlevel 1 (
 )
 
 rem ==========================================
+rem First-time setup only (GUI --setup): everything above this point has
+rem ensured configs, the EI CLI, Python deps, and TiddlyWiki. Exit before
+rem touching any logs.
+rem ==========================================
+if /i "%RUN_MODE%"=="setup" (
+  echo.
+  echo [SETUP] First-time setup complete.
+  exit /b 0
+)
+
+rem ==========================================
 rem Normal pipeline start
 rem ==========================================
 
@@ -178,7 +214,26 @@ if not exist "%EI_JSON_DIR%" mkdir "%EI_JSON_DIR%"
 if not exist "%DROP_DIR%"    mkdir "%DROP_DIR%"
 
 set "RAID_DATE_OVERRIDE="
-if defined LOG_SOURCE_DIR (
+
+rem --- Decide whether to run the scheduled raid-window auto-copy step ---
+set "DO_AUTOCOPY=0"
+if /i "%RUN_MODE%"=="scheduled" (
+  if not defined LOG_SOURCE_DIR (
+    echo [ERROR] --scheduled requires LOG_SOURCE_DIR to be set in config.txt.
+    echo         Set LOG_SOURCE_DIR to your arcDPS log folder, or use --manual
+    echo         to process the logs currently in Raid_Logs.
+    goto :fail
+  )
+  set "DO_AUTOCOPY=1"
+) else if /i "%RUN_MODE%"=="manual" (
+  rem Manual mode: never auto-copy; process whatever is in Raid_Logs.
+  set "DO_AUTOCOPY=0"
+) else (
+  rem Default/legacy: auto-copy only when LOG_SOURCE_DIR is configured.
+  if defined LOG_SOURCE_DIR set "DO_AUTOCOPY=1"
+)
+
+if "%DO_AUTOCOPY%"=="1" (
   echo [INFO] Resolving active raid window from config...
   set "RW_TMP=%TEMP%\raidwindow_%RANDOM%_%RANDOM%.out"
   powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SCRIPTS_DIR%\Resolve-RaidWindow.ps1" ^
@@ -486,6 +541,21 @@ exit /b 1
 rem ==========================================
 rem Subroutines
 rem ==========================================
+
+:print_usage
+echo Usage: process_logs.bat [--manual ^| --scheduled]
+echo.
+echo   (no argument)  Auto-copy logs from LOG_SOURCE_DIR when it is set in
+echo                  config.txt; otherwise process whatever is already in
+echo                  Raid_Logs. (Legacy behavior - unchanged.)
+echo   --manual, -m   Skip the auto-copy step and process the logs currently
+echo                  in Raid_Logs as-is.
+echo   --scheduled,   Force the raid-window auto-copy from LOG_SOURCE_DIR
+echo     -s           (requires LOG_SOURCE_DIR to be set), then process.
+echo   --setup        Run first-time setup only (build Elite Insights, create
+echo                  configs, install dependencies) and exit. Used by the GUI.
+echo   --help, -h     Show this help.
+goto :eof
 
 :load_config
 rem Parse NAME=VALUE pairs from CONFIG_FILE. Lines starting with # are ignored.
