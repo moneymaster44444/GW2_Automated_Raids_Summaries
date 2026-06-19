@@ -89,6 +89,10 @@ internal class Escort : StrongholdOfTheFaithful
         //
         return phases;
     }
+    protected override IReadOnlyList<TargetID> GetSuccessCheckIDs()
+    {
+        return [];
+    }
 
     internal static IReadOnlyList<SubPhasePhaseData> ComputePhases(ParsedEvtcLog log, SingleActor? mcLeod, IReadOnlyList<SingleActor> targets, EncounterPhaseData encounterPhase, bool requirePhases)
     {
@@ -144,7 +148,7 @@ internal class Escort : StrongholdOfTheFaithful
 
     internal static void FindMines(AgentData agentData, List<CombatItem> combatData)
     {
-        var mineAgents = combatData.Where(x => MaxHealthUpdateEvent.GetMaxHealth(x) == 1494 && x.IsStateChange == StateChange.MaxHealthUpdate).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Where(x => x.Type == AgentItem.AgentType.VolatileSpecies && x.HitboxWidth == 100 && x.HitboxHeight == 300);
+        var mineAgents = combatData.Where(x => MaxHealthUpdateEvent.GetMaxHealth(x) == 1494 && x.IsStateChange == StateChange.MaxHealthUpdate).Select(x => agentData.GetAgent(x.SrcAgent, x.Time)).Where(x => x.Type == AgentItem.AgentType.VolatileSpecies && x.HitboxWidth == 100);
         foreach (AgentItem mine in mineAgents)
         {
             mine.OverrideID(TargetID.Mine, agentData);

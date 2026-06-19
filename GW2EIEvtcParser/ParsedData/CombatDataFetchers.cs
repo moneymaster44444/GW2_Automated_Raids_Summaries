@@ -608,6 +608,13 @@ partial class CombatData
     {
         return GetTimeValueOrEmpty(_animatedCastData, caster);
     }
+    /// <summary>
+    /// Returns list of cast events from skill
+    /// </summary>
+    public IReadOnlyList<AnimatedCastEvent> GetAnimatedCastData(long skillID)
+    {
+        return _animatedCastDataByID.GetValueOrEmpty(skillID);
+    }
 
     /// <summary>
     /// Returns list of instant cast events done by Agent
@@ -630,13 +637,6 @@ partial class CombatData
     public IReadOnlyList<WeaponSwapEvent> GetWeaponSwapData(AgentItem caster)
     {
         return GetTimeValueOrEmpty(_weaponSwapData, caster);
-    }
-    /// <summary>
-    /// Returns list of cast events from skill
-    /// </summary>
-    public IReadOnlyList<AnimatedCastEvent> GetAnimatedCastData(long skillID)
-    {
-        return _animatedCastDataByID.GetValueOrEmpty(skillID);
     }
     #region GADGET INTERACT
     /// <summary>
@@ -791,6 +791,22 @@ partial class CombatData
         return emoteEvents.Count > 0;
     }
     #endregion EMOTES
+    #region GADGET ANIMATION
+    /// <summary>
+    /// Returns list of gadget animation events done by Agent
+    /// </summary>
+    public IReadOnlyList<GadgetAnimationEvent> GetGadgetAnimationData(AgentItem caster)
+    {
+        return GetTimeValueOrEmpty(_gadgetAnimationEventsByGadget, caster);
+    }
+    /// <summary>
+    /// Returns list of gadget animation events from token 
+    /// </summary>
+    public IReadOnlyList<GadgetAnimationEvent> GetGadgetAnimationData(ulong token)
+    {
+        return _gadgetAnimationEventsByToken.GetValueOrEmpty(token);
+    }
+    #endregion GADGET ANIMATION
     #endregion CAST
     #region MOVEMENTS
     public IReadOnlyList<MovementEvent> GetMovementData(AgentItem src)
@@ -1240,4 +1256,16 @@ partial class CombatData
         return GetTimeValueOrEmpty(_statusEvents.MissileDamagingEventsBySrc, src);
     }
     #endregion MISSILE
+
+    #region GADGET_CAPTURE
+    public IReadOnlyList<GadgetCaptureEvent> GetGadgetCaptureEvents()
+    {
+        return _statusEvents.GadgetCaptureEvents;
+    }
+    public IReadOnlyList<GadgetCaptureEvent> GetGadgetCaptureEventsBySrc(AgentItem src)
+    {
+        return GetTimeValueOrEmpty(_statusEvents.GadgetCaptureEventsBySrc, src);
+    }
+
+    #endregion GADGET_CAPTURE
 }
