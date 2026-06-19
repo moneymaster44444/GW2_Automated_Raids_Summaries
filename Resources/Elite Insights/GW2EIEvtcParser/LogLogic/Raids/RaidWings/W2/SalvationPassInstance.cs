@@ -52,7 +52,7 @@ internal class SalvationPassInstance : SalvationPass
 
     internal override void CheckSuccess(CombatData combatData, AgentData agentData, LogData logData, IReadOnlyCollection<AgentItem> playerAgents, LogData.LogSuccessHandler successHandler)
     {
-        var chest = agentData.GetVolatileSpeciesByID(_matthias.ChestID).FirstOrDefault();
+        var chest = agentData.GetStableSpeciesByID(_matthias.ChestID).FirstOrDefault();
         if (chest != null)
         {
             successHandler.SetSuccess(true, chest.FirstAware);
@@ -125,7 +125,7 @@ internal class SalvationPassInstance : SalvationPass
         }
         //
         var lastPack = packedTrios.Last();
-        var chest = log.AgentData.GetVolatileSpeciesByID(_banditTrio.ChestID).FirstOrDefault();
+        var chest = log.AgentData.GetStableSpeciesByID(_banditTrio.ChestID).FirstOrDefault();
         var encounterPhases = new List<EncounterPhaseData>();
         foreach (var pack in packedTrios)
         {
@@ -242,7 +242,7 @@ internal class SalvationPassInstance : SalvationPass
         Slothasor.FindMushrooms(logData, agentData, combatData, extensions);
         Slothasor.FindSlublingTransformations(logData, agentData, combatData, extensions);
         var bees = BanditTrio.CreateCustomInsectSwarmMasterAgent(logData, agentData);
-        BanditTrio.FindCageAndBombs(agentData, combatData);
+        BanditTrio.FindCageAndBombs(agentData, combatData, evtcVersion);
         Matthias.FindSacrifices(logData, agentData, combatData, extensions);
         base.EIEvtcParse(gw2Build, evtcVersion, logData, agentData, combatData, extensions);
         BanditTrio.RedirectInsectSwarmsToCustomMaster(bees, agentData);

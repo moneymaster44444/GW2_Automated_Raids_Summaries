@@ -80,7 +80,7 @@ internal static class AntiquaryHelper
         new Buff("Mistburn Mortar", MistburnMortarBuff, Source.Antiquary, BuffStackType.StackingConditionalLoss, 7, BuffClassification.Other, SkillImages.MistburnMortar),
         new Buff("Exalted Hammer", ExaltedHammerBuff, Source.Antiquary, BuffStackType.StackingConditionalLoss, 2, BuffClassification.Other, SkillImages.ExaltedHammer),
         new Buff("Summon Kryptis Turret (Player)", SummonKryptisTurretPlayerBuff, Source.Antiquary, BuffClassification.Other, SkillImages.SummonKryptisTurret),
-        new Buff("Summon Kryptis Turret (Target)", SummonKryptisTurretTargetBuff, Source.Antiquary, BuffStackType.StackingUniquePerSrc, 999, BuffClassification.Other, SkillImages.SummonKryptisTurret),
+        new Buff("Summon Kryptis Turret (Target)", SummonKryptisTurretTargetBuff, Source.Antiquary, BuffStackType.StackingUniquePerSrc, 999, BuffClassification.Debuff, SkillImages.SummonKryptisTurret),
         new Buff("Kryptis Turret (1)", KryptisTurretBuff1, Source.Antiquary, BuffClassification.Hidden, BuffImages.Unknown),
         new Buff("Kryptis Turret (2)", KryptisTurretBuff2, Source.Antiquary, BuffClassification.Hidden, BuffImages.Unknown),
         // Double Edge
@@ -132,7 +132,7 @@ internal static class AntiquaryHelper
                 var master = gadget.GetFinalMaster();
                 if (master.IsPlayer && master.Spec == Spec.Antiquary)
                 {
-                    if (gadget.HitboxWidth == 118 && gadget.HitboxHeight == 0)
+                    if (gadget.HitboxWidth == 118)
                     {
                         // The Holo-Dancer is correctly named
                         gadget.OverrideID(MinionID.HoloDancer, agentData);
