@@ -11,7 +11,7 @@
       "name": "EI Combiner",
       "repo": "https://github.com/Drevarr/GW2_EI_log_combiner.git",
       "prefix": "Resources\\EI Combiner",
-      "ref": "v1.7.0",
+      "ref": "v1.7.3",
       "squash": true
     }
   ]
