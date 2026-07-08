@@ -139,27 +139,57 @@ if "%NEED_EI_BUILD%"=="1" (
 
 rem ==========================================
 rem Ensure Python deps for EI Combiner (idempotent)
+rem   Installs into the SAME interpreter that runs the combiner (%PYTHON_EXE%),
+rem   then RE-VERIFIES the imports. pip can exit 0 yet install into a different
+rem   site than %PYTHON_EXE% imports from, so a plain exit code is not trusted.
+rem   If the deps still cannot be imported after installing, this is a hard
+rem   error (the combiner cannot run without them) rather than a silent warning
+rem   that leaves a cryptic ModuleNotFoundError three steps later.
 rem ==========================================
 
 echo [SETUP] Checking Python dependencies for EI Combiner...
-"%PYTHON_EXE%" -c "import requests, xlsxwriter, glicko2" >nul 2>&1
-if errorlevel 1 (
-  echo [SETUP] One or more packages missing; installing...
-  if exist "%REQUIREMENTS_TXT%" (
-    "%PYTHON_EXE%" -m pip install --disable-pip-version-check -r "%REQUIREMENTS_TXT%"
-  ) else (
-    "%PYTHON_EXE%" -m pip install --disable-pip-version-check requests xlsxwriter glicko2
-  )
-  if errorlevel 1 (
-    echo [WARN] Could not install Python dependencies automatically.
-    echo        The EI Combiner step may fail. Install manually with:
-    echo            "%PYTHON_EXE%" -m pip install -r "%REQUIREMENTS_TXT%"
-  ) else (
-    echo [OK] Python dependencies installed.
-  )
-) else (
+call :check_python_deps
+if "!PY_DEPS_OK!"=="1" (
   echo [OK] Python dependencies already present.
+  goto :py_deps_done
 )
+
+echo [SETUP] One or more packages missing; installing...
+
+rem Make sure pip is available for THIS interpreter before using it.
+"%PYTHON_EXE%" -m pip --version >nul 2>&1
+if errorlevel 1 (
+  echo [SETUP] pip not available for the target Python; bootstrapping with ensurepip...
+  "%PYTHON_EXE%" -m ensurepip --upgrade >nul 2>&1
+)
+
+if exist "%REQUIREMENTS_TXT%" (
+  "%PYTHON_EXE%" -m pip install --disable-pip-version-check -r "%REQUIREMENTS_TXT%"
+) else (
+  "%PYTHON_EXE%" -m pip install --disable-pip-version-check requests xlsxwriter glicko2
+)
+
+rem Re-verify against the interpreter that will actually run the combiner.
+call :check_python_deps
+if "!PY_DEPS_OK!"=="1" (
+  echo [OK] Python dependencies installed.
+  goto :py_deps_done
+)
+
+echo.
+echo [ERROR] Python dependencies are still missing after attempting installation.
+echo         The EI Combiner cannot run without: requests, xlsxwriter, glicko2
+set "PY_RESOLVED="
+for /f "usebackq delims=" %%E in (`"%PYTHON_EXE%" -c "import sys;print(sys.executable)" 2^>nul`) do set "PY_RESOLVED=%%E"
+if not defined PY_RESOLVED set "PY_RESOLVED=%PYTHON_EXE%"
+echo         Python used: !PY_RESOLVED!
+echo         Install them manually into THAT interpreter, then re-run:
+echo             "!PY_RESOLVED!" -m pip install -r "%REQUIREMENTS_TXT%"
+echo         If you have more than one Python installed, make sure the first
+echo         "python" on your PATH is the one shown above.
+goto :fail
+
+:py_deps_done
 
 rem ==========================================
 rem Ensure TiddlyWiki CLI (idempotent)
@@ -541,6 +571,14 @@ exit /b 1
 rem ==========================================
 rem Subroutines
 rem ==========================================
+
+:check_python_deps
+rem Sets PY_DEPS_OK=1 iff requests, xlsxwriter, glicko2 all import under the
+rem same interpreter (%PYTHON_EXE%) that runs the EI Combiner; 0 otherwise.
+set "PY_DEPS_OK=0"
+"%PYTHON_EXE%" -c "import requests, xlsxwriter, glicko2" >nul 2>&1
+if not errorlevel 1 set "PY_DEPS_OK=1"
+goto :eof
 
 :print_usage
 echo Usage: process_logs.bat [--manual ^| --scheduled]
