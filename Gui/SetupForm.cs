@@ -47,7 +47,7 @@ public sealed class SetupForm : Form
 
     private void BuildUi()
     {
-        Text = "GW2 Raid Summaries — First-time setup";
+        Text = "GW2 Automated Raids Summaries — First-time setup";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;

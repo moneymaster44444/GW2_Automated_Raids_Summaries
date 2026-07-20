@@ -57,7 +57,7 @@ public partial class MainForm
 
     private void BuildUi()
     {
-        Text = "GW2 Raid Summaries";
+        Text = "GW2 Automated Raids Summaries";
         TrySetWindowIcon();
         Font = SystemFonts.MessageBoxFont ?? new Font("Segoe UI", 9f);
         MinimumSize = new Size(840, 620);
