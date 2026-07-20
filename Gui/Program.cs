@@ -16,7 +16,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "GW2 Raid Summaries",
+            MessageBox.Show(ex.Message, "GW2 Automated Raids Summaries",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }

@@ -611,7 +611,7 @@ public partial class MainForm : Form
         {
             lblStatus.Text = "Update downloaded — run setup.bat to finish.";
             MessageBox.Show(this,
-                "When you're ready, close GW2 Raid Summaries and run setup.bat to finish applying the update " +
+                "When you're ready, close GW2 Automated Raids Summaries and run setup.bat to finish applying the update " +
                 "(it rebuilds Elite Insights and the GUI).",
                 "Finish the update", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
